@@ -1,9 +1,9 @@
 package schedule
 
 import (
-	"github.com/chuccp/smtp2http/core"
-	"github.com/chuccp/smtp2http/db"
-	"github.com/chuccp/smtp2http/util"
+	"github.com/chuccp/http2smtp/core"
+	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/util"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 	"log"

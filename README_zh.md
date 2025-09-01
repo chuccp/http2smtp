@@ -31,7 +31,7 @@
 
 微信群：
 
-<img src="https://github.com/chuccp/smtp2http/blob/main/image/WeChat.png?raw=true" alt="WebChat" width="200">
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/WeChat.png?raw=true" alt="WebChat" width="200">
 
 telegram：
 
@@ -45,28 +45,28 @@ https://t.me/+JClG9_DojaM0ZGE1
 
 # Windows 系统（PowerShell 环境）
 # 下载程序包
-Invoke-WebRequest -Uri "https://github.com/chuccp/smtp2http/releases/latest/download/smtp2http-windows-amd64.tar.gz" -OutFile "smtp2http-windows-amd64.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-windows-amd64.tar.gz" -OutFile "http2smtp-windows-amd64.tar.gz"
 # 解压文件
-tar -zxvf smtp2http-windows-amd64.tar.gz
+tar -zxvf http2smtp-windows-amd64.tar.gz
 # 运行程序 
-.\smtp2http.exe
+.\http2smtp.exe
 # Linux 系统
 # 下载程序包（使用wget确保兼容性）
-wget https://github.com/chuccp/smtp2http/releases/latest/download/smtp2http-linux-amd64.tar.gz
+wget https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-linux-amd64.tar.gz
 # 解压文件
-tar -zxvf smtp2http-linux-amd64.tar.gz
+tar -zxvf http2smtp-linux-amd64.tar.gz
 # 添加执行权限并运行
-chmod +x smtp2http
-./smtp2http
+chmod +x http2smtp
+./http2smtp
 ```
 
 ### Docker运行
 
 ```bash
 
-docker pull cooge123/smtp2http
+docker pull cooge123/http2smtp
 
-docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/smtp2http
+docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
 
 ```
 启动后，使用默认端口号访问管理页面：http://127.0.0.1:12566
@@ -175,7 +175,7 @@ curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%
 
 ## 许可证
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/smtp2http/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
 
 本项目基于 Apache License 2.0 许可证发行。
 

@@ -1,8 +1,8 @@
 package manage
 
 import (
-	"github.com/chuccp/smtp2http/core"
-	"github.com/chuccp/smtp2http/web"
+	"github.com/chuccp/http2smtp/core"
+	"github.com/chuccp/http2smtp/web"
 	"go.uber.org/zap"
 	"strconv"
 )

@@ -2,9 +2,9 @@ package core
 
 import (
 	"errors"
-	"github.com/chuccp/smtp2http/config"
-	"github.com/chuccp/smtp2http/login"
-	"github.com/chuccp/smtp2http/web"
+	"github.com/chuccp/http2smtp/config"
+	"github.com/chuccp/http2smtp/login"
+	"github.com/chuccp/http2smtp/web"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -37,7 +37,7 @@ func (m *SMTP2Http) startHttpServer() error {
 	m.context.log.Info("startHttpServer", zap.String("name", "manage"), zap.Int("port", port))
 	err := m.httpServer.StartAutoTLS(port, certFile, keyFile)
 	if err != nil {
-		m.context.log.Error("服务启动失败", zap.String("name", "smtp2http"), zap.Int("port", port), zap.Error(err))
+		m.context.log.Error("服务启动失败", zap.String("name", "http2smtp"), zap.Int("port", port), zap.Error(err))
 		return err
 	}
 	return nil

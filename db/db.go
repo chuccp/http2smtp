@@ -2,9 +2,9 @@ package db
 
 import (
 	"fmt"
-	"github.com/chuccp/smtp2http/config"
-	"github.com/chuccp/smtp2http/sqlite"
-	"github.com/chuccp/smtp2http/util"
+	"github.com/chuccp/http2smtp/config"
+	"github.com/chuccp/http2smtp/sqlite"
+	"github.com/chuccp/http2smtp/util"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

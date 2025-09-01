@@ -34,7 +34,7 @@ Welcome to join WeChat group or Telegram for more suggestions.
 
 WeChat group:
 
-<img src="https://github.com/chuccp/smtp2http/blob/main/image/WeChat.png?raw=true" alt="WebChat" width="200">
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/WeChat.png?raw=true" alt="WebChat" width="200">
 
 Telegram:
 
@@ -47,35 +47,35 @@ https://t.me/+JClG9_DojaM0ZGE1
 ```bash
 # Windows (PowerShell environment)
 # Download package
-Invoke-WebRequest -Uri "https://github.com/chuccp/smtp2http/releases/latest/download/smtp2http-windows-amd64.tar.gz" -OutFile "smtp2http-windows-amd64.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-windows-amd64.tar.gz" -OutFile "http2smtp-windows-amd64.tar.gz"
 # Extract files
-tar -zxvf smtp2http-windows-amd64.tar.gz
+tar -zxvf http2smtp-windows-amd64.tar.gz
 # Run program
-.\smtp2http.exe
+.\http2smtp.exe
 
 # Linux
 # Download package (using wget for compatibility)
-wget https://github.com/chuccp/smtp2http/releases/latest/download/smtp2http-linux-amd64.tar.gz
+wget https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-linux-amd64.tar.gz
 # Extract files
-tar -zxvf smtp2http-linux-amd64.tar.gz
+tar -zxvf http2smtp-linux-amd64.tar.gz
 # Add execution permissions and run
-chmod +x smtp2http
-./smtp2http
+chmod +x http2smtp
+./http2smtp
 ```
 
 
 ### Docker Execution
 
 ```bash
-docker pull cooge123/smtp2http
+docker pull cooge123/http2smtp
 
-docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/smtp2http
+docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
 ```
 After startup, access the management page using the default port number: http://127.0.0.1:12566
 
 ## Configuration Instructions
 
-After first startup, the configuration file [config.ini](file://C:\Users\cao\Documents\GitHub\smtp2http\config.ini) is generated:
+After first startup, the configuration file [config.ini](file://C:\Users\cao\Documents\GitHub\http2smtp\config.ini) is generated:
 
 ```ini
 [core]
@@ -176,7 +176,7 @@ Compilation requires first building the frontend interface [d-mail-view](https:/
 
 ## License
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/smtp2http/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
 
 This project is licensed under the Apache License 2.0. 
 

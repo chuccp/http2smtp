@@ -3,10 +3,10 @@ package service
 import (
 	"encoding/json"
 	"errors"
-	"github.com/chuccp/smtp2http/db"
-	"github.com/chuccp/smtp2http/smtp"
-	"github.com/chuccp/smtp2http/util"
-	"github.com/chuccp/smtp2http/web"
+	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/smtp"
+	"github.com/chuccp/http2smtp/util"
+	"github.com/chuccp/http2smtp/web"
 )
 
 type Schedule struct {

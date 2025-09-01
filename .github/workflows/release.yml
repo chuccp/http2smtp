@@ -5,7 +5,7 @@ on:
     tags:
       - v*
 env:
-  REGISTRY_IMAGE: cooge123/smtp2http
+  REGISTRY_IMAGE: cooge123/http2smtp
 
 permissions:
   contents: write
@@ -81,15 +81,15 @@ jobs:
       - name: Get project dependencies
         run: go mod download
 
-      - name: Build smtp2http
+      - name: Build http2smtp
         run: |
-          go build  -v -o build_assets/smtp2http  ./
+          go build  -v -o build_assets/http2smtp  ./
 
-      - name: Rename Windows smtp2http
+      - name: Rename Windows http2smtp
         if: matrix.goos == 'windows'
         run: |
           cd ./build_assets || exit 1
-          mv smtp2http smtp2http.exe
+          mv http2smtp http2smtp.exe
 
       - name: Sign Windows d-mail
         if: matrix.goos == 'windows'
@@ -100,13 +100,13 @@ jobs:
           folder: 'build_assets'
           recursive: true
           files: |
-            smtp2http.exe
-          description: 'sign smtp2http.exe'
+            http2smtp.exe
+          description: 'sign http2smtp.exe'
 
       - name: Create tar.gz archive
         run: |
           pushd build_assets || exit 1
-          tar -czvf ../smtp2http-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz .
+          tar -czvf ../http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz .
           popd || exit 1
 
       - name: Upload files to GitHub release
@@ -114,7 +114,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file_glob: true
-          file: ./smtp2http-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz*
+          file: ./http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz*
           tag: ${{ github.ref }}
   build-docker:
     strategy:

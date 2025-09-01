@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
-	"github.com/chuccp/smtp2http/api"
-	"github.com/chuccp/smtp2http/core"
-	"github.com/chuccp/smtp2http/manage"
-	"github.com/chuccp/smtp2http/schedule"
+	"github.com/chuccp/http2smtp/api"
+	"github.com/chuccp/http2smtp/core"
+	"github.com/chuccp/http2smtp/manage"
+	"github.com/chuccp/http2smtp/schedule"
 )
 
 func main() {

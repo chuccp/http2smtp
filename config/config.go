@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/chuccp/smtp2http/util"
+	"github.com/chuccp/http2smtp/util"
 	"os"
 )
 

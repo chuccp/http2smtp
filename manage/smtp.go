@@ -1,11 +1,11 @@
 package manage
 
 import (
-	"github.com/chuccp/smtp2http/core"
-	"github.com/chuccp/smtp2http/db"
-	"github.com/chuccp/smtp2http/service"
-	stmp2 "github.com/chuccp/smtp2http/smtp"
-	"github.com/chuccp/smtp2http/web"
+	"github.com/chuccp/http2smtp/core"
+	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/service"
+	stmp2 "github.com/chuccp/http2smtp/smtp"
+	"github.com/chuccp/http2smtp/web"
 	"net/mail"
 	"strconv"
 )

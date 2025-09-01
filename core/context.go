@@ -1,12 +1,12 @@
 package core
 
 import (
-	"github.com/chuccp/smtp2http/config"
-	"github.com/chuccp/smtp2http/db"
-	"github.com/chuccp/smtp2http/login"
-	"github.com/chuccp/smtp2http/service"
-	"github.com/chuccp/smtp2http/util"
-	"github.com/chuccp/smtp2http/web"
+	"github.com/chuccp/http2smtp/config"
+	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/login"
+	"github.com/chuccp/http2smtp/service"
+	"github.com/chuccp/http2smtp/util"
+	"github.com/chuccp/http2smtp/web"
 	"go.uber.org/zap"
 	"log"
 	"runtime/debug"

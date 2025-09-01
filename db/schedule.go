@@ -2,8 +2,8 @@ package db
 
 import (
 	"fmt"
-	"github.com/chuccp/smtp2http/util"
-	"github.com/chuccp/smtp2http/web"
+	"github.com/chuccp/http2smtp/util"
+	"github.com/chuccp/http2smtp/web"
 	"gorm.io/gorm"
 	"time"
 )
