@@ -1,6 +1,6 @@
 
 
-# SMTP2HTTP - SMTP to HTTP Tool
+# HTTP2SMTP - USE HTTP SEND EMAIL 
 
 **English**🌎 | [**简体中文**🀄](./README_zh.md)
 

@@ -1,4 +1,4 @@
-# SMTP2HTTP - SMTP转HTTP 工具
+# HTTP2SMTP - 使用http发送邮件
 
 [**English**🌎](./README.md) | **简体中文**🀄
 
