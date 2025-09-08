@@ -60,19 +60,28 @@ func (token *Token) supplementToken(st ...*db.Token) {
 
 var lock = new(sync.Mutex)
 
-func (token *Token) SendApiCallMail(schedule *db.Schedule) {
+func (token *Token) SendApiCallMail(schedule *db.Schedule) error {
 	lock.Lock()
 	defer lock.Unlock()
 	byToken, err := token.GetOneByToken(schedule.Token)
-	if err == nil && byToken.IsUse {
+	if err != nil {
+		return err
+	}
+	if byToken == nil {
+		return errors.New("token not found")
+	}
+	if byToken.IsUse {
 		body, err := smtp.SendAPIMail(schedule, byToken.SMTP, byToken.ReceiveEmails)
 		if err != nil {
 			token.zapLog.Error("SendAPIMail log error", zap.Error(err))
 		}
-		err = token.log.Log(byToken.SMTP, byToken.ReceiveEmails, nil, schedule.Token, schedule.Name, body, err)
-		if err != nil {
-			token.zapLog.Error("SendAPIMail log error", zap.Error(err))
+		err2 := token.log.Log(byToken.SMTP, byToken.ReceiveEmails, nil, schedule.Token, schedule.Name, body, err)
+		if err2 != nil {
+			token.zapLog.Error("SendAPIMail log error", zap.Error(err2))
 		}
+		return err
+	} else {
+		return errors.New("token is not use")
 	}
 }
 

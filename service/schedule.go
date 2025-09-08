@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/chuccp/http2smtp/db"
-	"github.com/chuccp/http2smtp/smtp"
 	"github.com/chuccp/http2smtp/util"
 	"github.com/chuccp/http2smtp/web"
 )
@@ -57,6 +56,9 @@ func (schedule *Schedule) GetOne(id int) (*db.Schedule, error) {
 	if err != nil {
 		return nil, err
 	}
+	if one == nil {
+		return nil, errors.New("token not found")
+	}
 	headerStr := one.HeaderStr
 	if util.IsNotBlank(headerStr) {
 		err := json.Unmarshal([]byte(headerStr), &one.Headers)
@@ -74,16 +76,4 @@ func (schedule *Schedule) GetOne(id int) (*db.Schedule, error) {
 	}
 	one.TokenId = byToken.Id
 	return one, nil
-}
-
-func (schedule *Schedule) SendMail(sd *db.Schedule) error {
-	byToken, err := schedule.token.GetOneByToken(sd.Token)
-	if err != nil {
-		return err
-	}
-	if byToken == nil {
-		return errors.New("token not found")
-	}
-	_, err = smtp.SendAPIMail(sd, byToken.SMTP, byToken.ReceiveEmails)
-	return err
 }

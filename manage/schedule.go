@@ -79,7 +79,7 @@ func (schedule *Schedule) sendMail(req *web.Request) (any, error) {
 		return nil, err
 	}
 	st.IsOnlySendByError = false
-	err = schedule.context.GetScheduleService().SendMail(&st)
+	err = schedule.context.GetTokenService().SendApiCallMail(&st)
 	if err != nil {
 		return nil, err
 	}
