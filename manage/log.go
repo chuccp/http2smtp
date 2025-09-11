@@ -26,7 +26,8 @@ func (log *Log) getOne(req *web.Request) (any, error) {
 
 func (log *Log) getPage(req *web.Request) (any, error) {
 	page := req.GetPage()
-	p, err := log.context.GetDb().GetLogModel().Page(page)
+	searchKey := req.GetSearchKey()
+	p, err := log.context.GetDb().GetLogModel().PageBySearch(page, searchKey)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,8 @@ package db
 import (
 	"github.com/chuccp/http2smtp/web"
 	"gorm.io/gorm"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -77,6 +79,24 @@ func (a *LogModel) Page(page *web.Page) (*Page[*Log], error) {
 	}
 
 	return ToPage[*Log](num, logs), nil
+}
+func (a *LogModel) PageBySearch(page *web.Page, key string) (*Page[*Log], error) {
+
+	key = strings.TrimSpace(key)
+	if len(key) == 0 {
+		return a.Page(page)
+	}
+	var logs []*Log
+	log.Println("key:", key, "a.tableName", a.tableName)
+	tx := a.Model.db.Table(a.tableName).Where("`content` like ? or `subject` like ?", "%"+key+"%", "%"+key+"%").Order("`id` desc").Offset((page.PageNo - 1) * page.PageSize).Limit(page.PageSize).Find(&logs)
+	if tx.Error == nil {
+		var num int64
+		tx = a.Model.db.Table(a.tableName).Where("`content` like ? or `subject` like ?", "%"+key+"%", "%"+key+"%").Count(&num)
+		if tx.Error == nil {
+			return ToPage[*Log](int(num), logs), nil
+		}
+	}
+	return nil, tx.Error
 }
 func (a *LogModel) Save(log *Log) error {
 	return a.Model.Save(log)

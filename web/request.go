@@ -68,6 +68,9 @@ func (r *Request) GetPage() *Page {
 	page.PageSize = r.FormIntValue("pageSize")
 	return &page
 }
+func (r *Request) GetSearchKey() string {
+	return r.FormValue("searchKey")
+}
 func (r *Request) GetRawRequest() *http.Request {
 	return r.context.Request
 }
