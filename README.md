@@ -174,6 +174,29 @@ curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%
 
 Compilation requires first building the frontend interface [d-mail-view](https://github.com/chuccp/d-mail-view)
 
+## UI Display
+
+
+### initialize
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/001.png?raw=true" alt="WebChat" width="400">
+
+### add SMTP
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/002.png?raw=true" alt="WebChat" width="400">
+
+### add email address
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/003.png?raw=true" alt="WebChat" width="400">
+
+### add TOEKN
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/004.png?raw=true" alt="WebChat" width="400">
+
+### add schedule
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/005.png?raw=true" alt="WebChat" width="400">
+
 ## License
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)

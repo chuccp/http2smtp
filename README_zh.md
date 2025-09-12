@@ -171,7 +171,27 @@ curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%
 
 编译需先构建前端界面 [d-mail-view](https://github.com/chuccp/d-mail-view)
 
+## 界面展示
 
+### 初始化
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/001.png?raw=true" alt="WebChat" width="400">
+
+### 添加SMTP
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/002.png?raw=true" alt="WebChat" width="400">
+
+### 添加邮箱地址
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/003.png?raw=true" alt="WebChat" width="400">
+
+### 添加TOEKN
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/004.png?raw=true" alt="WebChat" width="400">
+
+### 添加定时任务
+
+<img src="https://github.com/chuccp/http2smtp/blob/main/image/005.png?raw=true" alt="WebChat" width="400">
 
 ## 许可证
 
