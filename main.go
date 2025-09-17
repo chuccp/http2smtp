@@ -6,7 +6,6 @@ import (
 	"github.com/chuccp/http2smtp/core"
 	"github.com/chuccp/http2smtp/manage"
 	"github.com/chuccp/http2smtp/schedule"
-	"log"
 )
 
 func main() {
@@ -18,9 +17,11 @@ func main() {
 	flag.IntVar(&apiPort, "api_port", 0, "api port")
 	flag.StringVar(&storageRoot, "storage_root", "./", "storage root")
 	flag.Parse()
-	log.Println("web_port:", webPort)
-	log.Println("api_port:", apiPort)
-	log.Println("storage_root:", storageRoot)
+	//web_port, exists := os.LookupEnv("web_port")
+	//if exists {
+	//	webPort, _ = util.s(web_port)
+	//}
+
 	smtp2Http := core.Create()
 	smtp2Http.AddServer(manage.NewServer())
 	smtp2Http.AddServer(api.NewServer())
