@@ -63,6 +63,13 @@ chmod +x http2smtp
 ### Docker运行
 
 ```bash
+##使用 docker-compose
+cd docker
+docker compose up -d
+```
+or
+
+```bash
 
 docker pull cooge123/http2smtp
 

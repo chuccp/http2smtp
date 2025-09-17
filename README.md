@@ -67,6 +67,12 @@ chmod +x http2smtp
 ### Docker Execution
 
 ```bash
+##use docker-compose
+cd docker
+docker compose up -d
+```
+or
+```bash
 docker pull cooge123/http2smtp
 
 docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
