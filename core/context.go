@@ -9,6 +9,7 @@ import (
 	"github.com/chuccp/http2smtp/web"
 	"go.uber.org/zap"
 	"log"
+	"path"
 	"runtime/debug"
 )
 
@@ -16,6 +17,7 @@ type Context struct {
 	db          *db.DB
 	config      *config.Config
 	log         *zap.Logger
+	storageRoot string
 	httpServer  *web.HttpServer
 	digestAuth  *login.DigestAuth
 	IsDocker    bool
@@ -57,7 +59,7 @@ func (c *Context) GetLogService() *service.Log {
 }
 func (c *Context) GetTokenService() *service.Token {
 	cachePath := c.GetConfig().GetStringOrDefault("core", "cachePath", ".cache")
-	return service.NewToken(c.db, c.GetLog(), cachePath)
+	return service.NewToken(c.db, c.GetLog(), path.Join(c.storageRoot, cachePath))
 }
 func (c *Context) GetScheduleService() *service.Schedule {
 	return service.NewSchedule(c.db, c.GetTokenService())
@@ -109,7 +111,7 @@ func (c *Context) UpdateSetInfo(setInfo *config.SetInfo) error {
 	return nil
 }
 func (c *Context) initDbBySetInfo(setInfo *config.SetInfo) error {
-	_db_ := db.CreateDB()
+	_db_ := db.CreateDB(c.storageRoot)
 	err := _db_.InitBySetInfo(setInfo)
 	if err != nil {
 		return err
@@ -121,7 +123,7 @@ func (c *Context) startSchedule() {
 }
 func (c *Context) initDb() error {
 	if c.IsInit() {
-		_db_ := db.CreateDB()
+		_db_ := db.CreateDB(c.storageRoot)
 		err := _db_.Init(c.config)
 		if err != nil {
 			return err

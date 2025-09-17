@@ -3,15 +3,16 @@ package config
 import (
 	"github.com/chuccp/http2smtp/util"
 	"os"
+	"path"
 )
 
 type Config struct {
-	filename string
-	config   *util.Config
+	name   string
+	config *util.Config
 }
 
 func NewConfig() *Config {
-	return &Config{filename: "config.ini"}
+	return &Config{name: "config.ini"}
 }
 
 func (config *Config) UpdateSetInfo(setInfo *SetInfo) error {
@@ -44,13 +45,14 @@ func (config *Config) UpdateSetInfo(setInfo *SetInfo) error {
 	return nil
 }
 
-func (config *Config) Init(webPort int, apiPort int) error {
-	if !util.FileExists(config.filename) {
-		_, err := os.Create(config.filename)
+func (config *Config) Init(webPort int, apiPort int, rootPath string) error {
+	filePath := path.Join(rootPath, config.name)
+	if !util.FileExists(filePath) {
+		_, err := os.Create(filePath)
 		if err != nil {
 			return err
 		}
-		fig, err := util.LoadFile(config.filename)
+		fig, err := util.LoadFile(filePath)
 		if err != nil {
 			return err
 		}
@@ -64,7 +66,7 @@ func (config *Config) Init(webPort int, apiPort int) error {
 		config.UpdateSetInfo(defaultSetInfo)
 		return nil
 	} else {
-		fig, err := util.LoadFile(config.filename)
+		fig, err := util.LoadFile(filePath)
 		if err != nil {
 			return err
 		}

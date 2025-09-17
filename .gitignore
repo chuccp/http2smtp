@@ -28,3 +28,4 @@ config.ini
 /unzip/web
 *.zip
 httpPush
+/storage

@@ -4,10 +4,12 @@ import (
 	"errors"
 	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/login"
+	"github.com/chuccp/http2smtp/util"
 	"github.com/chuccp/http2smtp/web"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
+	"path"
 	"time"
 )
 
@@ -21,6 +23,7 @@ type SMTP2Http struct {
 	apiPort     int
 	iHttpServer []IHttpServer
 	IsDocker    bool
+	storageRoot string
 }
 
 func Create() *SMTP2Http {
@@ -43,7 +46,12 @@ func (m *SMTP2Http) startHttpServer() error {
 	return nil
 }
 
-func (m *SMTP2Http) Start(webPort int, apiPort int) {
+func (m *SMTP2Http) Start(webPort int, apiPort int, storageRoot string) {
+	m.storageRoot = storageRoot
+	err := util.EnsureDir(m.storageRoot)
+	if err != nil {
+		log.Panic(err, m.storageRoot)
+	}
 	m.webPort = webPort
 	m.apiPort = apiPort
 	if m.webPort > 0 || m.apiPort > 0 {
@@ -72,19 +80,19 @@ func (m *SMTP2Http) StartServer(name string) {
 }
 func (m *SMTP2Http) reStart() {
 	m.iHttpServer = make([]IHttpServer, 0)
-	err := m.config.Init(m.webPort, m.apiPort)
+	err := m.config.Init(m.webPort, m.apiPort, m.storageRoot)
 	if err != nil {
 		log.Panic(err)
 		return
 	}
 	logPath := m.config.GetStringOrDefault("log", "filename", "run.log")
-	logger, err := initLogger(logPath)
+	logger, err := initLogger(path.Join(m.storageRoot, logPath))
 	if err != nil {
 		log.Panic(err)
 		return
 	}
 	m.log = logger
-	m.context = &Context{log: m.log, config: m.config, reStart: m.ReStart, IsDocker: m.IsDocker, startServer: m.StartServer}
+	m.context = &Context{log: m.log, config: m.config, reStart: m.ReStart, IsDocker: m.IsDocker, startServer: m.StartServer, storageRoot: m.storageRoot}
 	digestAuth := login.NewDigestAuth(m.context.SecretProvider)
 	m.context.digestAuth = digestAuth
 	m.httpServer = web.NewServer(digestAuth)

@@ -12,12 +12,14 @@ func main() {
 
 	var webPort int
 	var apiPort int
+	var storageRoot string
 	flag.IntVar(&webPort, "web_port", 0, "web port")
 	flag.IntVar(&apiPort, "api_port", 0, "api port")
+	flag.StringVar(&storageRoot, "storage_root", "./", "storage port")
 	flag.Parse()
 	smtp2Http := core.Create()
 	smtp2Http.AddServer(manage.NewServer())
 	smtp2Http.AddServer(api.NewServer())
 	smtp2Http.AddServer(schedule.NewServer())
-	smtp2Http.Start(webPort, apiPort)
+	smtp2Http.Start(webPort, apiPort, storageRoot)
 }

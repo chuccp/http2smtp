@@ -8,13 +8,15 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"path"
 )
 
 var NoDatabase = &NoDatabaseError{}
 
 type DB struct {
-	db  *gorm.DB
-	err error
+	db          *gorm.DB
+	err         error
+	storageRoot string
 }
 
 func (d *DB) GetSMTPModel() *STMPModel {
@@ -32,8 +34,8 @@ func (d *DB) GetTokenModel() *TokenModel {
 func (d *DB) GetScheduleModel() *ScheduleModel {
 	return NewScheduleModel(d.db, "t_schedule")
 }
-func CreateDB() *DB {
-	return &DB{}
+func CreateDB(storageRoot string) *DB {
+	return &DB{storageRoot: storageRoot}
 }
 
 // InitBySetInfo setInfo *config.SetInfo
@@ -41,8 +43,7 @@ func (d *DB) InitBySetInfo(setInfo *config.SetInfo) error {
 	var err error
 	dbType := setInfo.DbType
 	if util.EqualsAnyIgnoreCase(dbType, "sqlite") {
-		dbName := setInfo.Sqlite.Filename
-
+		dbName := path.Join(d.storageRoot, setInfo.Sqlite.Filename)
 		d.db, err = gorm.Open(sqlite.Open(dbName), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 		if err != nil {
 			d.err = err

@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  http2smtp:
+    image: cooge123/http2smtp:latest
+    container_name: http2smtp
+    environment:
+      - storage_root=/app/storage
+      - web_port=12566
+      - api_port=12567
+    volumes:
+      - ./storage:/app/storage
+    ports:
+      - "12566:12566"
+      - "12567:12567"
+    restart: unless-stopped
