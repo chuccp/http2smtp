@@ -77,7 +77,7 @@ func (d *DB) Init(config *config.Config) error {
 	dbType := config.GetString("core", "dbType")
 	if util.EqualsAnyIgnoreCase(dbType, "sqlite") {
 		dbName := config.GetStringOrDefault("sqlite", "filename", "d-mail.db")
-
+		dbName = path.Join(d.storageRoot, dbName)
 		d.db, err = gorm.Open(sqlite.Open(dbName), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 		if err != nil {
 			d.err = err
