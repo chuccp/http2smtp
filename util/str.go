@@ -172,6 +172,28 @@ func BoolToString(b bool) string {
 		return "false"
 	}
 }
+func StringToBool(s string) bool {
+	if s == "true" {
+		return true
+	} else {
+		return false
+	}
+}
+func StringToUInt(s string) uint {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+	return uint(i)
+}
+func StringToInt(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+	return i
+}
+
 func GetCachePath(rootPath, filename string) string {
 	id := uuid.New().String()
 	name := MD5([]byte(id))
