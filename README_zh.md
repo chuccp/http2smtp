@@ -63,7 +63,7 @@ chmod +x http2smtp
 ### Docker运行
 
 ```bash
-##使用 docker-compose
+##使用 docker-compose(推荐)
 cd docker
 docker compose up -d
 ```

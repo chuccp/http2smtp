@@ -67,7 +67,7 @@ chmod +x http2smtp
 ### Docker Execution
 
 ```bash
-##use docker-compose
+##use docker-compose（recommended)
 cd docker
 docker compose up -d
 ```
