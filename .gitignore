@@ -29,3 +29,5 @@ config.ini
 *.zip
 httpPush
 /storage
+http2smtp
+/docker/storage
