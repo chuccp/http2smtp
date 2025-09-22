@@ -3,6 +3,8 @@
 [![GitHub Downloads](https://img.shields.io/github/downloads/chuccp/http2smtp/total.svg)](https://github.com/chuccp/http2smtp/releases)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#社区)
+![GitHub last commit](https://img.shields.io/github/last-commit/chuccp/http2smtp)
+
 
 [**English**🌎](./README.md) | **简体中文**🀄
 
