@@ -5,6 +5,8 @@
 [![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#社区)
 ![GitHub last commit](https://img.shields.io/github/last-commit/chuccp/http2smtp)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/chuccp/http2smtp/release.yml)
+![GitHub top language](https://img.shields.io/github/languages/top/chuccp/http2smtp)
+
 
 
 [**English**🌎](./README.md) | **简体中文**🀄
