@@ -1,5 +1,9 @@
 # HTTP2SMTP - 使用http发送邮件
 
+[![GitHub Downloads](https://img.shields.io/github/downloads/chuccp/http2smtp/total.svg)](https://github.com/chuccp/http2smtp/releases)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
+[![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Community)
+
 [**English**🌎](./README.md) | **简体中文**🀄
 
 ## 重要更新
@@ -200,13 +204,7 @@ curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%
 
 <img src="https://github.com/chuccp/http2smtp/blob/main/image/005.png?raw=true" alt="WebChat" width="800">
 
-## 许可证
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
-
-本项目基于 Apache License 2.0 许可证发行。
-
-您可以在 [LICENSE](./LICENSE) 文件中查看完整的许可证文本。
 
 
 
