@@ -1,15 +1,16 @@
 package web
 
 import (
-	"github.com/chuccp/http2smtp/login"
-	"github.com/chuccp/http2smtp/util"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/chuccp/http2smtp/login"
+	"github.com/chuccp/http2smtp/util"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func NewServer(digestAuth *login.DigestAuth) *HttpServer {
@@ -138,7 +139,7 @@ func (hs *HttpServer) Stop() {
 func (hs *HttpServer) StartAutoTLS(port int, certFile, keyFile string) error {
 	if len(certFile) > 0 && len(keyFile) > 0 {
 		return hs.StartTLS(port, certFile, keyFile)
-	} else {
-		return hs.Start(port)
 	}
+
+	return hs.Start(port)
 }
