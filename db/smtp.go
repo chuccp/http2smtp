@@ -1,9 +1,10 @@
 package db
 
 import (
+	"time"
+
 	"github.com/chuccp/http2smtp/web"
 	"gorm.io/gorm"
-	"time"
 )
 
 type SMTP struct {
