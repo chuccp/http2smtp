@@ -50,3 +50,15 @@ func (t *SMTPModel) GetTableName() string {
 func (t *SMTPModel) Name() string {
 	return t.GetTableName()
 }
+
+func (t *SMTPModel) FindMapByIds(ids []uint) (map[uint]*SMTP, error) {
+	SMTPs, err := t.FindAllByIds(ids...)
+	if err != nil {
+		return nil, err
+	}
+	var SMTPMap = make(map[uint]*SMTP)
+	for _, st := range SMTPs {
+		SMTPMap[st.Id] = st
+	}
+	return SMTPMap, nil
+}

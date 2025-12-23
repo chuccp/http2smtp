@@ -46,3 +46,16 @@ func (t *MailModel) GetTableName() string {
 func (t *MailModel) Name() string {
 	return t.GetTableName()
 }
+
+func (t *MailModel) FindMapByIds(id []uint) (map[uint]*Mail, error) {
+
+	mails, err := t.FindAllByIds(id...)
+	if err != nil {
+		return nil, err
+	}
+	var mailMap = make(map[uint]*Mail)
+	for _, mail := range mails {
+		mailMap[mail.Id] = mail
+	}
+	return mailMap, nil
+}

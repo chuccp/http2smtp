@@ -2,14 +2,15 @@ package service
 
 import (
 	"errors"
+	"os"
+	"sync"
+
 	"github.com/chuccp/http2smtp/db"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/smtp"
 	"github.com/chuccp/http2smtp/util"
 	"github.com/chuccp/http2smtp/web"
 	"go.uber.org/zap"
-	"os"
-	"sync"
 )
 
 type Token struct {

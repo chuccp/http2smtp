@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"github.com/chuccp/http2smtp/db"
-	"github.com/chuccp/http2smtp/util"
-	"github.com/wneessen/go-mail"
 	"os"
 	"strings"
+
+	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/model"
+	"github.com/chuccp/http2smtp/util"
+	"github.com/wneessen/go-mail"
 )
 
 type Mail struct {
@@ -198,5 +200,78 @@ func SendAPIMail(schedule *db.Schedule, smtp *db.SMTP, mails []*db.Mail) (string
 		return string(response.Body), nil
 	} else {
 		return SendContentTemplateMsg(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
+	}
+}
+
+func SendFilesMsg2(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
+	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
+	receiveEmails := make([]*Mail, 0)
+	for _, d := range mails {
+		receiveEmails = append(receiveEmails, &Mail{Name: d.Name, Mail: d.Mail})
+	}
+	if len(receiveEmails) == 0 {
+		return errors.New("receiveEmails is empty")
+	}
+	var sendMsg SendMsg
+	sendMsg.SendMail = SMTP
+	sendMsg.ReceiveEmails = receiveEmails
+	sendMsg.Subject = subject
+	sendMsg.BodyString = bodyString
+	for _, file := range files {
+		sendMsg.ff = append(sendMsg.ff, file)
+	}
+	return SendMail(&sendMsg)
+}
+func SendContentTemplateMsg2(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string, useTemplate bool, templateStr string) (string, error) {
+	if useTemplate {
+		template, err := util.ParseTemplate(templateStr, bodyString)
+		if err != nil {
+			return bodyString, SendContentMsg2(smtp, mails, subject, bodyString)
+		} else {
+			return template, SendContentMsg2(smtp, mails, subject, template)
+		}
+	}
+	return bodyString, SendContentMsg2(smtp, mails, subject, bodyString)
+}
+
+func SendContentMsg2(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string) error {
+	return SendFilesMsg2(smtp, mails, nil, subject, bodyString)
+}
+func SendAPIMail2(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail) (string, error) {
+	url := schedule.Url
+	Method := schedule.Method
+	request := util.NewRequest()
+	var headers []db.Header
+	var dataMap = make(map[string]string)
+	if len(schedule.HeaderStr) > 0 {
+		err := json.Unmarshal([]byte(schedule.HeaderStr), &headers)
+		if err == nil {
+			for _, header := range headers {
+				dataMap[header.Name] = header.Value
+			}
+		} else {
+			return "", err
+		}
+	}
+	if len(schedule.Headers) > 0 {
+		for _, header := range schedule.Headers {
+			dataMap[header.Name] = header.Value
+		}
+	}
+	response, err := request.CallApiForResponse(url, dataMap, Method, []byte(schedule.Body))
+	if err != nil {
+		errSend := SendContentMsg2(smtp, mails, schedule.Name, err.Error())
+		if errSend != nil {
+			return errSend.Error(), err
+		}
+		return err.Error(), nil
+	}
+	if schedule.IsOnlySendByError {
+		if response.StatusCode >= 400 {
+			return SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
+		}
+		return string(response.Body), nil
+	} else {
+		return SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
 	}
 }
