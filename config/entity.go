@@ -14,6 +14,10 @@ type Manage struct {
 	ConfirmPassword string `json:"confirmPassword"`
 }
 
+func (m *Manage) Key() string {
+	return "manage"
+}
+
 type Api struct {
 	Port int `json:"port"`
 }

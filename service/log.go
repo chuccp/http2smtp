@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/chuccp/http2smtp/db"
 	"github.com/chuccp/http2smtp/smtp"
 	"github.com/chuccp/http2smtp/util"
