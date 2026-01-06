@@ -3,6 +3,7 @@ package rest
 import (
 	"strings"
 
+	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
@@ -20,7 +21,7 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	manage := core.GetValueConfig[*config.Manage](l.context)
+	manage := wf.UnmarshalConfig[*config.Manage]("manage", l.context)
 	key := util.MD5Str(util.MD5Str(manage.Password) + manage.Username)
 	sign := util.MD5Str(key + u.Nonce)
 	if strings.EqualFold(sign, u.Response) {
@@ -31,10 +32,11 @@ func (l *User) signIn(request *web.Request) (any, error) {
 func (l *User) logout(request *web.Request) (any, error) {
 	return request.SignOut()
 }
-func (l *User) Init(context *core.Context) {
+func (l *User) Init(context *core.Context) error {
 	l.context = context
 	context.Post("/signIn", l.signIn)
 	context.Post("/logout", l.logout)
+	return nil
 }
 func (l *User) Name() string {
 	return entity.UserRest

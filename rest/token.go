@@ -1,6 +1,7 @@
 package rest
 
 import (
+	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/entity"
@@ -14,7 +15,7 @@ type Token struct {
 
 func (token *Token) getOne(req *web.Request) (any, error) {
 	id := req.ParamUint("id")
-	tokenService := core.GetService[*service2.TokenService](token.context)
+	tokenService := wf.GetService[*service2.TokenService](token.context)
 	return tokenService.GetOne(id)
 }
 
@@ -64,7 +65,7 @@ func (token *Token) sendMail(req *web.Request) (any, error) {
 	return "ok", nil
 }
 
-func (token *Token) Init(context *core.Context) {
+func (token *Token) Init(context *core.Context) error {
 	token.context = context
 	token.context.GetAuth("/token/:id", token.getOne)
 	token.context.DeleteAuth("/token/:id", token.deleteOne)
@@ -72,6 +73,7 @@ func (token *Token) Init(context *core.Context) {
 	token.context.PostAuth("/token", token.postOne)
 	token.context.PutAuth("/token", token.putOne)
 	token.context.PostAuth("/sendMailByToken", token.sendMail)
+	return nil
 }
 func (token *Token) Name() string {
 	return entity.TokenRest

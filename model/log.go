@@ -43,11 +43,21 @@ type LogModel struct {
 	context *core.Context
 }
 
-func (t *LogModel) Init(context *core.Context) {
+func (t *LogModel) Init(context *core.Context) error {
 	t.db = context.GetDB()
 	t.context = context
-	t.EntryModel = model.NewEntryModel[*Log](t.db, t.GetTableName(), &Log{})
+	t.EntryModel = model.NewEntryModel[*Log](t.db, t.GetTableName())
+	return nil
 }
+
+func (t *LogModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+	return &LogModel{
+		EntryModel: model.NewEntryModel[*Log](db, t.GetTableName()),
+		db:         db,
+		context:    c,
+	}
+}
+
 func (t *LogModel) GetTableName() string {
 	return "t_mail"
 }

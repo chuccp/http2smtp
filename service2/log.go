@@ -65,7 +65,8 @@ func (l *LogService) Log(smtp *model.SMTP, mails []*model.Mail, files []*smtp.Fi
 func (l *LogService) Name() string {
 	return "LogService"
 }
-func (l *LogService) Init(context *core.Context) {
+func (l *LogService) Init(context *core.Context) error {
 	l.context = context
 	l.logModel = core.GetModel[*model.LogModel](context)
+	return nil
 }

@@ -70,10 +70,11 @@ type ScheduleModel struct {
 	context *core.Context
 }
 
-func (t *ScheduleModel) Init(context *core.Context) {
+func (t *ScheduleModel) Init(context *core.Context) error {
 	t.db = context.GetDB()
 	t.context = context
-	t.EntryModel = model.NewEntryModel[*Schedule](t.db, t.GetTableName(), &Schedule{})
+	t.EntryModel = model.NewEntryModel[*Schedule](t.db, t.GetTableName())
+	return nil
 }
 func (t *ScheduleModel) GetTableName() string {
 	return "t_mail"

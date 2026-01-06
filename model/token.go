@@ -43,11 +43,20 @@ type TokenModel struct {
 	context *core.Context
 }
 
-func (t *TokenModel) Init(context *core.Context) {
+func (t *TokenModel) Init(context *core.Context) error {
 	t.db = context.GetDB()
 	t.context = context
-	t.EntryModel = model.NewEntryModel[*Token](t.db, t.GetTableName(), &Token{})
+	t.EntryModel = model.NewEntryModel[*Token](t.db, t.GetTableName())
+	return nil
 }
+func (t *TokenModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+	return &TokenModel{
+		EntryModel: model.NewEntryModel[*Token](db, t.GetTableName()),
+		db:         db,
+		context:    c,
+	}
+}
+
 func (t *TokenModel) GetTableName() string {
 	return "t_token"
 }

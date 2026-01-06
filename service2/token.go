@@ -96,13 +96,14 @@ func (l *TokenService) Name() string {
 	return "LogService"
 }
 
-func (l *TokenService) Init(context *core.Context) {
+func (l *TokenService) Init(context *core.Context) error {
 	l.context = context
 	l.lock = new(sync.RWMutex)
 	l.mailModel = core.GetModel[*model.MailModel](l.context)
 	l.smtpModel = core.GetModel[*model.SMTPModel](l.context)
 	l.tokenModel = core.GetModel[*model.TokenModel](l.context)
 	l.logService = core.GetService[*LogService](l.context)
+	return nil
 }
 
 func GetMails(ids []uint, mailMap map[uint]*model.Mail) []*model.Mail {

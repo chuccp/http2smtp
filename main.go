@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 
+	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
@@ -43,7 +44,7 @@ func main() {
 
 	changeConfig(fileConfig, webPort, apiPort, storageRoot)
 
-	frame := core.New(fileConfig)
+	frame := wf.New(fileConfig)
 	frame.AddRest(&rest.User{}, &rest.Token{})
 	frame.AddModel(&model.MailModel{}, &model.SMTPModel{}, &model.TokenModel{}, &model.ScheduleModel{}, &model.LogModel{})
 	frame.RegisterConfig(&config2.Manage{})

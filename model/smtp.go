@@ -39,11 +39,21 @@ type SMTPModel struct {
 	context *core.Context
 }
 
-func (t *SMTPModel) Init(context *core.Context) {
+func (t *SMTPModel) Init(context *core.Context) error {
 	t.db = context.GetDB()
 	t.context = context
-	t.EntryModel = model.NewEntryModel[*SMTP](t.db, t.GetTableName(), &SMTP{})
+	t.EntryModel = model.NewEntryModel[*SMTP](t.db, t.GetTableName())
+	return nil
 }
+
+func (t *SMTPModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+	return &SMTPModel{
+		EntryModel: model.NewEntryModel[*SMTP](db, t.GetTableName()),
+		db:         db,
+		context:    c,
+	}
+}
+
 func (t *SMTPModel) GetTableName() string {
 	return "t_SMTP"
 }

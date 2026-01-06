@@ -35,10 +35,11 @@ type MailModel struct {
 	context *core.Context
 }
 
-func (t *MailModel) Init(context *core.Context) {
+func (t *MailModel) Init(context *core.Context) error {
 	t.db = context.GetDB()
 	t.context = context
-	t.EntryModel = model.NewEntryModel[*Mail](t.db, t.GetTableName(), &Mail{})
+	t.EntryModel = model.NewEntryModel[*Mail](t.db, t.GetTableName())
+	return nil
 }
 func (t *MailModel) GetTableName() string {
 	return "t_mail"
@@ -46,7 +47,13 @@ func (t *MailModel) GetTableName() string {
 func (t *MailModel) Name() string {
 	return t.GetTableName()
 }
-
+func (t *MailModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+	return &MailModel{
+		EntryModel: model.NewEntryModel[*Mail](db, t.GetTableName()),
+		db:         db,
+		context:    c,
+	}
+}
 func (t *MailModel) FindMapByIds(id []uint) (map[uint]*Mail, error) {
 
 	mails, err := t.FindAllByIds(id...)
