@@ -76,6 +76,15 @@ func (t *ScheduleModel) Init(context *core.Context) error {
 	t.EntryModel = model.NewEntryModel[*Schedule](t.db, t.GetTableName())
 	return nil
 }
+
+func (t *ScheduleModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+	return &ScheduleModel{
+		EntryModel: model.NewEntryModel[*Schedule](db, t.GetTableName()),
+		db:         db,
+		context:    c,
+	}
+}
+
 func (t *ScheduleModel) GetTableName() string {
 	return "t_mail"
 }

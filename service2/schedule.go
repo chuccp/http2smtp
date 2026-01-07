@@ -9,6 +9,7 @@ type ScheduleService struct {
 func (l *ScheduleService) Name() string {
 	return "ScheduleService"
 }
-func (l *ScheduleService) Init(context *core.Context) {
+func (l *ScheduleService) Init(context *core.Context) error {
 	l.context = context
+	return nil
 }

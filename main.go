@@ -5,11 +5,9 @@ import (
 
 	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/config"
-	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/http2smtp/auth"
-	config2 "github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
 	"github.com/chuccp/http2smtp/service2"
@@ -47,7 +45,6 @@ func main() {
 	frame := wf.New(fileConfig)
 	frame.AddRest(&rest.User{}, &rest.Token{})
 	frame.AddModel(&model.MailModel{}, &model.SMTPModel{}, &model.TokenModel{}, &model.ScheduleModel{}, &model.LogModel{})
-	frame.RegisterConfig(&config2.Manage{})
 	frame.AddService(&service2.TokenService{}, &service2.ScheduleService{}, &service2.LogService{})
 	frame.Authentication(&auth.Authentication{})
 	err = frame.Start()
