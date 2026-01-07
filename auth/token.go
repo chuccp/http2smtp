@@ -16,7 +16,7 @@ type Token struct {
 var aes_key = util.GenerateRandomStringByAlphanumeric(32)
 var aes_iv = util.GenerateRandomStringByAlphanumeric(16)
 
-func GenerateToken(value string, code string, type_ string) string {
+func GenerateToken(value string, code string, type_ string) (string, error) {
 	token := &Token{
 		Time:  util.NowDateTime(),
 		Type:  type_,
@@ -26,7 +26,7 @@ func GenerateToken(value string, code string, type_ string) string {
 	v, _ := json.Marshal(token)
 	return util.EncryptByCBC(string(v), aes_key, aes_iv)
 }
-func Encrypt(value any) string {
+func Encrypt(value any) (string, error) {
 	v, _ := json.Marshal(value)
 	return util.EncryptByCBC(string(v), aes_key, aes_iv)
 }

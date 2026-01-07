@@ -9,7 +9,11 @@ type Authentication struct {
 }
 
 func (authentication *Authentication) SignIn(user any, request *web.Request) (any, error) {
-	request.Cookie().Set(entity.UserToken, Encrypt(user))
+	encrypt, err := Encrypt(user)
+	if err != nil {
+		return nil, err
+	}
+	request.Cookie().Set(entity.UserToken, encrypt)
 	return web.Ok("success"), nil
 }
 func (authentication *Authentication) SignOut(request *web.Request) (any, error) {
