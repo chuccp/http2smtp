@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/model"
-	"gorm.io/gorm"
 )
 
 type Log struct {
@@ -39,18 +39,18 @@ func (log *Log) SetId(id uint) {
 
 type LogModel struct {
 	*model.EntryModel[*Log]
-	db      *gorm.DB
+	db      *db.DB
 	context *core.Context
 }
 
-func (t *LogModel) Init(context *core.Context) error {
-	t.db = context.GetDB()
+func (t *LogModel) Init(db *db.DB, context *core.Context) error {
+	t.db = db
 	t.context = context
 	t.EntryModel = model.NewEntryModel[*Log](t.db, t.GetTableName())
 	return nil
 }
 
-func (t *LogModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+func (t *LogModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 	return &LogModel{
 		EntryModel: model.NewEntryModel[*Log](db, t.GetTableName()),
 		db:         db,
@@ -60,7 +60,4 @@ func (t *LogModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
 
 func (t *LogModel) GetTableName() string {
 	return "t_mail"
-}
-func (t *LogModel) Name() string {
-	return t.GetTableName()
 }

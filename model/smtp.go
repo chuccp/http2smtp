@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/model"
-	"gorm.io/gorm"
 )
 
 type SMTP struct {
@@ -35,18 +35,18 @@ func (smtp *SMTP) SetId(id uint) {
 
 type SMTPModel struct {
 	*model.EntryModel[*SMTP]
-	db      *gorm.DB
+	db      *db.DB
 	context *core.Context
 }
 
-func (t *SMTPModel) Init(context *core.Context) error {
-	t.db = context.GetDB()
+func (t *SMTPModel) Init(db *db.DB, context *core.Context) error {
+	t.db = db
 	t.context = context
 	t.EntryModel = model.NewEntryModel[*SMTP](t.db, t.GetTableName())
 	return nil
 }
 
-func (t *SMTPModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+func (t *SMTPModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 	return &SMTPModel{
 		EntryModel: model.NewEntryModel[*SMTP](db, t.GetTableName()),
 		db:         db,
@@ -56,9 +56,6 @@ func (t *SMTPModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
 
 func (t *SMTPModel) GetTableName() string {
 	return "t_SMTP"
-}
-func (t *SMTPModel) Name() string {
-	return t.GetTableName()
 }
 
 func (t *SMTPModel) FindMapByIds(ids []uint) (map[uint]*SMTP, error) {

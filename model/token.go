@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/model"
-	"gorm.io/gorm"
 )
 
 type Token struct {
@@ -39,17 +39,17 @@ func (token *Token) SetId(id uint) {
 
 type TokenModel struct {
 	*model.EntryModel[*Token]
-	db      *gorm.DB
+	db      *db.DB
 	context *core.Context
 }
 
-func (t *TokenModel) Init(context *core.Context) error {
-	t.db = context.GetDB()
+func (t *TokenModel) Init(db *db.DB, context *core.Context) error {
+	t.db = db
 	t.context = context
 	t.EntryModel = model.NewEntryModel[*Token](t.db, t.GetTableName())
 	return nil
 }
-func (t *TokenModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+func (t *TokenModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 	return &TokenModel{
 		EntryModel: model.NewEntryModel[*Token](db, t.GetTableName()),
 		db:         db,
@@ -59,7 +59,4 @@ func (t *TokenModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
 
 func (t *TokenModel) GetTableName() string {
 	return "t_token"
-}
-func (t *TokenModel) Name() string {
-	return t.GetTableName()
 }

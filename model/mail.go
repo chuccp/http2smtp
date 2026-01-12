@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/model"
-	"gorm.io/gorm"
 )
 
 type Mail struct {
@@ -31,12 +31,12 @@ func (mail *Mail) SetId(id uint) {
 
 type MailModel struct {
 	*model.EntryModel[*Mail]
-	db      *gorm.DB
+	db      *db.DB
 	context *core.Context
 }
 
-func (t *MailModel) Init(context *core.Context) error {
-	t.db = context.GetDB()
+func (t *MailModel) Init(db *db.DB, context *core.Context) error {
+	t.db = db
 	t.context = context
 	t.EntryModel = model.NewEntryModel[*Mail](t.db, t.GetTableName())
 	return nil
@@ -44,10 +44,7 @@ func (t *MailModel) Init(context *core.Context) error {
 func (t *MailModel) GetTableName() string {
 	return "t_mail"
 }
-func (t *MailModel) Name() string {
-	return t.GetTableName()
-}
-func (t *MailModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+func (t *MailModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 	return &MailModel{
 		EntryModel: model.NewEntryModel[*Mail](db, t.GetTableName()),
 		db:         db,

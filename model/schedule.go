@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/model"
 	"github.com/chuccp/go-web-frame/util"
-	"gorm.io/gorm"
 )
 
 type Header struct {
@@ -66,18 +66,18 @@ func (schedule *Schedule) SetId(id uint) {
 
 type ScheduleModel struct {
 	*model.EntryModel[*Schedule]
-	db      *gorm.DB
+	db      *db.DB
 	context *core.Context
 }
 
-func (t *ScheduleModel) Init(context *core.Context) error {
-	t.db = context.GetDB()
+func (t *ScheduleModel) Init(db *db.DB, context *core.Context) error {
+	t.db = db
 	t.context = context
 	t.EntryModel = model.NewEntryModel[*Schedule](t.db, t.GetTableName())
 	return nil
 }
 
-func (t *ScheduleModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
+func (t *ScheduleModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 	return &ScheduleModel{
 		EntryModel: model.NewEntryModel[*Schedule](db, t.GetTableName()),
 		db:         db,
@@ -87,7 +87,4 @@ func (t *ScheduleModel) ReNew(db *gorm.DB, c *core.Context) core.IModel {
 
 func (t *ScheduleModel) GetTableName() string {
 	return "t_mail"
-}
-func (t *ScheduleModel) Name() string {
-	return t.GetTableName()
 }
