@@ -1,11 +1,13 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/model"
+	"github.com/chuccp/go-web-frame/web"
 )
 
 type Log struct {
@@ -56,6 +58,15 @@ func (t *LogModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 		db:         db,
 		context:    c,
 	}
+}
+
+func (t *LogModel) PageBySearch(page *web.Page, key string) (*web.PageAble[*Log], error) {
+	key = strings.TrimSpace(key)
+	if len(key) == 0 {
+		return t.PageForWeb(page)
+	}
+	return t.Query().Where("`content` like ? or `subject` like ?", "%"+key+"%", "%"+key+"%").Order("`id` desc").PageForWeb(page)
+
 }
 
 func (t *LogModel) GetTableName() string {

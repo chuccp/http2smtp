@@ -67,13 +67,7 @@ func (token *Token) putOne(req *web.Request) (any, error) {
 }
 
 func (token *Token) sendMail(req *web.Request) (any, error) {
-	//return token.context.GetTokenService().SendMailByToken(req)
-	//token.tokenService.
-	byToken, err := token.tokenService.SendMailByToken(req)
-	if err != nil {
-		return nil, err
-	}
-	return "ok", nil
+	return token.tokenService.SendMailByToken(req)
 }
 
 func (token *Token) Init(context *core.Context) error {
