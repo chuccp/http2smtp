@@ -60,3 +60,7 @@ func (t *TokenModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 func (t *TokenModel) GetTableName() string {
 	return "t_token"
 }
+
+func (t *TokenModel) GetOneByToken(token string) (*Token, error) {
+	return t.FindOne(" token =?  ", token)
+}

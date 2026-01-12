@@ -203,6 +203,10 @@ func SendAPIMail(schedule *db.Schedule, smtp *db.SMTP, mails []*db.Mail) (string
 	}
 }
 
+func SendAllMsg2(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
+	return SendFilesMsg2(smtp, mails, files, subject, bodyString)
+}
+
 func SendFilesMsg2(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
 	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
 	receiveEmails := make([]*Mail, 0)
