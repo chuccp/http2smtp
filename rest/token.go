@@ -24,7 +24,7 @@ func (token *Token) getOne(req *web.Request) (any, error) {
 func (token *Token) deleteOne(req *web.Request) (any, error) {
 	id := req.ParamUint("id")
 	tokenModel := core.GetModel[*model.TokenModel](token.context)
-	err := tokenModel.DeleteOne(id)
+	err := tokenModel.DeleteById(id)
 	if err != nil {
 		return nil, err
 	}

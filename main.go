@@ -43,9 +43,27 @@ func main() {
 	changeConfig(fileConfig, webPort, apiPort, storageRoot)
 
 	frame := wf.New(fileConfig)
-	frame.AddRest(&rest.User{}, &rest.Token{})
-	frame.AddModel(&model.MailModel{}, &model.SMTPModel{}, &model.TokenModel{}, &model.ScheduleModel{}, &model.LogModel{})
-	frame.AddService(&service2.TokenService{}, &service2.ScheduleService{}, &service2.LogService{})
+	frame.AddRest(
+		&rest.User{},
+		&rest.Token{},
+		&rest.Set{},
+		&rest.Smtp{},
+		&rest.Mail{},
+		&rest.Schedule{},
+		&rest.Log{},
+	)
+	frame.AddModel(
+		&model.MailModel{},
+		&model.SMTPModel{},
+		&model.TokenModel{},
+		&model.ScheduleModel{},
+		&model.LogModel{},
+	)
+	frame.AddService(
+		&service2.TokenService{},
+		&service2.ScheduleService{},
+		&service2.LogService{},
+	)
 	frame.Authentication(&auth.Authentication{})
 	err = frame.Start()
 	if err != nil {

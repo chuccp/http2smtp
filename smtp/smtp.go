@@ -60,6 +60,18 @@ func SendTestMsg(st *db.SMTP) error {
 	}
 	return sendTestMsg(&SMTP{Username: st.Username, Mail: st.Mail, Password: st.Password, Host: st.Host, Port: st.Port})
 }
+func SendTestMsg2(st *model.SMTP) error {
+	if len(st.Username) == 0 {
+		return errors.New("username cannot be empty")
+	}
+	if len(st.Password) == 0 {
+		return errors.New("password cannot be empty")
+	}
+	if len(st.Host) == 0 {
+		return errors.New("host cannot be empty")
+	}
+	return sendTestMsg(&SMTP{Username: st.Username, Mail: st.Mail, Password: st.Password, Host: st.Host, Port: st.Port})
+}
 
 func SendContentMsgByRecipients(smtp *db.SMTP, recipients []string, subject, bodyString string) error {
 	receiveEmails := make([]*db.Mail, 0)
