@@ -38,6 +38,3 @@ func (l *User) Init(context *core.Context) error {
 	context.Post("/logout", l.logout)
 	return nil
 }
-func (l *User) Name() string {
-	return entity.UserRest
-}

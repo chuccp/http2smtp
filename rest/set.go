@@ -27,17 +27,17 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	err := req.BindJSON(&setInfo)
 	if err != nil {
 		return nil, err
-	} else {
-		if len(setInfo.Manage.Username) == 0 || len(setInfo.Manage.Password) == 0 {
-			return nil, errors.New("username or password is blank")
-		}
-		log.Debug("putSet", zap.Any("setInfo", &setInfo))
-		//err := set.context.UpdateSetInfo(&setInfo)
-		//if err != nil {
-		//	return nil, err
-		//}
-		return "ok", nil
 	}
+
+	if len(setInfo.Manage.Username) == 0 || len(setInfo.Manage.Password) == 0 {
+		return nil, errors.New("username or password is blank")
+	}
+	log.Debug("putSet", zap.Any("setInfo", &setInfo))
+	//err := set.context.UpdateSetInfo(&setInfo)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return "ok", nil
 }
 
 func (set *Set) getSet(req *web.Request) (any, error) {

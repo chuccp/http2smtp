@@ -4,7 +4,6 @@ import (
 	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
-	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service2"
 	"github.com/chuccp/http2smtp/util"
@@ -81,7 +80,4 @@ func (token *Token) Init(context *core.Context) error {
 	token.context.PutAuth("/token", token.putOne)
 	token.context.PostAuth("/sendMailByToken", token.sendMail)
 	return nil
-}
-func (token *Token) Name() string {
-	return entity.TokenRest
 }
