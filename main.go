@@ -20,6 +20,7 @@ func changeConfig(fileConfig config.IConfig, webPort int, apiPort int, storageRo
 	} else {
 		fileConfig.ReplaceKey("manage.port", "web.server.port")
 	}
+	fileConfig.ReplaceKey("core.logLevel", "web.log.level")
 }
 
 func main() {
