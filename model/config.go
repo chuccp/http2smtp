@@ -25,7 +25,7 @@ type CoreConfig struct {
 func DefaultCoreConfig() *CoreConfig {
 	return &CoreConfig{
 		Init:      "false",
-		CachePath: "cache",
+		CachePath: ".cache",
 		DbType:    "sqlite",
 		LogLevel:  "info",
 		IsDocker:  "false",

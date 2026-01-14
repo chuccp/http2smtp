@@ -25,7 +25,7 @@ func (authentication *Authentication) User(request *web.Request) (any, error) {
 	user := authentication.NewUser()
 	token := request.Cookie().Get(entity.UserToken)
 	if token == "" {
-		return user, web.NoLogin
+		return nil, web.NoLogin
 	}
 	err := Decrypt(token, user)
 	if err != nil {

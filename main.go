@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"path"
 
 	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/config"
@@ -14,6 +15,29 @@ import (
 	"github.com/chuccp/http2smtp/service2"
 	"go.uber.org/zap"
 )
+
+func converter(value any, err error, ctx *web.Request, response web.Response) {
+	if err != nil {
+		response.WriteStatus(500)
+		response.Write([]byte(err.Error()))
+		response.Abort()
+	} else {
+		if value != nil {
+			switch t := value.(type) {
+			case string:
+				response.Write([]byte(t))
+			case *web.File:
+				if len(t.FileName) == 0 {
+					_, filename := path.Split(t.Path)
+					t.FileName = filename
+				}
+				response.FileAttachment(t.Path, t.FileName)
+			default:
+				response.AbortWithStatusJSON(200, t)
+			}
+		}
+	}
+}
 
 func main() {
 
@@ -47,17 +71,23 @@ func main() {
 		fileConfig.Put("core.cachePath", storageRoot)
 	}
 
-	var config = model.DefaultConfig()
+	var cfg = model.DefaultConfig()
 
-	err = fileConfig.Unmarshal(config)
+	err = fileConfig.Unmarshal(cfg)
 	if err != nil {
 		log.Panic("加载配置文件失败", zap.Error(err))
 		return
 	}
 	frame := wf.New(fileConfig)
 	var serverConfig = web.DefaultServerConfig()
-	serverConfig.Port = config.Manage.Port
-	frame.GetRestGroup(serverConfig).AddRest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}).Authentication(&auth.Authentication{})
+	serverConfig.Port = cfg.Manage.Port
+	frame.GetRestGroup(serverConfig).AddRest(
+		&rest.Set{},
+		&rest.User{},
+		&rest.Token{},
+		&rest.Mail{},
+		&rest.Smtp{},
+	).Authentication(&auth.Authentication{}).Converter(converter)
 	frame.AddModel(
 		&model.MailModel{},
 		&model.SMTPModel{},
@@ -65,17 +95,14 @@ func main() {
 		&model.ScheduleModel{},
 		&model.LogModel{},
 	)
-
 	var apiServerConfig = web.DefaultServerConfig()
-	apiServerConfig.Port = config.Api.Port
+	apiServerConfig.Port = cfg.Api.Port
 	frame.GetRestGroup(apiServerConfig).AddRest(&rest.API{})
-
 	frame.AddService(
 		&service2.TokenService{},
 		&service2.ScheduleService{},
 		&service2.LogService{},
 	)
-	frame.Authentication(&auth.Authentication{})
 	err = frame.Start()
 	if err != nil {
 		log.Panic("启动失败", zap.Error(err))

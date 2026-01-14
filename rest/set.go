@@ -7,6 +7,7 @@ import (
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/config"
+	"github.com/chuccp/http2smtp/model"
 	"go.uber.org/zap"
 )
 
@@ -41,19 +42,19 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 }
 
 func (set *Set) getSet(req *web.Request) (any, error) {
-	//hasLogin := req.GetDigestAuth().HasSign(req.GetContext())
-	//return &config.System{HasInit: set.context.IsInit(), HasLogin: hasLogin, IsDocker: set.context.IsDocker}, nil
-	return "ok", nil
+	u, err := req.User()
+	init := set.context.GetConfig().GetBoolOrDefault("core.init", false)
+	isDocker := set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)
+	return &config.System{HasInit: init, HasLogin: err != nil && u != nil, IsDocker: isDocker}, nil
+
 }
 func (set *Set) defaultSet(req *web.Request) (any, error) {
-	//
-	//if set.context.IsInit() {
-	//	req.Status(http.StatusMethodNotAllowed)
-	//	return nil, errors.New("has init")
-	//}
-	//
-	//return set.context.GetDefaultSetInfo(), nil
-	return nil, nil
+	var cfg = model.DefaultConfig()
+	err := set.context.GetConfig().Unmarshal(&cfg)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
 }
 
 func (set *Set) testConnection(req *web.Request) (any, error) {
