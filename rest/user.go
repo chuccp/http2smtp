@@ -21,7 +21,7 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	manage := wf.UnmarshalConfig[*config.Manage]("manage", l.context)
+	manage := wf.UnmarshalKeyConfig[*config.Manage]("manage", l.context)
 	key := util.MD5Str(util.MD5Str(manage.Password) + manage.Username)
 	sign := util.MD5Str(key + u.Nonce)
 	if strings.EqualFold(sign, u.Response) {
