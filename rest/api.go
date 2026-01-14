@@ -12,8 +12,6 @@ type API struct {
 	tokenService *service2.TokenService
 }
 
-func (s *API) Start() {}
-
 func (s *API) SendMail(req *web.Request) (any, error) {
 	return s.tokenService.SendMailByToken(req)
 }
