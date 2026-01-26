@@ -1,6 +1,7 @@
 package auth
 
 import (
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/entity"
 )
@@ -22,16 +23,7 @@ func (authentication *Authentication) SignOut(request *web.Request) (any, error)
 }
 
 func (authentication *Authentication) User(request *web.Request) (any, error) {
-	user := authentication.NewUser()
-	token := request.Cookie().Get(entity.UserToken)
-	if token == "" {
-		return nil, web.NoLogin
-	}
-	err := Decrypt(token, user)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+	return User(request)
 }
 
 func (authentication *Authentication) NewUser() any {
@@ -39,5 +31,14 @@ func (authentication *Authentication) NewUser() any {
 }
 
 func User(request *web.Request) (*entity.LoginUser, error) {
-	return web.User[*entity.LoginUser](request)
+	token := request.Cookie().Get(entity.UserToken)
+	if token == "" {
+		return nil, auth2.NoLogin
+	}
+	user := &entity.LoginUser{}
+	err := Decrypt(token, user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

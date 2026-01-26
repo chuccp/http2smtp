@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	wf "github.com/chuccp/go-web-frame"
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
@@ -45,6 +46,9 @@ func (l *Log) downLoad(req *web.Request) (any, error) {
 
 func (l *Log) Init(context *core.Context) error {
 	l.logModel = wf.GetModel[*model.LogModel](context)
+	context.Get("/log/:id", l.getOne).WithMeta(auth2.WithLogin())
+	context.Get("/log", l.getPage).WithMeta(auth2.WithLogin())
+	context.Get("/download", l.downLoad).WithMeta(auth2.WithLogin())
 	return nil
 
 }

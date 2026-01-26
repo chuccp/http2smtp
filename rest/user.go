@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	wf "github.com/chuccp/go-web-frame"
+	"github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
@@ -12,7 +13,8 @@ import (
 )
 
 type User struct {
-	context *core.Context
+	context              *core.Context
+	authenticationFilter *auth.AuthenticationFilter
 }
 
 func (l *User) signIn(request *web.Request) (any, error) {
@@ -25,15 +27,16 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	key := util.MD5Str(util.MD5Str(manage.Password) + manage.Username)
 	sign := util.MD5Str(key + u.Nonce)
 	if strings.EqualFold(sign, u.Response) {
-		return request.SignIn(u)
+		return l.authenticationFilter.SignIn(&u, request)
 	}
 	return nil, nil
 }
 func (l *User) logout(request *web.Request) (any, error) {
-	return request.SignOut()
+	return l.authenticationFilter.SignOut(request)
 }
 func (l *User) Init(context *core.Context) error {
 	l.context = context
+	l.authenticationFilter = wf.GetFilter[*auth.AuthenticationFilter](context)
 	context.Post("/signIn", l.signIn)
 	context.Post("/logout", l.logout)
 	return nil

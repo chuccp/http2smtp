@@ -3,9 +3,11 @@ package rest
 import (
 	"errors"
 
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/model"
 	"go.uber.org/zap"
@@ -42,7 +44,7 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 }
 
 func (set *Set) getSet(req *web.Request) (any, error) {
-	u, err := req.User()
+	u, err := auth.User(req)
 	init := set.context.GetConfig().GetBoolOrDefault("core.init", false)
 	isDocker := set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)
 	return &config.System{HasInit: init, HasLogin: err != nil && u != nil, IsDocker: isDocker}, nil
@@ -90,9 +92,9 @@ func (set *Set) Init(context *core.Context) error {
 	context.Get("/set", set.getSet)
 	context.Get("/defaultSet", set.defaultSet)
 	context.Put("/set", set.putSet)
-	context.GetAuth("/readSet", set.readSet)
-	context.PutAuth("/reSet", set.putReSet)
-	context.PostAuth("/reStart", set.reStart)
+	context.Get("/readSet", set.readSet).WithMeta(auth2.WithLogin())
+	context.Put("/reSet", set.putReSet).WithMeta(auth2.WithLogin())
+	context.Post("/reStart", set.reStart).WithMeta(auth2.WithLogin())
 	context.Post("/testConnection", set.testConnection)
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"path"
 
 	wf "github.com/chuccp/go-web-frame"
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
@@ -87,7 +88,7 @@ func main() {
 		&rest.Token{},
 		&rest.Mail{},
 		&rest.Smtp{},
-	).Authentication(&auth.Authentication{}).Converter(converter)
+	).AddFilter(auth2.NewAuthenticationFilter(&auth.Authentication{}))
 	frame.AddModel(
 		&model.MailModel{},
 		&model.SMTPModel{},

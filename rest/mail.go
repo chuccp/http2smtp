@@ -4,6 +4,7 @@ import (
 	"net/mail"
 	"strconv"
 
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/model"
@@ -82,11 +83,11 @@ func (m *Mail) putOne(req *web.Request) (any, error) {
 }
 func (m *Mail) Init(context *core.Context) error {
 	m.context = context
-	context.GetAuth("/mail/:id", m.getOne)
-	context.DeleteAuth("/mail/:id", m.deleteOne)
-	context.GetAuth("/mail", m.getPage)
-	context.PostAuth("/mail", m.postOne)
-	context.PutAuth("/mail", m.putOne)
+	context.Get("/mail/:id", m.getOne).WithMeta(auth2.WithLogin())
+	context.Delete("/mail/:id", m.deleteOne).WithMeta(auth2.WithLogin())
+	context.Get("/mail", m.getPage).WithMeta(auth2.WithLogin())
+	context.Post("/mail", m.postOne).WithMeta(auth2.WithLogin())
+	context.Put("/mail", m.putOne).WithMeta(auth2.WithLogin())
 	m.mailModel = core.GetModel[*model.MailModel](context)
 	return nil
 }

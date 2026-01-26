@@ -2,6 +2,7 @@ package rest
 
 import (
 	wf "github.com/chuccp/go-web-frame"
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/model"
@@ -73,11 +74,11 @@ func (token *Token) Init(context *core.Context) error {
 	token.context = context
 	token.tokenService = wf.GetService[*service2.TokenService](token.context)
 	token.tokenModel = wf.GetModel[*model.TokenModel](token.context)
-	token.context.GetAuth("/token/:id", token.getOne)
-	token.context.DeleteAuth("/token/:id", token.deleteOne)
-	token.context.GetAuth("/token", token.getPage)
-	token.context.PostAuth("/token", token.postOne)
-	token.context.PutAuth("/token", token.putOne)
-	token.context.PostAuth("/sendMailByToken", token.sendMail)
+	token.context.Get("/token/:id", token.getOne).WithMeta(auth2.WithLogin())
+	token.context.Delete("/token/:id", token.deleteOne).WithMeta(auth2.WithLogin())
+	token.context.Get("/token", token.getPage).WithMeta(auth2.WithLogin())
+	token.context.Post("/token", token.postOne).WithMeta(auth2.WithLogin())
+	token.context.Put("/token", token.putOne).WithMeta(auth2.WithLogin())
+	token.context.Post("/sendMailByToken", token.sendMail).WithMeta(auth2.WithLogin())
 	return nil
 }

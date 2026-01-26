@@ -6,6 +6,7 @@ import (
 
 	"emperror.dev/errors"
 	wf "github.com/chuccp/go-web-frame"
+	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
@@ -124,13 +125,13 @@ func (schedule *Schedule) scheduleTestApi(req *web.Request) (any, error) {
 
 func (schedule *Schedule) Init(context *core.Context) error {
 	schedule.context = context
-	context.GetAuth("/schedule/:id", schedule.getOne)
-	context.DeleteAuth("/schedule/:id", schedule.deleteOne)
-	context.GetAuth("/schedule", schedule.getPage)
-	context.PostAuth("/schedule", schedule.postOne)
-	context.PutAuth("/schedule", schedule.putOne)
-	context.PostAuth("/sendMailBySchedule", schedule.sendMail)
-	context.Any("/scheduleTestApi", schedule.scheduleTestApi)
+	context.Get("/schedule/:id", schedule.getOne).WithMeta(auth2.WithLogin())
+	context.Delete("/schedule/:id", schedule.deleteOne).WithMeta(auth2.WithLogin())
+	context.Get("/schedule", schedule.getPage).WithMeta(auth2.WithLogin())
+	context.Post("/schedule", schedule.postOne).WithMeta(auth2.WithLogin())
+	context.Put("/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
+	context.Post("/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
+	context.Any("/scheduleTestApi", schedule.scheduleTestApi).WithMeta(auth2.WithLogin())
 	schedule.scheduleService = wf.GetService[*service2.ScheduleService](schedule.context)
 	schedule.tokenService = wf.GetService[*service2.TokenService](schedule.context)
 	schedule.scheduleModel = wf.GetModel[*model.ScheduleModel](schedule.context)
