@@ -7,6 +7,7 @@ import (
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/config"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
@@ -90,6 +91,20 @@ func main() {
 		&rest.Mail{},
 		&rest.Smtp{},
 	).AddFilter(authFilter)
+
+	frame.GetDefaultModelGroup().AutoCreateTable(true)
+	dbtype := fileConfig.GetString("core.dbtype")
+	if dbtype == "sqlite" {
+		filename := fileConfig.GetString("sqlite.filename")
+		connection, err := db.ConnectionSQLite(filename)
+		if err != nil {
+			log.Panic("启动失败", zap.Error(err))
+			return
+		}
+		frame.SetDefaultDB(connection)
+	} else if dbtype == "mysql" {
+
+	}
 	frame.AddModel(
 		&model.MailModel{},
 		&model.SMTPModel{},
@@ -97,6 +112,7 @@ func main() {
 		&model.ScheduleModel{},
 		&model.LogModel{},
 	)
+
 	var apiServerConfig = web.DefaultServerConfig()
 	apiServerConfig.Port = cfg.Api.Port
 	frame.NewRestGroup(apiServerConfig).AddRest(&rest.API{})
@@ -110,10 +126,4 @@ func main() {
 		log.Panic("启动失败", zap.Error(err))
 		return
 	}
-
-	//smtp2Http := core.Create()
-	//smtp2Http.AddServer(manage.NewServer())
-	//smtp2Http.AddServer(api.NewServer())
-	//smtp2Http.AddServer(schedule.NewServer())
-	//smtp2Http.Start(webPort, apiPort, storageRoot)
 }
