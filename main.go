@@ -95,15 +95,30 @@ func main() {
 	frame.GetDefaultModelGroup().AutoCreateTable(true)
 	dbtype := fileConfig.GetString("core.dbtype")
 	if dbtype == "sqlite" {
-		filename := fileConfig.GetString("sqlite.filename")
-		connection, err := db.ConnectionSQLite(filename)
+		var sqliteConfig = model.DefaultSqliteConfig()
+		err := fileConfig.UnmarshalKey("sqlite", &sqliteConfig)
+		if err != nil {
+			log.Panic("启动失败", zap.Error(err))
+			return
+		}
+		connection, err := db.ConnectionSQLite(sqliteConfig.Filename)
 		if err != nil {
 			log.Panic("启动失败", zap.Error(err))
 			return
 		}
 		frame.SetDefaultDB(connection)
 	} else if dbtype == "mysql" {
-
+		var mysqlConfig = model.DefaultMysqlConfig()
+		err := fileConfig.UnmarshalKey("mysql", &mysqlConfig)
+		if err != nil {
+			return
+		}
+		connection, err := db.ConnectionMysql(mysqlConfig.Host, mysqlConfig.Port, mysqlConfig.Dbname, mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Charset)
+		if err != nil {
+			log.Panic("启动失败", zap.Error(err))
+			return
+		}
+		frame.SetDefaultDB(connection)
 	}
 	frame.AddModel(
 		&model.MailModel{},
