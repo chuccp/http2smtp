@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/chuccp/http2smtp/db"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/util"
 	"github.com/wneessen/go-mail"
@@ -48,7 +47,7 @@ func sendTestMsg(Smtp *SMTP) error {
 	return SendMail(&sendMsg)
 }
 
-func SendTestMsg(st *db.SMTP) error {
+func SendTestMsg(st *model.SMTP) error {
 	if len(st.Username) == 0 {
 		return errors.New("username cannot be empty")
 	}
@@ -73,23 +72,23 @@ func SendTestMsg2(st *model.SMTP) error {
 	return sendTestMsg(&SMTP{Username: st.Username, Mail: st.Mail, Password: st.Password, Host: st.Host, Port: st.Port})
 }
 
-func SendContentMsgByRecipients(smtp *db.SMTP, recipients []string, subject, bodyString string) error {
-	receiveEmails := make([]*db.Mail, 0)
+func SendContentMsgByRecipients(smtp *model.SMTP, recipients []string, subject, bodyString string) error {
+	receiveEmails := make([]*model.Mail, 0)
 	for _, recipient := range recipients {
 		name, m, err := util.ParseMail(recipient)
 		if err != nil {
 			continue
 		}
-		receiveEmails = append(receiveEmails, &db.Mail{Name: name, Mail: m})
+		receiveEmails = append(receiveEmails, &model.Mail{Name: name, Mail: m})
 	}
 	return SendContentMsg(smtp, receiveEmails, subject, bodyString)
 }
 
-func SendContentMsg(smtp *db.SMTP, mails []*db.Mail, subject, bodyString string) error {
+func SendContentMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string) error {
 	return SendFilesMsg(smtp, mails, nil, subject, bodyString)
 }
 
-func SendContentTemplateMsg(smtp *db.SMTP, mails []*db.Mail, subject, bodyString string, useTemplate bool, templateStr string) (string, error) {
+func SendContentTemplateMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string, useTemplate bool, templateStr string) (string, error) {
 	if useTemplate {
 		template, err := util.ParseTemplate(templateStr, bodyString)
 		if err != nil {
@@ -100,10 +99,10 @@ func SendContentTemplateMsg(smtp *db.SMTP, mails []*db.Mail, subject, bodyString
 	}
 	return bodyString, SendContentMsg(smtp, mails, subject, bodyString)
 }
-func SendAllMsg(smtp *db.SMTP, mails []*db.Mail, files []*File, subject, bodyString string) error {
+func SendAllMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
 	return SendFilesMsg(smtp, mails, files, subject, bodyString)
 }
-func SendFilesMsg(smtp *db.SMTP, mails []*db.Mail, files []*File, subject, bodyString string) error {
+func SendFilesMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
 	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
 	receiveEmails := make([]*Mail, 0)
 	for _, d := range mails {
@@ -176,11 +175,11 @@ func SendMail(sendMsg *SendMsg, invalidMails ...string) error {
 	return nil
 }
 
-func SendAPIMail(schedule *db.Schedule, smtp *db.SMTP, mails []*db.Mail) (string, error) {
+func SendAPIMail(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail) (string, error) {
 	url := schedule.Url
 	Method := schedule.Method
 	request := util.NewRequest()
-	var headers []db.Header
+	var headers []model.Header
 	var dataMap = make(map[string]string)
 	if len(schedule.HeaderStr) > 0 {
 		err := json.Unmarshal([]byte(schedule.HeaderStr), &headers)
@@ -257,7 +256,7 @@ func SendAPIMail2(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mai
 	url := schedule.Url
 	Method := schedule.Method
 	request := util.NewRequest()
-	var headers []db.Header
+	var headers []model.Header
 	var dataMap = make(map[string]string)
 	if len(schedule.HeaderStr) > 0 {
 		err := json.Unmarshal([]byte(schedule.HeaderStr), &headers)

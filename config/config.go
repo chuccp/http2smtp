@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/chuccp/http2smtp/util"
 	"os"
 	"path"
+
+	"github.com/chuccp/http2smtp/util"
 )
 
 type Config struct {

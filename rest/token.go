@@ -6,13 +6,13 @@ import (
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/model"
-	"github.com/chuccp/http2smtp/service2"
+	"github.com/chuccp/http2smtp/service"
 	"github.com/chuccp/http2smtp/util"
 )
 
 type Token struct {
 	context      *core.Context
-	tokenService *service2.TokenService
+	tokenService *service.TokenService
 	tokenModel   *model.TokenModel
 }
 
@@ -72,7 +72,7 @@ func (token *Token) sendMail(req *web.Request) (any, error) {
 
 func (token *Token) Init(context *core.Context) error {
 	token.context = context
-	token.tokenService = wf.GetService[*service2.TokenService](token.context)
+	token.tokenService = wf.GetService[*service.TokenService](token.context)
 	token.tokenModel = wf.GetModel[*model.TokenModel](token.context)
 	token.context.Get("/token/:id", token.getOne).WithMeta(auth2.WithLogin())
 	token.context.Delete("/token/:id", token.deleteOne).WithMeta(auth2.WithLogin())

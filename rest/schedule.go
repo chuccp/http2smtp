@@ -11,15 +11,15 @@ import (
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/model"
-	"github.com/chuccp/http2smtp/service2"
+	"github.com/chuccp/http2smtp/service"
 	"github.com/chuccp/http2smtp/util"
 	"go.uber.org/zap"
 )
 
 type Schedule struct {
 	context         *core.Context
-	scheduleService *service2.ScheduleService
-	tokenService    *service2.TokenService
+	scheduleService *service.ScheduleService
+	tokenService    *service.TokenService
 	scheduleModel   *model.ScheduleModel
 }
 
@@ -132,8 +132,8 @@ func (schedule *Schedule) Init(context *core.Context) error {
 	context.Put("/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
 	context.Post("/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
 	context.Any("/scheduleTestApi", schedule.scheduleTestApi).WithMeta(auth2.WithLogin())
-	schedule.scheduleService = wf.GetService[*service2.ScheduleService](schedule.context)
-	schedule.tokenService = wf.GetService[*service2.TokenService](schedule.context)
+	schedule.scheduleService = wf.GetService[*service.ScheduleService](schedule.context)
+	schedule.tokenService = wf.GetService[*service.TokenService](schedule.context)
 	schedule.scheduleModel = wf.GetModel[*model.ScheduleModel](schedule.context)
 	return nil
 

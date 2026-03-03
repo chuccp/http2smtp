@@ -15,7 +15,7 @@ import (
 
 type Smtp struct {
 	context   *core.Context
-	schedule  *service.Schedule
+	schedule  *service.ScheduleService
 	smtpModel *model.SMTPModel
 }
 

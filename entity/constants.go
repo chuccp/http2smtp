@@ -17,3 +17,8 @@ const (
 	QrcodeRest    = "qrcode_rest"
 	QrcodeModel   = "qrcode_model"
 )
+const (
+	SUCCESS byte = iota
+	WARM
+	ERROR
+)

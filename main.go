@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"path"
 
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
@@ -14,32 +13,9 @@ import (
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
-	"github.com/chuccp/http2smtp/service2"
+	"github.com/chuccp/http2smtp/service"
 	"go.uber.org/zap"
 )
-
-func converter(value any, err error, ctx *web.Request, response web.Response) {
-	if err != nil {
-		response.WriteStatus(500)
-		response.Write([]byte(err.Error()))
-		response.Abort()
-	} else {
-		if value != nil {
-			switch t := value.(type) {
-			case string:
-				response.Write([]byte(t))
-			case *web.File:
-				if len(t.FileName) == 0 {
-					_, filename := path.Split(t.Path)
-					t.FileName = filename
-				}
-				response.FileAttachment(t.Path, t.FileName)
-			default:
-				response.AbortWithStatusJSON(200, t)
-			}
-		}
-	}
-}
 
 func main() {
 
@@ -134,9 +110,9 @@ func main() {
 	apiServerConfig.Port = cfg.Api.Port
 	frame.NewRestGroup(apiServerConfig).AddRest(&rest.API{})
 	frame.AddService(
-		&service2.TokenService{},
-		&service2.ScheduleService{},
-		&service2.LogService{},
+		&service.TokenService{},
+		&service.ScheduleService{},
+		&service.LogService{},
 	)
 	err = frame.Start()
 	if err != nil {

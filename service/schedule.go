@@ -2,57 +2,66 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/chuccp/http2smtp/db"
-	"github.com/chuccp/http2smtp/util"
-	"github.com/chuccp/http2smtp/web"
+
+	"emperror.dev/errors"
+	wf "github.com/chuccp/go-web-frame"
+	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/util"
+	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/model"
 )
 
-type Schedule struct {
-	db    *db.DB
-	token *Token
+type ScheduleService struct {
+	context       *core.Context
+	tokenService  *TokenService
+	tokenModel    *model.TokenModel
+	scheduleModel *model.ScheduleModel
 }
 
-func NewSchedule(db *db.DB, token *Token) *Schedule {
-	return &Schedule{db: db, token: token}
+func (l *ScheduleService) Init(context *core.Context) error {
+	l.context = context
+	l.tokenService = wf.GetService[*TokenService](context)
+	l.tokenModel = wf.GetModel[*model.TokenModel](context)
+	l.scheduleModel = wf.GetModel[*model.ScheduleModel](context)
+	return nil
 }
-func (schedule *Schedule) GetPage(page *web.Page) (any, error) {
-	return schedule.db.GetScheduleModel().Page(page)
+
+func (l *ScheduleService) GetPage(page *web.Page) (any, error) {
+	return l.scheduleModel.PageForWeb(page)
 }
-func (schedule *Schedule) Edit(sd *db.Schedule) error {
+func (l *ScheduleService) Edit(sd *model.Schedule) error {
 	if sd.Headers != nil && len(sd.Headers) > 0 {
 		jsonData, err := json.Marshal(sd.Headers)
 		if err != nil {
 			return err
-		} else {
-			sd.HeaderStr = string(jsonData)
 		}
+		sd.HeaderStr = string(jsonData)
 	}
 
-	v, err := schedule.db.GetTokenModel().GetOneByToken(sd.Token)
+	v, err := l.tokenModel.GetOneByToken(sd.Token)
 	if err != nil {
 		return err
 	}
 	if v == nil {
 		return errors.New("token not found")
 	}
-	return schedule.db.GetScheduleModel().Edit(sd)
+	return l.scheduleModel.UpdateById(sd)
 }
-func (schedule *Schedule) Save(sd *db.Schedule) error {
-	v, err := schedule.db.GetTokenModel().GetOneByToken(sd.Token)
+func (l *ScheduleService) Save(sd *model.Schedule) error {
+	v, err := l.tokenModel.GetOneByToken(sd.Token)
 	if err != nil {
 		return err
 	}
 	if v == nil {
 		return errors.New("token not found")
 	}
-	return schedule.db.GetScheduleModel().Save(sd)
+	return l.scheduleModel.Save(sd)
 
 }
 
-func (schedule *Schedule) GetOne(id int) (*db.Schedule, error) {
+func (l *ScheduleService) GetOne(id int) (*model.Schedule, error) {
 
-	one, err := schedule.db.GetScheduleModel().GetOne(uint(id))
+	one, err := l.scheduleModel.FindById(uint(id))
 	if err != nil {
 		return nil, err
 	}
@@ -63,14 +72,14 @@ func (schedule *Schedule) GetOne(id int) (*db.Schedule, error) {
 	if util.IsNotBlank(headerStr) {
 		err := json.Unmarshal([]byte(headerStr), &one.Headers)
 		if err != nil {
-			one.Headers = []*db.Header{}
+			one.Headers = []*model.Header{}
 		}
 	} else {
-		one.Headers = []*db.Header{}
+		one.Headers = []*model.Header{}
 	}
 
 	token := one.Token
-	byToken, err := schedule.db.GetTokenModel().GetOneByToken(token)
+	byToken, err := l.tokenModel.GetOneByToken(token)
 	if err != nil {
 		return nil, err
 	}
