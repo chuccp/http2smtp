@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -35,21 +35,15 @@ export default function TokenPage() {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    fetchData();
+    fetchTokens();
   }, [pageNo]);
 
-  const fetchData = async () => {
+  const fetchTokens = async () => {
     try {
       setLoading(true);
-      const [tokensResult, smtpData, mailsData] = await Promise.all([
-        apiClient.getTokens(pageNo, pageSize),
-        apiClient.getSMTPServers(1, 100),
-        apiClient.getMails(1, 100),
-      ]);
-      setTokens(tokensResult.list);
-      setTotal(tokensResult.total);
-      setSmtpServers(smtpData.list);
-      setMails(mailsData.list);
+      const result = await apiClient.getTokens(pageNo, pageSize);
+      setTokens(result.list);
+      setTotal(result.total);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
         alert('Authentication failed, redirecting to home');
@@ -63,8 +57,31 @@ export default function TokenPage() {
     }
   };
 
-  const handleEdit = (token: TokenConfig) => {
+  // Fetch auxiliary data only when dialog opens
+  const fetchAuxiliaryData = useCallback(async () => {
+    if (smtpServers.length === 0 || mails.length === 0) {
+      try {
+        const [smtpData, mailsData] = await Promise.all([
+          apiClient.getSMTPServers(1, 100),
+          apiClient.getMails(1, 100),
+        ]);
+        setSmtpServers(smtpData.list);
+        setMails(mailsData.list);
+      } catch (err) {
+        console.error('Failed to fetch auxiliary data:', err);
+      }
+    }
+  }, [smtpServers.length, mails.length]);
+
+  const handleEdit = async (token: TokenConfig) => {
     setEditingToken(token);
+    await fetchAuxiliaryData();
+    setDialogOpen(true);
+  };
+
+  const handleAdd = async () => {
+    setEditingToken(null);
+    await fetchAuxiliaryData();
     setDialogOpen(true);
   };
 
@@ -72,7 +89,7 @@ export default function TokenPage() {
     if (confirm('Are you sure you want to delete this token?')) {
       try {
         await apiClient.deleteToken(id);
-        fetchData();
+        fetchTokens();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
           alert('Authentication failed, redirecting to home');
@@ -102,7 +119,7 @@ export default function TokenPage() {
 
   const handleFormSuccess = () => {
     handleDialogClose();
-    fetchData();
+    fetchTokens();
   };
 
   const handlePageChange = (page: number) => {
@@ -141,11 +158,9 @@ export default function TokenPage() {
           <h1 className="text-3xl font-bold mb-2">API Tokens</h1>
           <p className="text-gray-600">Manage API tokens for email sending</p>
         </div>
-        <TokenFormDialog
-          smtpServers={smtpServers}
-          mails={mails}
-          onSuccess={handleFormSuccess}
-        />
+        <Button className="gap-2" onClick={handleAdd}>
+          Generate Token
+        </Button>
       </div>
 
       {error && (
@@ -228,12 +243,7 @@ export default function TokenPage() {
           {tokens.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">No tokens configured yet</p>
-              <TokenFormDialog
-                smtpServers={smtpServers}
-                mails={mails}
-                onSuccess={handleFormSuccess}
-                triggerButton={true}
-              />
+              <Button onClick={handleAdd}>Generate Your First Token</Button>
             </div>
           )}
           <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />

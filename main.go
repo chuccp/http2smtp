@@ -90,6 +90,8 @@ func main() {
 		&rest.Token{},
 		&rest.Mail{},
 		&rest.Smtp{},
+		&rest.Schedule{},
+		&rest.Log{},
 	).AddFilter(authFilter)
 
 	frame.GetDefaultModelGroup().AutoCreateTable(true)

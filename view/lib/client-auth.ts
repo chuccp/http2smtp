@@ -3,6 +3,7 @@ import { SMTPConfig } from '@/types/smtp';
 import { MailConfig } from '@/types/mail';
 import { SetInfo } from '@/types/settings';
 import { TokenConfig } from '@/types/token';
+import { ScheduleConfig } from '@/types/schedule';
 import { md5, generateRandomString } from './auth-utils';
 
 export const USER_TOKEN_COOKIE = 'user_token';
@@ -453,6 +454,114 @@ export class ApiClient {
     });
     if (response.status === 401) {
       throw new Error('Unauthorized');
+    }
+  }
+
+  // Schedule Management
+  async getSchedules(pageNo: number = 1, pageSize: number = 10): Promise<{ list: ScheduleConfig[]; total: number }> {
+    const response = await fetch(`${this.manageBaseUrl}/schedule?pageNo=${pageNo}&pageSize=${pageSize}`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    const data = responseData.data || responseData;
+    if (data && data.list) {
+      return { list: data.list, total: data.total || 0 };
+    }
+    return { list: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 };
+  }
+
+  async getSchedule(id: number): Promise<ScheduleConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/schedule/${id}`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData.data || responseData;
+  }
+
+  async createSchedule(schedule: ScheduleConfig): Promise<ScheduleConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/schedule`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(schedule),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to create schedule');
+    }
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return schedule;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return schedule;
+    }
+  }
+
+  async updateSchedule(schedule: ScheduleConfig): Promise<ScheduleConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/schedule`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(schedule),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to update schedule');
+    }
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return schedule;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return schedule;
+    }
+  }
+
+  async deleteSchedule(id: number): Promise<void> {
+    const response = await fetch(`${this.manageBaseUrl}/schedule/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+  }
+
+  async sendMailBySchedule(schedule: ScheduleConfig): Promise<void> {
+    const response = await fetch(`${this.manageBaseUrl}/sendMailBySchedule`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(schedule),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to send mail');
     }
   }
 }

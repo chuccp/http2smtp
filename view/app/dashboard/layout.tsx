@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Menu,
   Users,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/client-auth';
@@ -50,6 +51,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       title: 'API Tokens',
       href: '/dashboard/tokens',
       icon: <Key className="h-5 w-5" />,
+    },
+    {
+      title: 'Schedules',
+      href: '/dashboard/schedule',
+      icon: <Clock className="h-5 w-5" />,
     },
     {
       title: 'Settings',
