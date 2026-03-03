@@ -10,15 +10,13 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { MailConfig } from '@/types/mail';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
 import { Pagination } from '@/components/Pagination';
+import { MailFormDialog } from '@/components/MailFormDialog';
 
 export default function MailPage() {
   const router = useRouter();
@@ -27,11 +25,6 @@ export default function MailPage() {
   const [error, setError] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMail, setEditingMail] = useState<MailConfig | null>(null);
-  const [formData, setFormData] = useState<MailConfig>({
-    name: '',
-    mail: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
   const [pageNo, setPageNo] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -61,9 +54,6 @@ export default function MailPage() {
 
   const handleEdit = (mail: MailConfig) => {
     setEditingMail(mail);
-    setFormData({
-      ...mail,
-    });
     setDialogOpen(true);
   };
 
@@ -84,64 +74,14 @@ export default function MailPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError('');
-
-    try {
-      if (!formData.mail.trim()) {
-        setError('Please enter a mail address');
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.mail)) {
-        setError('Please enter a valid mail address');
-        return;
-      }
-
-      if (editingMail) {
-        await apiClient.updateMail(formData);
-      } else {
-        await apiClient.createMail(formData);
-      }
-
-      setDialogOpen(false);
-      setEditingMail(null);
-      setFormData({
-        name: '',
-        mail: '',
-      });
-      fetchMails();
-    } catch (err) {
-      if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
-        router.push('/');
-      } else {
-        setError('Failed to save mail address');
-        console.error('Failed to save mail address:', err);
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancel = () => {
+  const handleDialogClose = () => {
     setDialogOpen(false);
     setEditingMail(null);
-    setFormData({
-      name: '',
-      mail: '',
-    });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleFormSuccess = () => {
+    handleDialogClose();
+    fetchMails();
   };
 
   const handlePageChange = (page: number) => {
@@ -163,59 +103,7 @@ export default function MailPage() {
           <h1 className="text-3xl font-bold mb-2">Mail Addresses</h1>
           <p className="text-gray-600">Manage recipient mail addresses</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Address
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogHeader>
-              <DialogTitle>{editingMail ? 'Edit Mail Address' : 'Add Mail Address'}</DialogTitle>
-              <DialogDescription>
-                {editingMail ? 'Modify recipient mail address information' : 'Add a new recipient mail address'}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 py-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="e.g., John, Support"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mail">Mail Address *</Label>
-                <Input
-                  id="mail"
-                  name="mail"
-                  type="email"
-                  value={formData.mail}
-                  onChange={handleInputChange}
-                  placeholder="example@email.com"
-                  required
-                />
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving...' : 'Save'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <MailFormDialog onSuccess={handleFormSuccess} />
       </div>
 
       {error && (
@@ -272,16 +160,21 @@ export default function MailPage() {
           {mails.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">No mail addresses yet</p>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>Add Your First Address</Button>
-                </DialogTrigger>
-              </Dialog>
+              <MailFormDialog triggerButton={true} onSuccess={handleFormSuccess} />
             </div>
           )}
           <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <MailFormDialog
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
+        editingMail={editingMail}
+        onSuccess={handleFormSuccess}
+        triggerButton={false}
+      />
     </div>
   );
 }
