@@ -27,8 +27,8 @@ export class ApiClient {
   }
 
   // SMTP Server Management
-  async getSMTPServers(): Promise<SMTPConfig[]> {
-    const response = await fetch(`${this.manageBaseUrl}/smtp`, {
+  async getSMTPServers(pageNo: number = 1, pageSize: number = 10): Promise<{ list: SMTPConfig[]; total: number }> {
+    const response = await fetch(`${this.manageBaseUrl}/smtp?pageNo=${pageNo}&pageSize=${pageSize}`, {
       credentials: 'include',
     });
     if (response.status === 401) {
@@ -39,10 +39,10 @@ export class ApiClient {
     const data = responseData.data || responseData;
     // Handle PageAble format: { total, list }
     if (data && data.list) {
-      return data.list;
+      return { list: data.list, total: data.total || 0 };
     }
     // Fallback for direct array response
-    return data;
+    return { list: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 };
   }
 
   async getSMTPServer(id: number): Promise<SMTPConfig> {
@@ -222,8 +222,8 @@ export class ApiClient {
   }
 
   // Mail Address Management
-  async getMails(): Promise<MailConfig[]> {
-    const response = await fetch(`${this.manageBaseUrl}/mail`, {
+  async getMails(pageNo: number = 1, pageSize: number = 10): Promise<{ list: MailConfig[]; total: number }> {
+    const response = await fetch(`${this.manageBaseUrl}/mail?pageNo=${pageNo}&pageSize=${pageSize}`, {
       credentials: 'include',
     });
     if (response.status === 401) {
@@ -232,9 +232,9 @@ export class ApiClient {
     const responseData = await response.json();
     const data = responseData.data || responseData;
     if (data && data.list) {
-      return data.list;
+      return { list: data.list, total: data.total || 0 };
     }
-    return data;
+    return { list: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 };
   }
 
   async getMail(id: number): Promise<MailConfig> {
@@ -366,8 +366,8 @@ export class ApiClient {
   }
 
   // Token Management
-  async getTokens(): Promise<TokenConfig[]> {
-    const response = await fetch(`${this.manageBaseUrl}/token`, {
+  async getTokens(pageNo: number = 1, pageSize: number = 10): Promise<{ list: TokenConfig[]; total: number }> {
+    const response = await fetch(`${this.manageBaseUrl}/token?pageNo=${pageNo}&pageSize=${pageSize}`, {
       credentials: 'include',
     });
     if (response.status === 401) {
@@ -376,9 +376,9 @@ export class ApiClient {
     const responseData = await response.json();
     const data = responseData.data || responseData;
     if (data && data.list) {
-      return data.list;
+      return { list: data.list, total: data.total || 0 };
     }
-    return data;
+    return { list: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 };
   }
 
   async getToken(id: number): Promise<TokenConfig> {

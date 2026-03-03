@@ -18,6 +18,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { MailConfig } from '@/types/mail';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
+import { Pagination } from '@/components/Pagination';
 
 export default function MailPage() {
   const router = useRouter();
@@ -31,19 +32,23 @@ export default function MailPage() {
     mail: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchMails();
-  }, []);
+  }, [pageNo]);
 
   const fetchMails = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getMails();
-      setMails(data);
+      const result = await apiClient.getMails(pageNo, pageSize);
+      setMails(result.list);
+      setTotal(result.total);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('权限验证失败，将跳转到首页');
+        alert('Authentication failed, redirecting to home');
         router.push('/');
       } else {
         setError('Failed to fetch mail addresses');
@@ -63,13 +68,13 @@ export default function MailPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('确定要删除此邮件地址吗？')) {
+    if (confirm('Are you sure you want to delete this mail address?')) {
       try {
         await apiClient.deleteMail(id);
-        setMails(mails.filter(m => m.id !== id));
+        fetchMails();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('权限验证失败，将跳转到首页');
+          alert('Authentication failed, redirecting to home');
           router.push('/');
         } else {
           setError('Failed to delete mail address');
@@ -86,25 +91,20 @@ export default function MailPage() {
 
     try {
       if (!formData.mail.trim()) {
-        setError('请输入邮件地址');
+        setError('Please enter a mail address');
         return;
       }
 
-      // Simple email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.mail)) {
-        setError('请输入有效的邮件地址');
+        setError('Please enter a valid mail address');
         return;
       }
 
       if (editingMail) {
         await apiClient.updateMail(formData);
-        setMails(mails.map(m =>
-          m.id === editingMail.id ? formData : m
-        ));
       } else {
         await apiClient.createMail(formData);
-        fetchMails(); // Refresh list to get the new item with ID
       }
 
       setDialogOpen(false);
@@ -113,9 +113,10 @@ export default function MailPage() {
         name: '',
         mail: '',
       });
+      fetchMails();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('权限验证失败，将跳转到首页');
+        alert('Authentication failed, redirecting to home');
         router.push('/');
       } else {
         setError('Failed to save mail address');
@@ -143,10 +144,14 @@ export default function MailPage() {
     }));
   };
 
+  const handlePageChange = (page: number) => {
+    setPageNo(page);
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">加载中...</div>
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
@@ -155,21 +160,21 @@ export default function MailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">邮件地址管理</h1>
-          <p className="text-gray-600">管理常用的收件人邮件地址</p>
+          <h1 className="text-3xl font-bold mb-2">Mail Addresses</h1>
+          <p className="text-gray-600">Manage recipient mail addresses</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              添加地址
+              Add Address
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
-              <DialogTitle>{editingMail ? '编辑邮件地址' : '添加邮件地址'}</DialogTitle>
+              <DialogTitle>{editingMail ? 'Edit Mail Address' : 'Add Mail Address'}</DialogTitle>
               <DialogDescription>
-                {editingMail ? '修改收件人邮件地址信息' : '添加新的收件人邮件地址'}
+                {editingMail ? 'Modify recipient mail address information' : 'Add a new recipient mail address'}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -179,17 +184,17 @@ export default function MailPage() {
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="name">名称</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="例如: 张三、客服"
+                  placeholder="e.g., John, Support"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="mail">邮件地址 *</Label>
+                <Label htmlFor="mail">Mail Address *</Label>
                 <Input
                   id="mail"
                   name="mail"
@@ -202,10 +207,10 @@ export default function MailPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-                  取消
+                  Cancel
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? '保存中...' : '保存'}
+                  {submitting ? 'Saving...' : 'Save'}
                 </Button>
               </DialogFooter>
             </form>
@@ -221,19 +226,19 @@ export default function MailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>邮件地址列表</CardTitle>
+          <CardTitle>Mail Address List</CardTitle>
           <CardDescription>
-            共 {mails.length} 个邮件地址
+            {total} mail addresses
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>邮件地址</TableHead>
-                <TableHead>创建时间</TableHead>
-                <TableHead>操作</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Mail Address</TableHead>
+                <TableHead>Create Time</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -266,14 +271,15 @@ export default function MailPage() {
           </Table>
           {mails.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">暂无邮件地址</p>
+              <p className="text-gray-500 mb-4">No mail addresses yet</p>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>添加第一个邮件地址</Button>
+                  <Button>Add Your First Address</Button>
                 </DialogTrigger>
               </Dialog>
             </div>
           )}
+          <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />
         </CardContent>
       </Card>
     </div>

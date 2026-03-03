@@ -20,6 +20,7 @@ import { SMTPConfig } from '@/types/smtp';
 import { MailConfig } from '@/types/mail';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
+import { Pagination } from '@/components/Pagination';
 
 export default function TokenPage() {
   const router = useRouter();
@@ -39,22 +40,26 @@ export default function TokenPage() {
     isUse: true,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pageNo]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [tokensData, smtpData, mailsData] = await Promise.all([
-        apiClient.getTokens(),
-        apiClient.getSMTPServers(),
-        apiClient.getMails(),
+      const [tokensResult, smtpData, mailsData] = await Promise.all([
+        apiClient.getTokens(pageNo, pageSize),
+        apiClient.getSMTPServers(1, 100),
+        apiClient.getMails(1, 100),
       ]);
-      setTokens(tokensData);
-      setSmtpServers(smtpData);
-      setMails(mailsData);
+      setTokens(tokensResult.list);
+      setTotal(tokensResult.total);
+      setSmtpServers(smtpData.list);
+      setMails(mailsData.list);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
         alert('Authentication failed, redirecting to home');
@@ -101,7 +106,7 @@ export default function TokenPage() {
     if (confirm('Are you sure you want to delete this token?')) {
       try {
         await apiClient.deleteToken(id);
-        setTokens(tokens.filter(t => t.id !== id));
+        fetchData();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
           alert('Authentication failed, redirecting to home');
@@ -142,16 +147,13 @@ export default function TokenPage() {
 
       if (editingToken) {
         await apiClient.updateToken(formData);
-        setTokens(tokens.map(t =>
-          t.id === editingToken.id ? { ...formData, id: editingToken.id } : t
-        ));
       } else {
         await apiClient.createToken(formData);
-        fetchData();
       }
 
       setDialogOpen(false);
       setEditingToken(null);
+      fetchData();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
         alert('Authentication failed, redirecting to home');
@@ -188,6 +190,10 @@ export default function TokenPage() {
         [name]: value,
       }));
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setPageNo(page);
   };
 
   const getSMTPName = (id: number) => {
@@ -336,7 +342,7 @@ export default function TokenPage() {
         <CardHeader>
           <CardTitle>Token List</CardTitle>
           <CardDescription>
-            {tokens.length} tokens configured
+            {total} tokens configured
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -413,6 +419,7 @@ export default function TokenPage() {
               </Dialog>
             </div>
           )}
+          <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />
         </CardContent>
       </Card>
     </div>

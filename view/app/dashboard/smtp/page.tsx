@@ -18,6 +18,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { SMTPConfig } from '@/types/smtp';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
+import { Pagination } from '@/components/Pagination';
 
 export default function SMTPPage() {
   const router = useRouter();
@@ -35,19 +36,23 @@ export default function SMTPPage() {
     password: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchSMTPServers();
-  }, []);
+  }, [pageNo]);
 
   const fetchSMTPServers = async () => {
     try {
       setLoading(true);
-      const servers = await apiClient.getSMTPServers();
-      setSmtpServers(servers);
+      const result = await apiClient.getSMTPServers(pageNo, pageSize);
+      setSmtpServers(result.list);
+      setTotal(result.total);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('权限验证失败，将跳转到首页');
+        alert('Authentication failed, redirecting to home');
         router.push('/');
       } else {
         setError('Failed to fetch SMTP servers');
@@ -70,10 +75,10 @@ export default function SMTPPage() {
     if (confirm('Are you sure you want to delete this SMTP server?')) {
       try {
         await apiClient.deleteSMTPServer(id);
-        setSmtpServers(smtpServers.filter(server => server.id !== id));
+        fetchSMTPServers();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('权限验证失败，将跳转到首页');
+          alert('Authentication failed, redirecting to home');
           router.push('/');
         } else {
           setError('Failed to delete SMTP server');
@@ -89,7 +94,6 @@ export default function SMTPPage() {
     setError('');
 
     try {
-      // Validate form
       if (!formData.host.trim() || !formData.mail.trim()) {
         setError('Please fill in all required fields');
         return;
@@ -106,29 +110,25 @@ export default function SMTPPage() {
       }
 
       if (editingServer) {
-        // Update existing server
-        const updatedServer = await apiClient.updateSMTPServer(formData);
-        setSmtpServers(smtpServers.map(server =>
-          server.id === editingServer.id ? updatedServer : server
-        ));
+        await apiClient.updateSMTPServer(formData);
       } else {
-        // Create new server
-        const newServer = await apiClient.createSMTPServer(formData);
-        setSmtpServers([...smtpServers, newServer]);
+        await apiClient.createSMTPServer(formData);
       }
 
       setDialogOpen(false);
       setEditingServer(null);
       setFormData({
+        name: '',
         host: '',
         port: 587,
         mail: '',
         username: '',
         password: '',
       });
+      fetchSMTPServers();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('权限验证失败，将跳转到首页');
+        alert('Authentication failed, redirecting to home');
         router.push('/');
       } else {
         setError('Failed to save SMTP server');
@@ -160,6 +160,9 @@ export default function SMTPPage() {
     }));
   };
 
+  const handlePageChange = (page: number) => {
+    setPageNo(page);
+  };
 
   if (loading) {
     return (
@@ -286,7 +289,7 @@ export default function SMTPPage() {
         <CardHeader>
           <CardTitle>SMTP Server List</CardTitle>
           <CardDescription>
-            {smtpServers.length} servers configured
+            {total} servers configured
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -343,6 +346,7 @@ export default function SMTPPage() {
               </Dialog>
             </div>
           )}
+          <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />
         </CardContent>
       </Card>
     </div>
