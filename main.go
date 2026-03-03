@@ -113,7 +113,7 @@ func main() {
 		if err != nil {
 			return
 		}
-		connection, err := db.ConnectionMysql(mysqlConfig.Host, mysqlConfig.Port, mysqlConfig.Dbname, mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Charset)
+		connection, err := db.ConnectionMysql(mysqlConfig.Host, mysqlConfig.Port, mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Dbname, mysqlConfig.Charset)
 		if err != nil {
 			log.Panic("启动失败", zap.Error(err))
 			return
