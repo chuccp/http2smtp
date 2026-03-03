@@ -1,5 +1,8 @@
 import { LoginUser, SystemInfo, LoginResponse } from '@/types/auth';
 import { SMTPConfig } from '@/types/smtp';
+import { MailConfig } from '@/types/mail';
+import { SetInfo } from '@/types/settings';
+import { TokenConfig } from '@/types/token';
 import { md5, generateRandomString } from './auth-utils';
 
 export const USER_TOKEN_COOKIE = 'user_token';
@@ -32,7 +35,14 @@ export class ApiClient {
       throw new Error('Unauthorized');
     }
     const responseData = await response.json();
-    return responseData.data || responseData;
+    // Backend returns { code, data: { total, list } } format
+    const data = responseData.data || responseData;
+    // Handle PageAble format: { total, list }
+    if (data && data.list) {
+      return data.list;
+    }
+    // Fallback for direct array response
+    return data;
   }
 
   async getSMTPServer(id: number): Promise<SMTPConfig> {
@@ -58,8 +68,20 @@ export class ApiClient {
     if (response.status === 401) {
       throw new Error('Unauthorized');
     }
-    const responseData = await response.json();
-    return responseData.data || responseData;
+    if (!response.ok) {
+      throw new Error('Failed to create SMTP server');
+    }
+    // Backend may return "ok" as plain text or JSON
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return server;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return server;
+    }
   }
 
   async updateSMTPServer(server: SMTPConfig): Promise<SMTPConfig> {
@@ -74,8 +96,20 @@ export class ApiClient {
     if (response.status === 401) {
       throw new Error('Unauthorized');
     }
-    const responseData = await response.json();
-    return responseData.data || responseData;
+    if (!response.ok) {
+      throw new Error('Failed to update SMTP server');
+    }
+    // Backend may return "ok" as plain text or JSON
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return server;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return server;
+    }
   }
 
   async deleteSMTPServer(id: number): Promise<void> {
@@ -184,6 +218,241 @@ export class ApiClient {
       return { code: 200, data: 'success', message: 'Logout successful' };
     } else {
       return { code: response.status, data: '', message: 'Logout failed' };
+    }
+  }
+
+  // Mail Address Management
+  async getMails(): Promise<MailConfig[]> {
+    const response = await fetch(`${this.manageBaseUrl}/mail`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    const data = responseData.data || responseData;
+    if (data && data.list) {
+      return data.list;
+    }
+    return data;
+  }
+
+  async getMail(id: number): Promise<MailConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/mail/${id}`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData.data || responseData;
+  }
+
+  async createMail(mail: MailConfig): Promise<MailConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/mail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mail),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to create mail');
+    }
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return mail;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return mail;
+    }
+  }
+
+  async updateMail(mail: MailConfig): Promise<MailConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/mail`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mail),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to update mail');
+    }
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return mail;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return mail;
+    }
+  }
+
+  async deleteMail(id: number): Promise<void> {
+    const response = await fetch(`${this.manageBaseUrl}/mail/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+  }
+
+  // Settings Management
+  async getSettings(): Promise<SetInfo> {
+    const response = await fetch(`${this.manageBaseUrl}/readSet`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData.data || responseData;
+  }
+
+  async getDefaultSettings(): Promise<SetInfo> {
+    const response = await fetch(`${this.manageBaseUrl}/defaultSet`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData.data || responseData;
+  }
+
+  async updateSettings(settings: SetInfo): Promise<void> {
+    const response = await fetch(`${this.manageBaseUrl}/reSet`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(settings),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to update settings');
+    }
+  }
+
+  async restart(): Promise<void> {
+    const response = await fetch(`${this.manageBaseUrl}/reStart`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to restart');
+    }
+  }
+
+  // Token Management
+  async getTokens(): Promise<TokenConfig[]> {
+    const response = await fetch(`${this.manageBaseUrl}/token`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    const data = responseData.data || responseData;
+    if (data && data.list) {
+      return data.list;
+    }
+    return data;
+  }
+
+  async getToken(id: number): Promise<TokenConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/token/${id}`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData.data || responseData;
+  }
+
+  async createToken(token: TokenConfig): Promise<TokenConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(token),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to create token');
+    }
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return token;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return token;
+    }
+  }
+
+  async updateToken(token: TokenConfig): Promise<TokenConfig> {
+    const response = await fetch(`${this.manageBaseUrl}/token`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(token),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      throw new Error('Failed to update token');
+    }
+    const text = await response.text();
+    if (text === 'ok' || text === '"ok"') {
+      return token;
+    }
+    try {
+      const responseData = JSON.parse(text);
+      return responseData.data || responseData;
+    } catch {
+      return token;
+    }
+  }
+
+  async deleteToken(id: number): Promise<void> {
+    const response = await fetch(`${this.manageBaseUrl}/token/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
     }
   }
 }

@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronRight,
   Menu,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/client-auth';
@@ -41,13 +42,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: <Mail className="h-5 w-5" />,
     },
     {
+      title: 'Mail',
+      href: '/dashboard/mail',
+      icon: <Users className="h-5 w-5" />,
+    },
+    {
       title: 'API Tokens',
-      href: '/tokens',
+      href: '/dashboard/tokens',
       icon: <Key className="h-5 w-5" />,
     },
     {
       title: 'Settings',
-      href: '/settings',
+      href: '/dashboard/settings',
       icon: <Settings className="h-5 w-5" />,
     },
   ];
