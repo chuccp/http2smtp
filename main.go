@@ -82,13 +82,14 @@ func main() {
 	frame := wf.New(fileConfig)
 	var serverConfig = web.DefaultServerConfig()
 	serverConfig.Port = cfg.Manage.Port
-	frame.GetRestGroup(serverConfig).AddRest(
+	authFilter := auth2.NewAuthenticationFilter(&auth.Authentication{})
+	frame.NewRestGroup(serverConfig).AddRest(
 		&rest.Set{},
 		&rest.User{},
 		&rest.Token{},
 		&rest.Mail{},
 		&rest.Smtp{},
-	).AddFilter(auth2.NewAuthenticationFilter(&auth.Authentication{}))
+	).AddFilter(authFilter)
 	frame.AddModel(
 		&model.MailModel{},
 		&model.SMTPModel{},
@@ -98,7 +99,7 @@ func main() {
 	)
 	var apiServerConfig = web.DefaultServerConfig()
 	apiServerConfig.Port = cfg.Api.Port
-	frame.GetRestGroup(apiServerConfig).AddRest(&rest.API{})
+	frame.NewRestGroup(apiServerConfig).AddRest(&rest.API{})
 	frame.AddService(
 		&service2.TokenService{},
 		&service2.ScheduleService{},

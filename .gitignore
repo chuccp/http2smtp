@@ -31,3 +31,10 @@ httpPush
 /storage
 http2smtp
 /docker/storage
+/view/.next
+/view/node_modules
+/view/.env
+/view/.env.local
+/view/.env.development.local
+/view/.env.test.local
+/view/.env.production.local

@@ -4,6 +4,8 @@ type Config struct {
 	Core   *CoreConfig   `json:"core"`
 	Manage *ManageConfig `json:"manage"`
 	Api    *ApiConfig    `json:"api"`
+	Sqlite *SqliteConfig `json:"sqlite"`
+	Mysql  *MysqlConfig  `json:"mysql"`
 }
 
 func DefaultConfig() *Config {
@@ -11,6 +13,8 @@ func DefaultConfig() *Config {
 		Core:   DefaultCoreConfig(),
 		Manage: DefaultManageConfig(),
 		Api:    DefaultApiConfig(),
+		Sqlite: DefaultSqliteConfig(),
+		Mysql:  DefaultMysqlConfig(),
 	}
 }
 
@@ -20,15 +24,17 @@ type CoreConfig struct {
 	DbType    string `json:"dbType"`
 	LogLevel  string `json:"logLevel"`
 	IsDocker  string `json:"isDocker"`
+	Debug     bool   `json:"debug"`
 }
 
 func DefaultCoreConfig() *CoreConfig {
 	return &CoreConfig{
-		Init:      "false",
+		Init:      "",
 		CachePath: ".cache",
 		DbType:    "sqlite",
 		LogLevel:  "info",
 		IsDocker:  "false",
+		Debug:     false,
 	}
 }
 
@@ -55,5 +61,35 @@ type ApiConfig struct {
 func DefaultApiConfig() *ApiConfig {
 	return &ApiConfig{
 		Port: 12567,
+	}
+}
+
+type SqliteConfig struct {
+	Filename string `json:"filename"`
+}
+
+func DefaultSqliteConfig() *SqliteConfig {
+	return &SqliteConfig{
+		Filename: "d-mail.db",
+	}
+}
+
+type MysqlConfig struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Dbname   string `json:"dbname"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Charset  string `json:"charset"`
+}
+
+func DefaultMysqlConfig() *MysqlConfig {
+	return &MysqlConfig{
+		Host:     "",
+		Port:     3306,
+		Dbname:   "d-main",
+		Username: "",
+		Password: "",
+		Charset:  "utf8",
 	}
 }

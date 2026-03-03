@@ -63,7 +63,10 @@ func (config *Config) Init(webPort int, apiPort int, rootPath string) error {
 		if webPort > 0 {
 			defaultSetInfo.Manage.Port = webPort
 		}
-		config.UpdateSetInfo(defaultSetInfo)
+		// Create a copy and ensure HasInit is false for initial setup
+		initSetInfo := *defaultSetInfo
+		initSetInfo.HasInit = false
+		config.UpdateSetInfo(&initSetInfo)
 		return nil
 	} else {
 		fig, err := util.LoadFile(filePath)

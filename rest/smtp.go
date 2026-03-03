@@ -110,6 +110,7 @@ func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 }
 func (smtp *Smtp) Init(context *core.Context) error {
 	smtp.context = context
+	smtp.smtpModel = core.GetModel[*model.SMTPModel](context)
 	context.Get("/smtp/:id", smtp.getOne).WithMeta(auth2.WithLogin())
 	context.Delete("/smtp/:id", smtp.deleteOne).WithMeta(auth2.WithLogin())
 	context.Get("/smtp", smtp.getPage).WithMeta(auth2.WithLogin())

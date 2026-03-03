@@ -13,7 +13,7 @@ type SMTP struct {
 	Port       int       `gorm:"column:port" json:"port"`
 	Mail       string    `gorm:"column:mail" json:"mail"`
 	Username   string    `gorm:"column:username" json:"username"`
-	Name       string    `gorm:"-"  json:"name"`
+	Name       string    `gorm:"column:name" json:"name"`
 	Password   string    `gorm:"column:password"  json:"password"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
 	UpdateTime time.Time `gorm:"column:update_time" json:"updateTime"`
@@ -58,7 +58,10 @@ func (a *STMPModel) GetOne(id uint) (*SMTP, error) {
 	if err != nil {
 		return nil, err
 	}
-	smtp.Name = smtp.Username
+	// If name is empty, set default to username
+	if smtp.Name == "" {
+		smtp.Name = smtp.Username
+	}
 	return &smtp, nil
 }
 
@@ -69,7 +72,10 @@ func (a *STMPModel) GetByIds(id []uint) ([]*SMTP, error) {
 		return nil, err
 	}
 	for _, smtp := range smtps {
-		smtp.Name = smtp.Username
+		// If name is empty, set default to username
+		if smtp.Name == "" {
+			smtp.Name = smtp.Username
+		}
 	}
 	return smtps, nil
 }
@@ -104,7 +110,10 @@ func (a *STMPModel) Page(page *web.Page) (*Page[*SMTP], error) {
 		return nil, err
 	}
 	for _, smtp := range smtps {
-		smtp.Name = smtp.Username
+		// If name is empty, set default to username
+		if smtp.Name == "" {
+			smtp.Name = smtp.Username
+		}
 	}
 	return ToPage[*SMTP](num, smtps), nil
 }
