@@ -106,7 +106,11 @@
     "deleteError": "刪除郵件地址失敗",
     "saveError": "儲存郵件地址失敗",
     "enterMail": "請輸入郵件地址",
-    "invalidMail": "請輸入有效的郵件地址"
+    "invalidMail": "請輸入有效的郵件地址",
+    "namePlaceholder": "例如：John, Support",
+    "mailPlaceholder": "example@email.com",
+    "saving": "儲存中...",
+    "cancel": "取消"
   },
   "token": {
     "title": "API 權杖",
@@ -130,7 +134,19 @@
     "tokenRequired": "權杖為必填項",
     "selectSmtp": "請選擇 SMTP 伺服器",
     "selectSmtpServer": "選擇 SMTP 伺服器",
-    "selectSmtpDesc": "從列表中選擇一個 SMTP 伺服器"
+    "selectSmtpDesc": "從列表中選擇一個 SMTP 伺服器",
+    "selectToken": "選擇權杖",
+    "selectTokenTitle": "選擇權杖",
+    "selectTokenDesc": "從下面的列表中選擇一個權杖",
+    "noSubject": "無主旨",
+    "active": "啟用",
+    "inactive": "停用",
+    "regenerate": "重新產生",
+    "defaultSubject": "預設主旨",
+    "recipientEmails": "收件人信箱",
+    "saving": "儲存中...",
+    "saveToken": "儲存權杖",
+    "cancel": "取消"
   },
   "schedule": {
     "title": "排程任務",
@@ -163,7 +179,18 @@
     "urlRequired": "URL 為必填項",
     "cronRequired": "Cron 表示式為必填項",
     "selectToken": "選擇權杖",
-    "cronExample": "例如：\"0 0 * * *\" = 每天零點，\"0 */2 * * *\" = 每2小時"
+    "cronExample": "例如：\"0 0 * * *\" = 每天零點，\"0 */2 * * *\" = 每2小時",
+    "scheduleNamePlaceholder": "任務名稱",
+    "cronPlaceholder": "0 0 * * * (每天零點)",
+    "urlPlaceholder": "https://api.example.com/data",
+    "templatePlaceholder": "使用 {{.field}} 作為 API 回應的模板變數",
+    "headerNamePlaceholder": "請求頭名稱",
+    "headerValuePlaceholder": "請求頭值",
+    "bodyPlaceholder": "{\"key\": \"value\"}",
+    "active": "啟用",
+    "saving": "儲存中...",
+    "saveSchedule": "儲存任務",
+    "cancel": "取消"
   },
   "settings": {
     "title": "設定",
@@ -179,16 +206,22 @@
     "databaseType": "資料庫類型",
     "databaseFilename": "資料庫檔案名稱",
     "host": "主機",
+    "hostPlaceholder": "localhost",
     "port": "連接埠",
     "databaseName": "資料庫名稱",
+    "dbNamePlaceholder": "d-mail",
     "dbUsername": "使用者名稱",
+    "dbUsernamePlaceholder": "root",
     "dbPassword": "密碼",
+    "dbPasswordPlaceholder": "輸入資料庫密碼",
     "charset": "字元集",
+    "charsetPlaceholder": "utf8mb4",
     "accountSettings": "帳戶設定",
     "accountSettingsDesc": "修改管理員帳戶資訊",
     "username": "使用者名稱",
     "newPassword": "新密碼",
     "newPasswordDesc": "輸入新密碼以變更，留空則保持目前密碼",
+    "passwordPlaceholder": "留空以保持目前密碼",
     "saveSettings": "儲存設定",
     "restartService": "重新啟動服務",
     "restartConfirm": "確定要重新啟動服務嗎？",
@@ -208,7 +241,17 @@
     "to": "收件人",
     "subject": "主旨",
     "content": "內容",
-    "selectRecipients": "選擇收件人"
+    "selectRecipients": "選擇收件人",
+    "sendMail": "發送郵件",
+    "sendMailDesc": "使用配置的 SMTP 伺服器發送郵件",
+    "emailSubject": "郵件主旨",
+    "emailContent": "郵件內容",
+    "emailContentPlaceholder": "郵件內容",
+    "pleaseSelectOne": "請選擇一個",
+    "cancel": "取消",
+    "confirm": "確認",
+    "selectSmtp": "請選擇 SMTP 伺服器",
+    "addRecipient": "新增收件人"
   },
   "auth": {
     "login": "登入",
@@ -286,5 +329,18 @@
     "noFiles": "無附件",
     "alertMessage": "這裡您可以查看郵件發送日誌，如成功或失敗狀態。",
     "pleaseSelectOne": "請選擇一筆記錄"
+  },
+  "pagination": {
+    "showing": "顯示 {start} 到 {end} 共 {total} 條結果",
+    "previous": "上一頁",
+    "next": "下一頁",
+    "page": "頁",
+    "of": "共"
+  },
+  "emailSelect": {
+    "title": "選擇收件人信箱",
+    "desc": "從下面的列表中選擇一個或多個收件人信箱",
+    "cancel": "取消",
+    "confirm": "確認"
   }
 }

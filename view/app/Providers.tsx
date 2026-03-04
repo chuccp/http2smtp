@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { SystemInfo } from '@/types/auth';
 import { apiClient } from '@/lib/client-auth';
 
@@ -15,6 +16,7 @@ export interface AppState {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const tCommon = useTranslations('common');
   const [appState, setAppState] = useState<AppState>({
     systemInfo: null,
     loading: true,
@@ -37,7 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAppState({
         systemInfo: null,
         loading: false,
-        error: 'Failed to load system information',
+        error: tCommon('fetchError'),
       });
       console.error('Failed to fetch system info:', err);
     }
@@ -50,7 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   if (appState.loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -59,13 +61,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Connection Error</h2>
+          <h2 className="text-2xl font-bold mb-4">{tCommon('fetchError')}</h2>
           <p className="text-red-600 mb-4">{appState.error}</p>
           <button
             onClick={refreshSystemInfo}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Try Again
+            {tCommon('retry')}
           </button>
         </div>
       </div>

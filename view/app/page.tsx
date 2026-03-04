@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { SystemInfo } from '@/types/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:12566';
 
 export default function RootPage() {
   const router = useRouter();
+  const tCommon = useTranslations('common');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAndRedirect = async () => {
@@ -52,15 +55,25 @@ export default function RootPage() {
         console.error('Root: Error checking system status:', err);
         // On error, default to setup page
         router.push('/setup');
+      } finally {
+        setLoading(false);
       }
     };
 
     checkAndRedirect();
   }, [router]);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-lg">{tCommon('loading')}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="text-lg">Loading...</div>
+      <div className="text-lg">{tCommon('loading')}</div>
     </div>
   );
 }

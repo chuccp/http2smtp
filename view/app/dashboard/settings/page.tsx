@@ -202,7 +202,7 @@ export default function SettingsPage() {
                       id="mysqlHost"
                       value={settings.mysql?.host || ''}
                       onChange={(e) => handleInputChange('mysql', 'host', e.target.value)}
-                      placeholder="localhost"
+                      placeholder={t('hostPlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -221,7 +221,7 @@ export default function SettingsPage() {
                     id="mysqlDbname"
                     value={settings.mysql?.dbname || ''}
                     onChange={(e) => handleInputChange('mysql', 'dbname', e.target.value)}
-                    placeholder="d-mail"
+                    placeholder={t('dbNamePlaceholder')}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -231,7 +231,7 @@ export default function SettingsPage() {
                       id="mysqlUsername"
                       value={settings.mysql?.username || ''}
                       onChange={(e) => handleInputChange('mysql', 'username', e.target.value)}
-                      placeholder="root"
+                      placeholder={t('dbUsernamePlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -241,7 +241,7 @@ export default function SettingsPage() {
                       type="password"
                       value={settings.mysql?.password || ''}
                       onChange={(e) => handleInputChange('mysql', 'password', e.target.value)}
-                      placeholder="Enter password"
+                      placeholder={t('dbPasswordPlaceholder')}
                     />
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export default function SettingsPage() {
                     id="mysqlCharset"
                     value={settings.mysql?.charset || 'utf8mb4'}
                     onChange={(e) => handleInputChange('mysql', 'charset', e.target.value)}
-                    placeholder="utf8mb4"
+                    placeholder={t('charsetPlaceholder')}
                   />
                 </div>
                 <p className="text-xs text-gray-500">{t('dbChangeNote')}</p>
@@ -282,7 +282,7 @@ export default function SettingsPage() {
                 type="password"
                 value={settings.manage?.password || ''}
                 onChange={(e) => handleInputChange('manage', 'password', e.target.value)}
-                placeholder="Leave blank to keep current password"
+                placeholder={t('passwordPlaceholder')}
               />
               <p className="text-xs text-gray-500">{t('newPasswordDesc')}</p>
             </div>

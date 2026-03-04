@@ -106,7 +106,11 @@
     "deleteError": "Failed to delete mail address",
     "saveError": "Failed to save mail address",
     "enterMail": "Please enter a mail address",
-    "invalidMail": "Please enter a valid mail address"
+    "invalidMail": "Please enter a valid mail address",
+    "namePlaceholder": "e.g., John, Support",
+    "mailPlaceholder": "example@email.com",
+    "saving": "Saving...",
+    "cancel": "Cancel"
   },
   "token": {
     "title": "API Tokens",
@@ -130,7 +134,19 @@
     "tokenRequired": "Token is required",
     "selectSmtp": "Please select an SMTP server",
     "selectSmtpServer": "Select SMTP Server",
-    "selectSmtpDesc": "Choose an SMTP server from the list below"
+    "selectSmtpDesc": "Choose an SMTP server from the list below",
+    "selectToken": "Select Token",
+    "selectTokenTitle": "Select Token",
+    "selectTokenDesc": "Choose a token from the list below",
+    "noSubject": "No Subject",
+    "active": "Active",
+    "inactive": "Inactive",
+    "regenerate": "Regenerate",
+    "defaultSubject": "Default subject",
+    "recipientEmails": "Recipient Emails",
+    "saving": "Saving...",
+    "saveToken": "Save Token",
+    "cancel": "Cancel"
   },
   "schedule": {
     "title": "Scheduled Tasks",
@@ -163,7 +179,18 @@
     "urlRequired": "URL is required",
     "cronRequired": "Cron expression is required",
     "selectToken": "Select Token",
-    "cronExample": "e.g., \"0 0 * * *\" = daily, \"0 */2 * * *\" = every 2 hours"
+    "cronExample": "e.g., \"0 0 * * *\" = daily, \"0 */2 * * *\" = every 2 hours",
+    "scheduleNamePlaceholder": "Schedule name",
+    "cronPlaceholder": "0 0 * * * (daily at midnight)",
+    "urlPlaceholder": "https://api.example.com/data",
+    "templatePlaceholder": "Use {{.field}} for template variables from API response",
+    "headerNamePlaceholder": "Header name",
+    "headerValuePlaceholder": "Header value",
+    "bodyPlaceholder": "{\"key\": \"value\"}",
+    "active": "Active",
+    "saving": "Saving...",
+    "saveSchedule": "Save Schedule",
+    "cancel": "Cancel"
   },
   "settings": {
     "title": "Settings",
@@ -179,16 +206,22 @@
     "databaseType": "Database Type",
     "databaseFilename": "Database Filename",
     "host": "Host",
+    "hostPlaceholder": "localhost",
     "port": "Port",
     "databaseName": "Database Name",
+    "dbNamePlaceholder": "d-mail",
     "dbUsername": "Username",
+    "dbUsernamePlaceholder": "root",
     "dbPassword": "Password",
+    "dbPasswordPlaceholder": "Enter database password",
     "charset": "Charset",
+    "charsetPlaceholder": "utf8mb4",
     "accountSettings": "Account Settings",
     "accountSettingsDesc": "Modify administrator account information",
     "username": "Username",
     "newPassword": "New Password",
     "newPasswordDesc": "Enter a new password to change, leave blank to keep the current password",
+    "passwordPlaceholder": "Leave blank to keep current password",
     "saveSettings": "Save Settings",
     "restartService": "Restart Service",
     "restartConfirm": "Are you sure you want to restart the service?",
@@ -208,7 +241,17 @@
     "to": "To",
     "subject": "Subject",
     "content": "Content",
-    "selectRecipients": "Select Recipients"
+    "selectRecipients": "Select Recipients",
+    "sendMail": "Send Mail",
+    "sendMailDesc": "Send an email using your configured SMTP server",
+    "emailSubject": "Email Subject",
+    "emailContent": "Email Content",
+    "emailContentPlaceholder": "Email content",
+    "pleaseSelectOne": "Please select one",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "selectSmtp": "Please select an SMTP server",
+    "addRecipient": "Add Recipient"
   },
   "auth": {
     "login": "Login",
@@ -286,5 +329,18 @@
     "noFiles": "No files",
     "alertMessage": "Here you can view the email sending logs, such as success or failure status.",
     "pleaseSelectOne": "Please select one"
+  },
+  "pagination": {
+    "showing": "Showing {start} to {end} of {total} results",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of"
+  },
+  "emailSelect": {
+    "title": "Select Recipient Emails",
+    "desc": "Choose one or more recipient emails from the list below",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   }
 }

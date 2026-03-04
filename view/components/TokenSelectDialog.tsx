@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,8 @@ export function TokenSelectDialog({
   pageSize = 10,
 }: TokenSelectDialogProps) {
   const [page, setPage] = useState(1);
+  const t = useTranslations('token');
+  const tCommon = useTranslations('common');
 
   // 直接在渲染时计算选中的 token，避免使用 useEffect 和 setState
   const selectedToken = tokens.find(token => token.id === selectedTokenId) || null;
@@ -56,9 +59,9 @@ export function TokenSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Select Token</DialogTitle>
+          <DialogTitle>{t('selectTokenTitle')}</DialogTitle>
           <DialogDescription>
-            Choose a token from the list below
+            {t('selectTokenDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -81,10 +84,10 @@ export function TokenSelectDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Token</TableHead>
-                  <TableHead>SMTP Server</TableHead>
-                  <TableHead>Active</TableHead>
+                  <TableHead>{t('subject')}</TableHead>
+                  <TableHead>{t('token')}</TableHead>
+                  <TableHead>{t('smtpServer')}</TableHead>
+                  <TableHead>{tCommon('status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -94,10 +97,10 @@ export function TokenSelectDialog({
                     className={`cursor-pointer ${selectedTokenId === token.id ? 'bg-muted' : ''}`}
                     onClick={() => handleRowClick(token)}
                   >
-                    <TableCell>{token.subject || 'No Subject'}</TableCell>
+                    <TableCell>{token.subject || t('noSubject')}</TableCell>
                     <TableCell>{token.token?.substring(0, 12)}...</TableCell>
                     <TableCell>SMTP ID: {token.SMTPId}</TableCell>
-                    <TableCell>{token.isUse ? 'Active' : 'Inactive'}</TableCell>
+                    <TableCell>{token.isUse ? tCommon('active') : tCommon('inactive')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -113,10 +116,10 @@ export function TokenSelectDialog({
         </div>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
+            {tCommon('cancel')}
           </Button>
           <Button type="button" onClick={handleConfirm}>
-            Confirm
+            {tCommon('confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

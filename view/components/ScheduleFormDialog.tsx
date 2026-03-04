@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,9 @@ export function ScheduleFormDialog({
   triggerButton = true,
 }: ScheduleFormDialogProps) {
   const router = useRouter();
+  const t = useTranslations('schedule');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [internalOpen, setInternalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleConfig | null>(null);
   const [formData, setFormData] = useState<ScheduleConfig>({
@@ -160,22 +164,22 @@ export function ScheduleFormDialog({
 
     try {
       if (!formData.name.trim()) {
-        setError('Name is required');
+        setError(t('nameRequired'));
         return;
       }
 
       if (!formData.token.trim()) {
-        setError('Token is required');
+        setError(t('tokenRequired'));
         return;
       }
 
       if (!formData.url.trim()) {
-        setError('URL is required');
+        setError(t('urlRequired'));
         return;
       }
 
       if (!formData.cron.trim()) {
-        setError('Cron expression is required');
+        setError(t('cronRequired'));
         return;
       }
 
@@ -201,10 +205,10 @@ export function ScheduleFormDialog({
       onSuccess?.();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to save schedule');
+        setError(t('saveError'));
         console.error('Failed to save schedule:', err);
       }
     } finally {
@@ -224,15 +228,15 @@ export function ScheduleFormDialog({
         <DialogTrigger asChild>
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Schedule
+            {t('addSchedule')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editingSchedule ? 'Edit Schedule' : 'Add Schedule'}</DialogTitle>
+          <DialogTitle>{editingSchedule ? t('editSchedule') : t('addScheduleTitle')}</DialogTitle>
           <DialogDescription>
-            {editingSchedule ? 'Modify scheduled task settings' : 'Create a new scheduled task for automatic email sending'}
+            {editingSchedule ? t('editScheduleDesc') : t('addScheduleDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -244,17 +248,17 @@ export function ScheduleFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{t('scheduleName')} *</Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Schedule name"
+                placeholder={t('scheduleNamePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="token">Token *</Label>
+              <Label htmlFor="token">{t('token')} *</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -265,7 +269,7 @@ export function ScheduleFormDialog({
                   {selectedToken ? (
                     <span>{selectedToken.subject || selectedToken.token?.substring(0, 12)}...</span>
                   ) : (
-                    <span>Select Token</span>
+                    <span>{t('selectToken')}</span>
                   )}
                 </Button>
                 {selectedToken && (
@@ -288,18 +292,18 @@ export function ScheduleFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cron">Cron Expression *</Label>
+              <Label htmlFor="cron">{t('cron')} *</Label>
               <Input
                 id="cron"
                 name="cron"
                 value={formData.cron}
                 onChange={handleInputChange}
-                placeholder="0 0 * * * (daily at midnight)"
+                placeholder={t('cronPlaceholder')}
               />
-              <p className="text-xs text-gray-500">e.g., &quot;0 0 * * *&quot; = daily, &quot;0 */2 * * *&quot; = every 2 hours</p>
+              <p className="text-xs text-gray-500" dangerouslySetInnerHTML={{__html: t('cronExample')}} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="method">HTTP Method</Label>
+              <Label htmlFor="method">{t('method')}</Label>
               <select
                 id="method"
                 name="method"
@@ -316,21 +320,21 @@ export function ScheduleFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="url">URL *</Label>
+            <Label htmlFor="url">{t('url')} *</Label>
             <Input
               id="url"
               name="url"
               value={formData.url}
               onChange={handleInputChange}
-              placeholder="https://api.example.com/data"
+              placeholder={t('urlPlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <Label>Headers</Label>
+              <Label>{t('headers')}</Label>
               <Button type="button" variant="outline" size="sm" onClick={handleAddHeader}>
-                Add Header
+                {t('addHeader')}
               </Button>
             </div>
             {formData.headers && formData.headers.length > 0 && (
@@ -338,13 +342,13 @@ export function ScheduleFormDialog({
                 {formData.headers.map((header, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <Input
-                      placeholder="Header name"
+                      placeholder={t('headerNamePlaceholder')}
                       value={header.name}
                       onChange={(e) => handleHeaderChange(index, 'name', e.target.value)}
                       className="flex-1"
                     />
                     <Input
-                      placeholder="Header value"
+                      placeholder={t('headerValuePlaceholder')}
                       value={header.value}
                       onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
                       className="flex-1"
@@ -364,7 +368,7 @@ export function ScheduleFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="body">Request Body</Label>
+            <Label htmlFor="body">{t('requestBody')}</Label>
             <textarea
               id="body"
               name="body"
@@ -385,19 +389,19 @@ export function ScheduleFormDialog({
                 onChange={handleInputChange}
                 className="h-4 w-4"
               />
-              <Label htmlFor="useTemplate">Use Template</Label>
+              <Label htmlFor="useTemplate">{t('useTemplate')}</Label>
             </div>
 
             {formData.useTemplate && (
               <div className="space-y-2">
-                <Label htmlFor="template">Email Template</Label>
+                <Label htmlFor="template">{t('emailTemplate')}</Label>
                 <textarea
                   id="template"
                   name="template"
                   className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   value={formData.template || ''}
                   onChange={handleInputChange}
-                  placeholder="Use {{.field}} for template variables from API response"
+                  placeholder="Use {{.field}} for template variables"
                 />
               </div>
             )}
@@ -412,15 +416,15 @@ export function ScheduleFormDialog({
               onChange={handleInputChange}
               className="h-4 w-4"
             />
-            <Label htmlFor="isUse">Active</Label>
+            <Label htmlFor="isUse">{tCommon('active')}</Label>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Schedule'}
+              {submitting ? tCommon('saving') : t('saveSchedule')}
             </Button>
 
             <TokenSelectDialog

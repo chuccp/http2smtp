@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,8 @@ export function EmailSelectDialog({
   pageSize = 10,
 }: EmailSelectDialogProps) {
   const [page, setPage] = useState(1);
+  const t = useTranslations('emailSelect');
+  const tCommon = useTranslations('common');
 
   // 直接在渲染时计算选中的邮件，避免使用 useEffect 和 setState
   const selectedEmails = emails.filter(email => selectedEmailIds.includes(email.id!));
@@ -63,9 +66,9 @@ export function EmailSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>Select Recipient Emails</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Choose one or more recipient emails from the list below
+            {t('desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -88,8 +91,8 @@ export function EmailSelectDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>{tCommon('name')}</TableHead>
+                  <TableHead>{tCommon('mail')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -116,10 +119,10 @@ export function EmailSelectDialog({
         </div>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button type="button" onClick={handleConfirm}>
-            Confirm
+            {t('confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

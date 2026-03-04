@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,9 @@ export function MailFormDialog({
   triggerButton = true,
 }: MailFormDialogProps) {
   const router = useRouter();
+  const t = useTranslations('mail');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [internalOpen, setInternalOpen] = useState(false);
   const [editingMail, setEditingMail] = useState<MailConfig | null>(null);
   const [formData, setFormData] = useState<MailConfig>({
@@ -74,13 +78,13 @@ export function MailFormDialog({
 
     try {
       if (!formData.mail.trim()) {
-        setError('Please enter a mail address');
+        setError(t('enterMail'));
         return;
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.mail)) {
-        setError('Please enter a valid mail address');
+        setError(t('invalidMail'));
         return;
       }
 
@@ -99,10 +103,10 @@ export function MailFormDialog({
       onSuccess?.();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to save mail address');
+        setError(t('saveError'));
         console.error('Failed to save mail address:', err);
       }
     } finally {
@@ -126,15 +130,15 @@ export function MailFormDialog({
         <DialogTrigger asChild>
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Address
+            {t('addAddress')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>{editingMail ? 'Edit Mail Address' : 'Add Mail Address'}</DialogTitle>
+          <DialogTitle>{editingMail ? t('editAddress') : t('addAddressTitle')}</DialogTitle>
           <DialogDescription>
-            {editingMail ? 'Modify recipient mail address information' : 'Add a new recipient mail address'}
+            {editingMail ? t('editAddressDesc') : t('addAddressDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -144,33 +148,33 @@ export function MailFormDialog({
             </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{tCommon('name')}</Label>
             <Input
               id="name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              placeholder="e.g., John, Support"
+              placeholder={t('namePlaceholder')}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="mail">Mail Address *</Label>
+            <Label htmlFor="mail">{t('mailAddress')} *</Label>
             <Input
               id="mail"
               name="mail"
               type="email"
               value={formData.mail}
               onChange={handleInputChange}
-              placeholder="example@email.com"
+              placeholder={t('mailPlaceholder')}
               required
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save'}
+              {submitting ? t('saving') : tCommon('save')}
             </Button>
           </DialogFooter>
         </form>

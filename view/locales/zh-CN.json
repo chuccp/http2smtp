@@ -106,7 +106,11 @@
     "deleteError": "删除邮件地址失败",
     "saveError": "保存邮件地址失败",
     "enterMail": "请输入邮件地址",
-    "invalidMail": "请输入有效的邮件地址"
+    "invalidMail": "请输入有效的邮件地址",
+    "namePlaceholder": "例如：John, Support",
+    "mailPlaceholder": "example@email.com",
+    "saving": "保存中...",
+    "cancel": "取消"
   },
   "token": {
     "title": "API 令牌",
@@ -130,7 +134,19 @@
     "tokenRequired": "令牌为必填项",
     "selectSmtp": "请选择 SMTP 服务器",
     "selectSmtpServer": "选择 SMTP 服务器",
-    "selectSmtpDesc": "从列表中选择一个 SMTP 服务器"
+    "selectSmtpDesc": "从列表中选择一个 SMTP 服务器",
+    "selectToken": "选择令牌",
+    "selectTokenTitle": "选择令牌",
+    "selectTokenDesc": "从下面的列表中选择一个令牌",
+    "noSubject": "无主题",
+    "active": "启用",
+    "inactive": "停用",
+    "regenerate": "重新生成",
+    "defaultSubject": "默认主题",
+    "recipientEmails": "收件人邮箱",
+    "saving": "保存中...",
+    "saveToken": "保存令牌",
+    "cancel": "取消"
   },
   "schedule": {
     "title": "定时任务",
@@ -163,7 +179,18 @@
     "urlRequired": "URL 为必填项",
     "cronRequired": "Cron 表达式为必填项",
     "selectToken": "选择令牌",
-    "cronExample": "例如：\"0 0 * * *\" = 每天零点，\"0 */2 * * *\" = 每2小时"
+    "cronExample": "例如：\"0 0 * * *\" = 每天零点，\"0 */2 * * *\" = 每2小时",
+    "scheduleNamePlaceholder": "任务名称",
+    "cronPlaceholder": "0 0 * * * (每天零点)",
+    "urlPlaceholder": "https://api.example.com/data",
+    "templatePlaceholder": "使用 {{.field}} 作为 API 响应的模板变量",
+    "headerNamePlaceholder": "请求头名称",
+    "headerValuePlaceholder": "请求头值",
+    "bodyPlaceholder": "{\"key\": \"value\"}",
+    "active": "启用",
+    "saving": "保存中...",
+    "saveSchedule": "保存任务",
+    "cancel": "取消"
   },
   "settings": {
     "title": "设置",
@@ -179,16 +206,22 @@
     "databaseType": "数据库类型",
     "databaseFilename": "数据库文件名",
     "host": "主机",
+    "hostPlaceholder": "localhost",
     "port": "端口",
     "databaseName": "数据库名称",
+    "dbNamePlaceholder": "d-mail",
     "dbUsername": "用户名",
+    "dbUsernamePlaceholder": "root",
     "dbPassword": "密码",
+    "dbPasswordPlaceholder": "输入数据库密码",
     "charset": "字符集",
+    "charsetPlaceholder": "utf8mb4",
     "accountSettings": "账户设置",
     "accountSettingsDesc": "修改管理员账户信息",
     "username": "用户名",
     "newPassword": "新密码",
     "newPasswordDesc": "输入新密码以更改，留空则保持当前密码",
+    "passwordPlaceholder": "留空以保持当前密码",
     "saveSettings": "保存设置",
     "restartService": "重启服务",
     "restartConfirm": "确定要重启服务吗？",
@@ -208,7 +241,17 @@
     "to": "收件人",
     "subject": "主题",
     "content": "内容",
-    "selectRecipients": "选择收件人"
+    "selectRecipients": "选择收件人",
+    "sendMail": "发送邮件",
+    "sendMailDesc": "使用配置的 SMTP 服务器发送邮件",
+    "emailSubject": "邮件主题",
+    "emailContent": "邮件内容",
+    "emailContentPlaceholder": "邮件内容",
+    "pleaseSelectOne": "请选择一个",
+    "cancel": "取消",
+    "confirm": "确认",
+    "selectSmtp": "请选择 SMTP 服务器",
+    "addRecipient": "添加收件人"
   },
   "auth": {
     "login": "登录",
@@ -286,5 +329,18 @@
     "noFiles": "无附件",
     "alertMessage": "这里您可以查看邮件发送日志，如成功或失败状态。",
     "pleaseSelectOne": "请选择一条记录"
+  },
+  "pagination": {
+    "showing": "显示 {start} 到 {end} 共 {total} 条结果",
+    "previous": "上一页",
+    "next": "下一页",
+    "page": "页",
+    "of": "共"
+  },
+  "emailSelect": {
+    "title": "选择收件人邮箱",
+    "desc": "从下面的列表中选择一个或多个收件人邮箱",
+    "cancel": "取消",
+    "confirm": "确认"
   }
 }

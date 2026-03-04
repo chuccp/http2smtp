@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +39,9 @@ export function SendMailByTokenDialog({
   onSuccess,
 }: SendMailByTokenDialogProps) {
   const router = useRouter();
+  const t = useTranslations('sendMail');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState({
     subject: tokenSubject,
@@ -68,7 +72,7 @@ export function SendMailByTokenDialog({
 
     try {
       if (!formData.content.trim()) {
-        setError('Please enter email content');
+        setError(t('emailContentPlaceholder'));
         return;
       }
 
@@ -85,14 +89,14 @@ export function SendMailByTokenDialog({
         setSelectedEmails([]);
         onSuccess?.();
       } else {
-        setError(result.message || 'Failed to send mail');
+        setError(result.message || t('sendError'));
       }
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to send mail');
+        setError(t('sendError'));
         console.error('Failed to send mail:', err);
       }
     } finally {
@@ -115,9 +119,9 @@ export function SendMailByTokenDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Send Mail</DialogTitle>
+          <DialogTitle>{t('sendMail')}</DialogTitle>
           <DialogDescription>
-            Send an email using the selected API token
+            {t('sendMailDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -127,29 +131,29 @@ export function SendMailByTokenDialog({
             </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
+            <Label htmlFor="subject">{t('emailSubject')}</Label>
             <Input
               id="subject"
               name="subject"
               value={formData.subject}
               onChange={handleInputChange}
-              placeholder="Email subject"
+              placeholder={t('emailSubject')}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="content">Content *</Label>
+            <Label htmlFor="content">{t('emailContent')} *</Label>
             <Textarea
               id="content"
               name="content"
               value={formData.content}
               onChange={handleInputChange}
-              placeholder="Email content"
+              placeholder={t('emailContentPlaceholder')}
               rows={5}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="recipients">Recipients (optional)</Label>
+            <Label htmlFor="recipients">{t('to')}</Label>
             <div className="flex flex-wrap gap-2 mb-2">
               {selectedEmails.map(email => (
                 <div key={email.id} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
@@ -169,16 +173,16 @@ export function SendMailByTokenDialog({
               ))}
               <Button type="button" variant="outline" onClick={() => setEmailDialogOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Add
+                {tCommon('add')}
               </Button>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Sending...' : 'Send Mail'}
+              {submitting ? t('sending') : t('sendMail')}
             </Button>
 
             <EmailSelectDialog

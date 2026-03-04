@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -52,6 +53,9 @@ export function TokenFormDialog({
   onSuccess,
   triggerButton = true,
 }: TokenFormDialogProps) {
+  const t = useTranslations('token');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
   const [editingToken, setEditingToken] = useState<TokenConfig | null>(null);
@@ -141,12 +145,12 @@ export function TokenFormDialog({
 
     try {
       if (!formData.token.trim()) {
-        setError('Token is required');
+        setError(t('tokenRequired'));
         return;
       }
 
       if (formData.SMTPId === 0) {
-        setError('Please select an SMTP server');
+        setError(t('selectSmtp'));
         return;
       }
 
@@ -161,10 +165,10 @@ export function TokenFormDialog({
       onSuccess?.();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to save token');
+        setError(t('saveError'));
         console.error('Failed to save token:', err);
       }
     } finally {
@@ -185,15 +189,15 @@ export function TokenFormDialog({
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Generate Token
+              {t('generateToken')}
             </Button>
           </DialogTrigger>
         )}
         <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>{editingToken ? 'Edit Token' : 'Generate New Token'}</DialogTitle>
+          <DialogTitle>{editingToken ? t('editToken') : t('generateTokenTitle')}</DialogTitle>
           <DialogDescription>
-            {editingToken ? 'Modify token settings' : 'Create a new API token for email sending'}
+            {editingToken ? t('editTokenDesc') : t('generateTokenDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -203,7 +207,7 @@ export function TokenFormDialog({
             </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="token">Token *</Label>
+            <Label htmlFor="token">{t('token')} *</Label>
             <div className="flex gap-2">
               <Input
                 id="token"
@@ -215,23 +219,23 @@ export function TokenFormDialog({
               />
               {!editingToken && (
                 <Button type="button" variant="outline" onClick={() => setFormData(prev => ({ ...prev, token: generateToken() }))}>
-                  Regenerate
+                  {t('regenerate')}
                 </Button>
               )}
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
+            <Label htmlFor="subject">{t('subject')}</Label>
             <Input
               id="subject"
               name="subject"
               value={formData.subject || ''}
               onChange={handleInputChange}
-              placeholder="Default email subject"
+              placeholder={t('defaultSubject')}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="SMTPId">SMTP Server *</Label>
+            <Label htmlFor="SMTPId">{t('selectSmtpServer')} *</Label>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -242,13 +246,13 @@ export function TokenFormDialog({
                 {smtpServers.find(server => server.id === formData.SMTPId) ? (
                   <span>{smtpServers.find(server => server.id === formData.SMTPId)?.name || smtpServers.find(server => server.id === formData.SMTPId)?.host} ({smtpServers.find(server => server.id === formData.SMTPId)?.host}:{smtpServers.find(server => server.id === formData.SMTPId)?.port})</span>
                 ) : (
-                  <span>Select SMTP Server</span>
+                  <span>{t('selectSmtpServer')}</span>
                 )}
               </Button>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="receiveEmailIds">Recipient Emails</Label>
+            <Label htmlFor="receiveEmailIds">{t('recipients')}</Label>
             <div className="flex flex-wrap gap-2 mb-2">
               {selectedEmails.map(email => (
                 <div key={email.id} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
@@ -276,7 +280,7 @@ export function TokenFormDialog({
                 onClick={() => setEmailDialogOpen(true)}
               >
                 <Plus className="h-4 w-4" />
-                Add
+                {tCommon('add')}
               </button>
             </div>
           </div>
@@ -289,14 +293,14 @@ export function TokenFormDialog({
               onChange={handleInputChange}
               className="h-4 w-4"
             />
-            <Label htmlFor="isUse">Active</Label>
+            <Label htmlFor="isUse">{tCommon('active')}</Label>
           </div>
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Token'}
+              {submitting ? t('saving') : t('saveToken')}
             </Button>
           </DialogFooter>
         </form>

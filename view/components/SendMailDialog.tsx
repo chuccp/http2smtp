@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,9 @@ export function SendMailDialog({
   triggerButton = true,
 }: SendMailDialogProps) {
   const router = useRouter();
+  const t = useTranslations('sendMail');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState<SendMail>({
     SMTPId: smtpServers.length > 0 ? smtpServers[0].id! : 0,
@@ -81,12 +85,12 @@ export function SendMailDialog({
 
     try {
       if (formData.SMTPId === 0) {
-        setError('Please select an SMTP server');
+        setError(t('selectSmtp'));
         return;
       }
 
       if (selectedEmails.length === 0) {
-        setError('Please add at least one recipient');
+        setError(t('pleaseSelectOne'));
         return;
       }
 
@@ -104,14 +108,14 @@ export function SendMailDialog({
         });
         onSuccess?.();
       } else {
-        setError(result.message || 'Failed to send mail');
+        setError(result.message || t('sendError'));
       }
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to send mail');
+        setError(t('sendError'));
         console.error('Failed to send mail:', err);
       }
     } finally {
@@ -136,15 +140,15 @@ export function SendMailDialog({
         <DialogTrigger asChild>
           <Button className="gap-2">
             <Send className="h-4 w-4" />
-            Send Mail
+            {t('sendMail')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Send Mail</DialogTitle>
+          <DialogTitle>{t('sendMail')}</DialogTitle>
           <DialogDescription>
-            Send an email using your configured SMTP server
+            {t('sendMailDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -156,7 +160,7 @@ export function SendMailDialog({
           {/* 隐藏 SMTP 服务器选择，因为我们已经在表格中选择了特定的 SMTP 服务器 */}
           <input type="hidden" id="SMTPId" name="SMTPId" value={formData.SMTPId} />
           <div className="space-y-2">
-            <Label htmlFor="recipients">Recipients *</Label>
+            <Label htmlFor="recipients">{t('to')} *</Label>
             <div className="flex flex-wrap gap-2 mb-2">
               {selectedEmails.map(email => (
                 <div key={email.id} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
@@ -176,38 +180,38 @@ export function SendMailDialog({
               ))}
               <Button type="button" variant="outline" onClick={() => setEmailDialogOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Add
+                {tCommon('add')}
               </Button>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
+            <Label htmlFor="subject">{t('subject')}</Label>
             <Input
               id="subject"
               name="subject"
               value={formData.subject}
               onChange={handleInputChange}
-              placeholder="Email subject"
+              placeholder={t('emailSubject')}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="content">Content *</Label>
+            <Label htmlFor="content">{t('content')} *</Label>
             <Textarea
               id="content"
               name="content"
               value={formData.content}
               onChange={handleInputChange}
-              placeholder="Email content"
+              placeholder={t('emailContentPlaceholder')}
               rows={5}
               required
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Sending...' : 'Send Mail'}
+              {submitting ? t('sending') : t('send')}
             </Button>
 
             <EmailSelectDialog
