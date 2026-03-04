@@ -86,5 +86,5 @@ func (t *ScheduleModel) ReNew(db *db.DB, c *core.Context) core.IModel {
 }
 
 func (t *ScheduleModel) GetTableName() string {
-	return "t_mail"
+	return "t_schedule"
 }

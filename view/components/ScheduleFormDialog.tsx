@@ -180,10 +180,14 @@ export function ScheduleFormDialog({
       }
 
       // Prepare data for submission
+      // 后端期望的是 headers 数组，而不是 headerStr 字符串
       const submitData: ScheduleConfig = {
         ...formData,
-        headerStr: formData.headers && formData.headers.length > 0 ? JSON.stringify(formData.headers) : '',
+        headers: formData.headers || [],
       };
+
+      // 删除 headerStr，因为后端会自动处理
+      delete submitData.headerStr;
 
       if (editingSchedule) {
         submitData.id = editingSchedule.id;
