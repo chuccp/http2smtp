@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -22,6 +23,9 @@ import { MailConfig } from '@/types/mail';
 
 export default function SMTPPage() {
   const router = useRouter();
+  const t = useTranslations('smtp');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [smtpServers, setSmtpServers] = useState<SMTPConfig[]>([]);
   const [mails, setMails] = useState<MailConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,17 +47,17 @@ export default function SMTPPage() {
       setLoading(true);
       const [smtpResult, mailResult] = await Promise.all([
         apiClient.getSMTPServers(pageNo, pageSize),
-        apiClient.getMails(1, 100), // 获取所有邮件列表
+        apiClient.getMails(1, 100),
       ]);
       setSmtpServers(smtpResult.list);
       setTotal(smtpResult.total);
       setMails(mailResult.list);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to fetch SMTP servers');
+        setError(t('fetchError'));
         console.error('Failed to fetch SMTP servers:', err);
       }
     } finally {
@@ -67,16 +71,16 @@ export default function SMTPPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this SMTP server?')) {
+    if (confirm(t('deleteConfirm'))) {
       try {
         await apiClient.deleteSMTPServer(id);
         fetchSMTPServers();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('Authentication failed, redirecting to home');
+          alert(tAuth('authFailed'));
           router.push('/');
         } else {
-          setError('Failed to delete SMTP server');
+          setError(t('deleteError'));
           console.error('Failed to delete SMTP server:', err);
         }
       }
@@ -100,7 +104,7 @@ export default function SMTPPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading SMTP servers...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -109,8 +113,8 @@ export default function SMTPPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">SMTP Servers</h1>
-          <p className="text-gray-600">Manage your email delivery servers</p>
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-gray-600">{t('subtitle')}</p>
         </div>
         <SMTPFormDialog onSuccess={handleFormSuccess} />
       </div>
@@ -123,22 +127,22 @@ export default function SMTPPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>SMTP Server List</CardTitle>
+          <CardTitle>{t('listTitle')}</CardTitle>
           <CardDescription>
-            {total} servers configured
+            {t('listCount', { count: total })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Host</TableHead>
-                <TableHead>Port</TableHead>
-                <TableHead>From Address</TableHead>
-                <TableHead>Username</TableHead>
-                <TableHead>Create Time</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('serverName')}</TableHead>
+                <TableHead>{t('host')}</TableHead>
+                <TableHead>{t('port')}</TableHead>
+                <TableHead>{t('fromAddress')}</TableHead>
+                <TableHead>{t('username')}</TableHead>
+                <TableHead>{tCommon('createTime')}</TableHead>
+                <TableHead>{tCommon('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -184,7 +188,7 @@ export default function SMTPPage() {
           </Table>
           {smtpServers.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No SMTP servers configured yet</p>
+              <p className="text-gray-500 mb-4">{t('noServers')}</p>
               <SMTPFormDialog triggerButton={true} onSuccess={handleFormSuccess} />
             </div>
           )}

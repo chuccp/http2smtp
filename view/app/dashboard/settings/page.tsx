@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -18,6 +19,9 @@ import { SetInfo } from '@/types/settings';
 
 export default function SettingsPage() {
   const router = useRouter();
+  const t = useTranslations('settings');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -44,10 +48,10 @@ export default function SettingsPage() {
       setSettings(data);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to fetch settings');
+        setError(t('fetchError'));
         console.error('Failed to fetch settings:', err);
       }
     } finally {
@@ -62,13 +66,13 @@ export default function SettingsPage() {
 
     try {
       await apiClient.updateSettings(settings);
-      setSuccess('Settings saved successfully');
+      setSuccess(t('saveSuccess'));
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to save settings');
+        setError(t('saveError'));
         console.error('Failed to save settings:', err);
       }
     } finally {
@@ -77,13 +81,13 @@ export default function SettingsPage() {
   };
 
   const handleRestart = async () => {
-    if (confirm('Are you sure you want to restart the service?')) {
+    if (confirm(t('restartConfirm'))) {
       try {
         await apiClient.restart();
-        alert('Restart command sent');
+        alert(t('restartSuccess'));
       } catch (err) {
         console.error('Failed to restart:', err);
-        setError('Failed to restart');
+        setError(t('restartError'));
       }
     }
   };
@@ -101,7 +105,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading settings...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -109,8 +113,8 @@ export default function SettingsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
-        <p className="text-gray-600">Configure system parameters and database connection</p>
+        <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+        <p className="text-gray-600">{t('subtitle')}</p>
       </div>
 
       {error && (
@@ -129,30 +133,30 @@ export default function SettingsPage() {
         {/* General Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>General Settings</CardTitle>
-            <CardDescription>Configure service ports</CardDescription>
+            <CardTitle>{t('generalSettings')}</CardTitle>
+            <CardDescription>{t('generalSettingsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="managePort">Management Port</Label>
+                <Label htmlFor="managePort">{t('managementPort')}</Label>
                 <Input
                   id="managePort"
                   type="number"
                   value={settings.manage?.port || 12566}
                   onChange={(e) => handleInputChange('manage', 'port', parseInt(e.target.value) || 12566)}
                 />
-                <p className="text-xs text-gray-500">Web UI management interface port</p>
+                <p className="text-xs text-gray-500">{t('managementPortDesc')}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="apiPort">API Port</Label>
+                <Label htmlFor="apiPort">{t('apiPort')}</Label>
                 <Input
                   id="apiPort"
                   type="number"
                   value={settings.api?.port || 12567}
                   onChange={(e) => handleInputChange('api', 'port', parseInt(e.target.value) || 12567)}
                 />
-                <p className="text-xs text-gray-500">Email sending API port</p>
+                <p className="text-xs text-gray-500">{t('apiPortDesc')}</p>
               </div>
             </div>
           </CardContent>
@@ -161,12 +165,12 @@ export default function SettingsPage() {
         {/* Database Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>Database Configuration</CardTitle>
-            <CardDescription>Select database type and configure connection parameters</CardDescription>
+            <CardTitle>{t('databaseConfig')}</CardTitle>
+            <CardDescription>{t('databaseConfigDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="dbType">Database Type</Label>
+              <Label htmlFor="dbType">{t('databaseType')}</Label>
               <select
                 id="dbType"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -180,7 +184,7 @@ export default function SettingsPage() {
 
             {settings.dbType === 'sqlite' && settings.sqlite && (
               <div className="space-y-2">
-                <Label htmlFor="sqliteFilename">Database Filename</Label>
+                <Label htmlFor="sqliteFilename">{t('databaseFilename')}</Label>
                 <Input
                   id="sqliteFilename"
                   value={settings.sqlite.filename}
@@ -193,7 +197,7 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="mysqlHost">Host *</Label>
+                    <Label htmlFor="mysqlHost">{t('host')} {tCommon('required')}</Label>
                     <Input
                       id="mysqlHost"
                       value={settings.mysql?.host || ''}
@@ -202,7 +206,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mysqlPort">Port *</Label>
+                    <Label htmlFor="mysqlPort">{t('port')} {tCommon('required')}</Label>
                     <Input
                       id="mysqlPort"
                       type="number"
@@ -212,7 +216,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mysqlDbname">Database Name *</Label>
+                  <Label htmlFor="mysqlDbname">{t('databaseName')} {tCommon('required')}</Label>
                   <Input
                     id="mysqlDbname"
                     value={settings.mysql?.dbname || ''}
@@ -222,7 +226,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="mysqlUsername">Username *</Label>
+                    <Label htmlFor="mysqlUsername">{t('dbUsername')} {tCommon('required')}</Label>
                     <Input
                       id="mysqlUsername"
                       value={settings.mysql?.username || ''}
@@ -231,7 +235,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mysqlPassword">Password *</Label>
+                    <Label htmlFor="mysqlPassword">{t('dbPassword')} {tCommon('required')}</Label>
                     <Input
                       id="mysqlPassword"
                       type="password"
@@ -242,7 +246,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mysqlCharset">Charset</Label>
+                  <Label htmlFor="mysqlCharset">{t('charset')}</Label>
                   <Input
                     id="mysqlCharset"
                     value={settings.mysql?.charset || 'utf8mb4'}
@@ -250,7 +254,7 @@ export default function SettingsPage() {
                     placeholder="utf8mb4"
                   />
                 </div>
-                <p className="text-xs text-gray-500">Note: Service restart is required after changing database type</p>
+                <p className="text-xs text-gray-500">{t('dbChangeNote')}</p>
               </div>
             )}
           </CardContent>
@@ -259,12 +263,12 @@ export default function SettingsPage() {
         {/* Account Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-            <CardDescription>Modify administrator account information</CardDescription>
+            <CardTitle>{t('accountSettings')}</CardTitle>
+            <CardDescription>{t('accountSettingsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t('username')}</Label>
               <Input
                 id="username"
                 value={settings.manage?.username || ''}
@@ -272,7 +276,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password">{t('newPassword')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -280,7 +284,7 @@ export default function SettingsPage() {
                 onChange={(e) => handleInputChange('manage', 'password', e.target.value)}
                 placeholder="Leave blank to keep current password"
               />
-              <p className="text-xs text-gray-500">Enter a new password to change, leave blank to keep the current password</p>
+              <p className="text-xs text-gray-500">{t('newPasswordDesc')}</p>
             </div>
           </CardContent>
         </Card>
@@ -288,10 +292,10 @@ export default function SettingsPage() {
 
       <div className="flex gap-4 mt-6">
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Settings'}
+          {saving ? tCommon('saving') : t('saveSettings')}
         </Button>
         <Button variant="outline" onClick={handleRestart}>
-          Restart Service
+          {t('restartService')}
         </Button>
       </div>
     </div>

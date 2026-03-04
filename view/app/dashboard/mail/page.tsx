@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -20,6 +21,9 @@ import { MailFormDialog } from '@/components/MailFormDialog';
 
 export default function MailPage() {
   const router = useRouter();
+  const t = useTranslations('mail');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [mails, setMails] = useState<MailConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,10 +45,10 @@ export default function MailPage() {
       setTotal(result.total);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to fetch mail addresses');
+        setError(t('fetchError'));
         console.error('Failed to fetch mail addresses:', err);
       }
     } finally {
@@ -58,16 +62,16 @@ export default function MailPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this mail address?')) {
+    if (confirm(t('deleteConfirm'))) {
       try {
         await apiClient.deleteMail(id);
         fetchMails();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('Authentication failed, redirecting to home');
+          alert(tAuth('authFailed'));
           router.push('/');
         } else {
-          setError('Failed to delete mail address');
+          setError(t('deleteError'));
           console.error('Failed to delete mail address:', err);
         }
       }
@@ -91,7 +95,7 @@ export default function MailPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -100,8 +104,8 @@ export default function MailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Mail Addresses</h1>
-          <p className="text-gray-600">Manage recipient mail addresses</p>
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-gray-600">{t('subtitle')}</p>
         </div>
         <MailFormDialog onSuccess={handleFormSuccess} />
       </div>
@@ -114,19 +118,19 @@ export default function MailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mail Address List</CardTitle>
+          <CardTitle>{t('listTitle')}</CardTitle>
           <CardDescription>
-            {total} mail addresses
+            {t('listCount', { count: total })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Mail Address</TableHead>
-                <TableHead>Create Time</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{tCommon('name')}</TableHead>
+                <TableHead>{t('mailAddress')}</TableHead>
+                <TableHead>{tCommon('createTime')}</TableHead>
+                <TableHead>{tCommon('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,7 +163,7 @@ export default function MailPage() {
           </Table>
           {mails.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No mail addresses yet</p>
+              <p className="text-gray-500 mb-4">{t('noAddresses')}</p>
               <MailFormDialog triggerButton={true} onSuccess={handleFormSuccess} />
             </div>
           )}

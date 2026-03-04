@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiClient } from '@/lib/client-auth';
 import { SystemInfo } from '@/types/auth';
 
+
 export default function DashboardPage() {
+  const t = useTranslations('dashboard');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,10 +43,10 @@ export default function DashboardPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('权限验证失败，将跳转到首页');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to load dashboard data');
+        setError(t('fetchError'));
         console.error('Dashboard: Failed to fetch system info:', err);
       }
     } finally {
@@ -54,7 +59,7 @@ export default function DashboardPage() {
       await apiClient.logout();
       router.push('/');
     } catch (err) {
-      setError('Failed to logout');
+      setError(t('logoutError'));
       console.error('Dashboard: Logout error:', err);
     }
   };
@@ -62,7 +67,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -71,7 +76,7 @@ export default function DashboardPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-red-600 mb-4">{error}</div>
-        <Button onClick={fetchSystemInfo}>Retry</Button>
+        <Button onClick={fetchSystemInfo}>{t('retry')}</Button>
       </div>
     );
   }
@@ -80,32 +85,34 @@ export default function DashboardPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome to HTTP2SMTP Administration Panel</p>
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-gray-600">{t('welcome')}</p>
         </div>
-        <Button variant="destructive" onClick={handleLogout}>
-          Logout
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button variant="destructive" onClick={handleLogout}>
+            {tCommon('logout')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
+            <CardTitle>{t('systemStatus')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div>
-                <span className="font-medium">Initialized:</span>
-                <span className="ml-2">{systemInfo?.hasInit ? 'Yes' : 'No'}</span>
+                <span className="font-medium">{t('initialized')}:</span>
+                <span className="ml-2">{systemInfo?.hasInit ? tCommon('yes') : tCommon('no')}</span>
               </div>
               <div>
-                <span className="font-medium">Logged In:</span>
-                <span className="ml-2">{systemInfo?.hasLogin ? 'Yes' : 'No'}</span>
+                <span className="font-medium">{t('loggedIn')}:</span>
+                <span className="ml-2">{systemInfo?.hasLogin ? tCommon('yes') : tCommon('no')}</span>
               </div>
               <div>
-                <span className="font-medium">Docker Environment:</span>
-                <span className="ml-2">{systemInfo?.isDocker ? 'Yes' : 'No'}</span>
+                <span className="font-medium">{t('dockerEnv')}:</span>
+                <span className="ml-2">{systemInfo?.isDocker ? tCommon('yes') : tCommon('no')}</span>
               </div>
             </div>
           </CardContent>
@@ -113,18 +120,18 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle>{t('quickActions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <Button className="w-full" variant="default">
-                Manage SMTP Servers
+                {t('manageSmtp')}
               </Button>
               <Button className="w-full" variant="default">
-                Manage Email Recipients
+                {t('manageRecipients')}
               </Button>
               <Button className="w-full" variant="default">
-                Manage API Tokens
+                {t('manageTokens')}
               </Button>
             </div>
           </CardContent>
@@ -132,18 +139,18 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Resources</CardTitle>
+            <CardTitle>{t('resources')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <Button className="w-full" variant="secondary">
-                API Documentation
+                {t('apiDocs')}
               </Button>
               <Button className="w-full" variant="secondary">
-                View Logs
+                {t('viewLogs')}
               </Button>
               <Button className="w-full" variant="secondary">
-                System Settings
+                {t('systemSettings')}
               </Button>
             </div>
           </CardContent>

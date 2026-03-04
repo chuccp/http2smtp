@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,9 @@ export function SMTPFormDialog({
   triggerButton = true,
 }: SMTPFormDialogProps) {
   const router = useRouter();
+  const t = useTranslations('smtp');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [internalOpen, setInternalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<SMTPConfig | null>(null);
   const [formData, setFormData] = useState<SMTPConfig>({
@@ -84,17 +88,17 @@ export function SMTPFormDialog({
 
     try {
       if (!formData.host.trim() || !formData.mail.trim()) {
-        setError('Please fill in all required fields');
+        setError(t('fillRequired'));
         return;
       }
 
       if (formData.port <= 0 || formData.port > 65535) {
-        setError('Port must be between 1 and 65535');
+        setError(t('portRange'));
         return;
       }
 
       if (!editingServer && (!formData.username.trim() || !formData.password || !formData.password.trim())) {
-        setError('Username and password are required for new servers');
+        setError(t('credentialsRequired'));
         return;
       }
 
@@ -117,10 +121,10 @@ export function SMTPFormDialog({
       onSuccess?.();
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to save SMTP server');
+        setError(t('saveError'));
         console.error('Failed to save SMTP server:', err);
       }
     } finally {
@@ -150,29 +154,29 @@ export function SMTPFormDialog({
 
     try {
       if (!formData.host.trim() || !formData.mail.trim()) {
-        setError('Please fill in all required fields');
+        setError(t('fillRequired'));
         setTesting(false);
         return;
       }
 
       if (formData.port <= 0 || formData.port > 65535) {
-        setError('Port must be between 1 and 65535');
+        setError(t('portRange'));
         setTesting(false);
         return;
       }
 
       const result = await apiClient.testSMTPServer(formData);
       if (result.code === 200) {
-        setTestResult({ success: true, message: result.message || 'Test successful' });
+        setTestResult({ success: true, message: result.message || t('testSuccess') });
       } else {
-        setTestResult({ success: false, message: result.message || 'Test failed' });
+        setTestResult({ success: false, message: result.message || t('testFailed') });
       }
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setTestResult({ success: false, message: 'Failed to test SMTP server' });
+        setTestResult({ success: false, message: t('testError') });
         console.error('Failed to test SMTP server:', err);
       }
     } finally {
@@ -186,17 +190,15 @@ export function SMTPFormDialog({
         <DialogTrigger asChild>
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Server
+            {t('addServer')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>{editingServer ? 'Edit SMTP Server' : 'Add SMTP Server'}</DialogTitle>
+          <DialogTitle>{editingServer ? t('editServer') : t('addServerTitle')}</DialogTitle>
           <DialogDescription>
-            {editingServer
-              ? 'Modify the settings of an existing SMTP server.'
-              : 'Configure a new SMTP server for email delivery.'}
+            {editingServer ? t('editServerDesc') : t('addServerDesc')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -211,7 +213,7 @@ export function SMTPFormDialog({
             </Alert>
           )}
           <div className="space-y-2">
-            <Label htmlFor="name">Server Name</Label>
+            <Label htmlFor="name">{t('serverName')}</Label>
             <Input
               id="name"
               name="name"
@@ -221,7 +223,7 @@ export function SMTPFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="host">SMTP Host *</Label>
+            <Label htmlFor="host">{t('host')} {tCommon('required')}</Label>
             <Input
               id="host"
               name="host"
@@ -232,7 +234,7 @@ export function SMTPFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="port">Port *</Label>
+            <Label htmlFor="port">{t('port')} {tCommon('required')}</Label>
             <Input
               id="port"
               name="port"
@@ -245,7 +247,7 @@ export function SMTPFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="mail">From Address *</Label>
+            <Label htmlFor="mail">{t('fromAddress')} {tCommon('required')}</Label>
             <Input
               id="mail"
               name="mail"
@@ -256,7 +258,7 @@ export function SMTPFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">{t('username')}</Label>
             <Input
               id="username"
               name="username"
@@ -266,7 +268,7 @@ export function SMTPFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <Input
               id="password"
               name="password"
@@ -279,14 +281,14 @@ export function SMTPFormDialog({
           </div>
           <DialogFooter className="flex justify-between">
             <Button type="button" variant="outline" onClick={handleTest} disabled={submitting || testing}>
-              {testing ? 'Testing...' : 'Test Connection'}
+              {testing ? tCommon('testing') : tCommon('testConnection')}
             </Button>
             <div className="flex gap-2">
               <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting || testing}>
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" disabled={submitting || testing}>
-                {submitting ? 'Saving...' : 'Save Server'}
+                {submitting ? tCommon('saving') : tCommon('save')}
               </Button>
             </div>
           </DialogFooter>

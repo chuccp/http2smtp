@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -23,6 +24,9 @@ import { SendMailByTokenDialog } from '@/components/SendMailByTokenDialog';
 
 export default function TokenPage() {
   const router = useRouter();
+  const t = useTranslations('token');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [tokens, setTokens] = useState<TokenConfig[]>([]);
   const [smtpServers, setSmtpServers] = useState<SMTPConfig[]>([]);
   const [mails, setMails] = useState<MailConfig[]>([]);
@@ -49,10 +53,10 @@ export default function TokenPage() {
       setTotal(result.total);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to fetch tokens');
+        setError(t('fetchError'));
         console.error('Failed to fetch tokens:', err);
       }
     } finally {
@@ -89,16 +93,16 @@ export default function TokenPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this token?')) {
+    if (confirm(t('deleteConfirm'))) {
       try {
         await apiClient.deleteToken(id);
         fetchTokens();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('Authentication failed, redirecting to home');
+          alert(tAuth('authFailed'));
           router.push('/');
         } else {
-          setError('Failed to delete token');
+          setError(t('deleteError'));
           console.error('Failed to delete token:', err);
         }
       }
@@ -154,7 +158,7 @@ export default function TokenPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading tokens...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -163,11 +167,11 @@ export default function TokenPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">API Tokens</h1>
-          <p className="text-gray-600">Manage API tokens for email sending</p>
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-gray-600">{t('subtitle')}</p>
         </div>
         <Button className="gap-2" onClick={handleAdd}>
-          Generate Token
+          {t('generateToken')}
         </Button>
       </div>
 
@@ -179,9 +183,9 @@ export default function TokenPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Token List</CardTitle>
+          <CardTitle>{t('listTitle')}</CardTitle>
           <CardDescription>
-            {total} tokens configured
+            {t('listCount', { count: total })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -189,13 +193,13 @@ export default function TokenPage() {
             <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-1/6">Token</TableHead>
-                  <TableHead className="w-1/6">Subject</TableHead>
-                  <TableHead className="w-1/6">SMTP Server</TableHead>
-                  <TableHead className="w-1/4">Recipients</TableHead>
-                  <TableHead className="w-1/12">Status</TableHead>
-                  <TableHead className="w-1/8">Create Time</TableHead>
-                  <TableHead className="w-1/12">Actions</TableHead>
+                  <TableHead className="w-1/6">{t('token')}</TableHead>
+                  <TableHead className="w-1/6">{t('subject')}</TableHead>
+                  <TableHead className="w-1/6">{t('smtpServer')}</TableHead>
+                  <TableHead className="w-1/4">{t('recipients')}</TableHead>
+                  <TableHead className="w-1/12">{tCommon('status')}</TableHead>
+                  <TableHead className="w-1/8">{tCommon('createTime')}</TableHead>
+                  <TableHead className="w-1/12">{tCommon('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -225,7 +229,7 @@ export default function TokenPage() {
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${token.isUse ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                        {token.isUse ? 'Active' : 'Inactive'}
+                        {token.isUse ? tCommon('active') : tCommon('inactive')}
                       </span>
                     </TableCell>
                     <TableCell>{token.createTime ? new Date(token.createTime).toLocaleString() : '-'}</TableCell>
@@ -235,7 +239,7 @@ export default function TokenPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleSendMail(token)}
-                          title="Send Mail"
+                          title={tCommon('sendMail')}
                         >
                           <Send className="h-4 w-4" />
                         </Button>
@@ -262,8 +266,8 @@ export default function TokenPage() {
           </div>
           {tokens.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No tokens configured yet</p>
-              <Button onClick={handleAdd}>Generate Your First Token</Button>
+              <p className="text-gray-500 mb-4">{t('noTokens')}</p>
+              <Button onClick={handleAdd}>{t('generateToken')}</Button>
             </div>
           )}
           <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />

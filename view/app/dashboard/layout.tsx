@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
   Mail,
@@ -16,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
+import { LanguageSwitcher } from '@/lib/LanguageSwitcher';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,35 +32,36 @@ interface NavigationItem {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations('common');
 
   const navigationItems: NavigationItem[] = [
     {
-      title: 'Dashboard',
+      title: t('dashboard'),
       href: '/',
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      title: 'SMTP Servers',
+      title: t('smtpServers'),
       href: '/dashboard/smtp',
       icon: <Mail className="h-5 w-5" />,
     },
     {
-      title: 'Mail',
+      title: t('mail'),
       href: '/dashboard/mail',
       icon: <Users className="h-5 w-5" />,
     },
     {
-      title: 'API Tokens',
+      title: t('apiTokens'),
       href: '/dashboard/tokens',
       icon: <Key className="h-5 w-5" />,
     },
     {
-      title: 'Schedules',
+      title: t('schedules'),
       href: '/dashboard/schedule',
       icon: <Clock className="h-5 w-5" />,
     },
     {
-      title: 'Settings',
+      title: t('settings'),
       href: '/dashboard/settings',
       icon: <Settings className="h-5 w-5" />,
     },
@@ -120,7 +123,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                {t('logout')}
               </Button>
             </div>
           </div>
@@ -144,14 +147,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  {/* User info */}
-                  <div className="flex items-center gap-2">
-                    <div className="hidden sm:block">
-                      <p className="text-sm font-medium text-gray-700">
-                        Administrator
-                      </p>
-                    </div>
-                  </div>
+                  {/* Language Switcher */}
+                  <LanguageSwitcher />
                 </div>
               </div>
             </div>

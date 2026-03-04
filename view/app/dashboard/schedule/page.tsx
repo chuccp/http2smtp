@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -21,6 +22,9 @@ import { ScheduleFormDialog } from '@/components/ScheduleFormDialog';
 
 export default function SchedulePage() {
   const router = useRouter();
+  const t = useTranslations('schedule');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
   const [schedules, setSchedules] = useState<ScheduleConfig[]>([]);
   const [tokens, setTokens] = useState<TokenConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,10 +47,10 @@ export default function SchedulePage() {
       setTotal(result.total);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
-        alert('Authentication failed, redirecting to home');
+        alert(tAuth('authFailed'));
         router.push('/');
       } else {
-        setError('Failed to fetch schedules');
+        setError(t('fetchError'));
         console.error('Failed to fetch schedules:', err);
       }
     } finally {
@@ -79,16 +83,16 @@ export default function SchedulePage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this schedule?')) {
+    if (confirm(t('deleteConfirm'))) {
       try {
         await apiClient.deleteSchedule(id);
         fetchSchedules();
       } catch (err) {
         if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('Authentication failed, redirecting to home');
+          alert(tAuth('authFailed'));
           router.push('/');
         } else {
-          setError('Failed to delete schedule');
+          setError(t('deleteError'));
           console.error('Failed to delete schedule:', err);
         }
       }
@@ -118,7 +122,7 @@ export default function SchedulePage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading schedules...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -127,11 +131,11 @@ export default function SchedulePage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Scheduled Tasks</h1>
-          <p className="text-gray-600">Manage scheduled email tasks with cron expressions</p>
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-gray-600">{t('subtitle')}</p>
         </div>
         <Button className="gap-2" onClick={handleAdd}>
-          Add Schedule
+          {t('addSchedule')}
         </Button>
       </div>
 
@@ -143,24 +147,24 @@ export default function SchedulePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Schedule List</CardTitle>
+          <CardTitle>{t('listTitle')}</CardTitle>
           <CardDescription>
-            {total} scheduled tasks configured
+            {t('listCount', { count: total })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Token</TableHead>
-                <TableHead>Cron</TableHead>
+                <TableHead>{t('scheduleName')}</TableHead>
+                <TableHead>{t('token')}</TableHead>
+                <TableHead>{t('cron')}</TableHead>
                 <TableHead>URL</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Template</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Create Time</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t('method')}</TableHead>
+                <TableHead>{t('template')}</TableHead>
+                <TableHead>{tCommon('status')}</TableHead>
+                <TableHead>{tCommon('createTime')}</TableHead>
+                <TableHead>{tCommon('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,10 +175,10 @@ export default function SchedulePage() {
                   <TableCell className="font-mono text-sm">{schedule.cron}</TableCell>
                   <TableCell className="max-w-[200px] truncate" title={schedule.url}>{schedule.url || '-'}</TableCell>
                   <TableCell>{schedule.method || 'GET'}</TableCell>
-                  <TableCell>{schedule.useTemplate ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{schedule.useTemplate ? tCommon('yes') : tCommon('no')}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${schedule.isUse ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {schedule.isUse ? 'Active' : 'Inactive'}
+                      {schedule.isUse ? tCommon('active') : tCommon('inactive')}
                     </span>
                   </TableCell>
                   <TableCell>{schedule.createTime ? new Date(schedule.createTime).toLocaleString() : '-'}</TableCell>
@@ -202,8 +206,8 @@ export default function SchedulePage() {
           </Table>
           {schedules.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No scheduled tasks configured yet</p>
-              <Button onClick={handleAdd}>Add Your First Schedule</Button>
+              <p className="text-gray-500 mb-4">{t('noSchedules')}</p>
+              <Button onClick={handleAdd}>{t('addSchedule')}</Button>
             </div>
           )}
           <Pagination pageNo={pageNo} pageSize={pageSize} total={total} onPageChange={handlePageChange} />
