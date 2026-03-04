@@ -46,7 +46,9 @@ export function SMTPFormDialog({
     password: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [error, setError] = useState('');
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -138,6 +140,44 @@ export function SMTPFormDialog({
       password: '',
     });
     setError('');
+    setTestResult(null);
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    setError('');
+
+    try {
+      if (!formData.host.trim() || !formData.mail.trim()) {
+        setError('Please fill in all required fields');
+        setTesting(false);
+        return;
+      }
+
+      if (formData.port <= 0 || formData.port > 65535) {
+        setError('Port must be between 1 and 65535');
+        setTesting(false);
+        return;
+      }
+
+      const result = await apiClient.testSMTPServer(formData);
+      if (result.code === 200) {
+        setTestResult({ success: true, message: result.message || 'Test successful' });
+      } else {
+        setTestResult({ success: false, message: result.message || 'Test failed' });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Unauthorized') {
+        alert('Authentication failed, redirecting to home');
+        router.push('/');
+      } else {
+        setTestResult({ success: false, message: 'Failed to test SMTP server' });
+        console.error('Failed to test SMTP server:', err);
+      }
+    } finally {
+      setTesting(false);
+    }
   };
 
   return (
@@ -163,6 +203,11 @@ export function SMTPFormDialog({
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {testResult && (
+            <Alert variant={testResult.success ? "default" : "destructive"}>
+              <AlertDescription>{testResult.message}</AlertDescription>
             </Alert>
           )}
           <div className="space-y-2">
@@ -232,13 +277,18 @@ export function SMTPFormDialog({
               autoComplete="new-password"
             />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
-              Cancel
+          <DialogFooter className="flex justify-between">
+            <Button type="button" variant="outline" onClick={handleTest} disabled={submitting || testing}>
+              {testing ? 'Testing...' : 'Test Connection'}
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : 'Save Server'}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting || testing}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting || testing}>
+                {submitting ? 'Saving...' : 'Save Server'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

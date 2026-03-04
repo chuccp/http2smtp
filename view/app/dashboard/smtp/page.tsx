@@ -11,20 +11,25 @@ import {
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Send } from 'lucide-react';
 import { SMTPConfig } from '@/types/smtp';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
 import { Pagination } from '@/components/Pagination';
 import { SMTPFormDialog } from '@/components/SMTPFormDialog';
+import { SendMailDialog } from '@/components/SendMailDialog';
+import { MailConfig } from '@/types/mail';
 
 export default function SMTPPage() {
   const router = useRouter();
   const [smtpServers, setSmtpServers] = useState<SMTPConfig[]>([]);
+  const [mails, setMails] = useState<MailConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<SMTPConfig | null>(null);
+  const [sendMailDialogOpen, setSendMailDialogOpen] = useState(false);
+  const [selectedSMTPId, setSelectedSMTPId] = useState<number | null>(null);
   const [pageNo, setPageNo] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -36,9 +41,13 @@ export default function SMTPPage() {
   const fetchSMTPServers = async () => {
     try {
       setLoading(true);
-      const result = await apiClient.getSMTPServers(pageNo, pageSize);
-      setSmtpServers(result.list);
-      setTotal(result.total);
+      const [smtpResult, mailResult] = await Promise.all([
+        apiClient.getSMTPServers(pageNo, pageSize),
+        apiClient.getMails(1, 100), // 获取所有邮件列表
+      ]);
+      setSmtpServers(smtpResult.list);
+      setTotal(smtpResult.total);
+      setMails(mailResult.list);
     } catch (err) {
       if (err instanceof Error && err.message === 'Unauthorized') {
         alert('Authentication failed, redirecting to home');
@@ -157,6 +166,16 @@ export default function SMTPPage() {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedSMTPId(server.id!);
+                          setSendMailDialogOpen(true);
+                        }}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -179,6 +198,19 @@ export default function SMTPPage() {
         onOpenChange={handleDialogClose}
         editingServer={editingServer}
         onSuccess={handleFormSuccess}
+        triggerButton={false}
+      />
+
+      {/* Send Mail Dialog */}
+      <SendMailDialog
+        open={sendMailDialogOpen}
+        onOpenChange={setSendMailDialogOpen}
+        smtpServers={smtpServers.filter(server => server.id === selectedSMTPId)}
+        mails={mails}
+        onSuccess={() => {
+          setSendMailDialogOpen(false);
+          setSelectedSMTPId(null);
+        }}
         triggerButton={false}
       />
     </div>

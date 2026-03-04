@@ -15,6 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Pagination } from '@/components/ui/pagination';
+import { EmailSelectDialog } from '@/components/EmailSelectDialog';
 import { TokenConfig } from '@/types/token';
 import { SMTPConfig } from '@/types/smtp';
 import { MailConfig } from '@/types/mail';
@@ -61,6 +64,14 @@ export function TokenFormDialog({
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [smtpDialogOpen, setSmtpDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [selectedEmailIds, setSelectedEmailIds] = useState<number[]>([]);
+  const [selectedEmails, setSelectedEmails] = useState<MailConfig[]>([]);
+
+  // Pagination state
+  const [smtpPage, setSmtpPage] = useState(1);
+  const pageSize = 10;
 
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -77,8 +88,15 @@ export function TokenFormDialog({
         SMTPId: externalEditingToken.SMTPId || 0,
         isUse: externalEditingToken.isUse ?? true,
       });
+      // Parse and set selected emails
+      const emailIds = externalEditingToken.receiveEmailIds
+        ? externalEditingToken.receiveEmailIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+        : [];
+      setSelectedEmailIds(emailIds);
+      const emails = mails.filter(mail => emailIds.includes(mail.id!));
+      setSelectedEmails(emails);
     }
-  }, [externalEditingToken]);
+  }, [externalEditingToken, mails]);
 
   // Reset form when dialog opens for new token
   useEffect(() => {
@@ -91,11 +109,13 @@ export function TokenFormDialog({
         isUse: true,
       });
       setEditingToken(null);
+      setSelectedEmailIds([]);
+      setSelectedEmails([]);
     }
   }, [open, externalEditingToken, smtpServers]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     if (name === 'isUse') {
       setFormData(prev => ({
         ...prev,
@@ -159,16 +179,17 @@ export function TokenFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {triggerButton && (
-        <DialogTrigger asChild>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Generate Token
-          </Button>
-        </DialogTrigger>
-      )}
-      <DialogContent className="sm:max-w-[550px]">
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        {triggerButton && (
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Generate Token
+            </Button>
+          </DialogTrigger>
+        )}
+        <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>{editingToken ? 'Edit Token' : 'Generate New Token'}</DialogTitle>
           <DialogDescription>
@@ -211,35 +232,53 @@ export function TokenFormDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="SMTPId">SMTP Server *</Label>
-            <select
-              id="SMTPId"
-              name="SMTPId"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              value={formData.SMTPId || ''}
-              onChange={handleInputChange}
-            >
-              <option value="">Select SMTP Server</option>
-              {smtpServers.map(server => (
-                <option key={server.id} value={server.id}>
-                  {server.name || server.host} ({server.host}:{server.port})
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 justify-start text-left"
+                onClick={() => setSmtpDialogOpen(true)}
+              >
+                {smtpServers.find(server => server.id === formData.SMTPId) ? (
+                  <span>{smtpServers.find(server => server.id === formData.SMTPId)?.name || smtpServers.find(server => server.id === formData.SMTPId)?.host} ({smtpServers.find(server => server.id === formData.SMTPId)?.host}:{smtpServers.find(server => server.id === formData.SMTPId)?.port})</span>
+                ) : (
+                  <span>Select SMTP Server</span>
+                )}
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="receiveEmailIds">Recipient Emails</Label>
-            <Input
-              id="receiveEmailIds"
-              name="receiveEmailIds"
-              value={formData.receiveEmailIds || ''}
-              onChange={handleInputChange}
-              placeholder="Email IDs, comma separated (e.g., 1,2,3)"
-            />
-            {mails.length > 0 && (
-              <p className="text-xs text-gray-500">
-                Available: {mails.map(m => `${m.id}:${m.name || m.mail}`).join(', ')}
-              </p>
-            )}
+            <div className="flex flex-wrap gap-2 mb-2">
+              {selectedEmails.map(email => (
+                <div key={email.id} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
+                  <span className="text-sm">{email.name || email.mail}</span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      const updatedSelectedEmails = selectedEmails.filter(e => e.id !== email.id);
+                      setSelectedEmails(updatedSelectedEmails);
+                      setSelectedEmailIds(updatedSelectedEmails.map(e => e.id!));
+                      setFormData(prev => ({
+                        ...prev,
+                        receiveEmailIds: updatedSelectedEmails.map(e => e.id).join(','),
+                      }));
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="flex items-center gap-1 bg-background border border-input px-2 py-1 rounded-md hover:bg-accent"
+                onClick={() => setEmailDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add
+              </button>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <input
@@ -262,6 +301,93 @@ export function TokenFormDialog({
           </DialogFooter>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      {/* SMTP Server Selection Dialog */}
+      <Dialog open={smtpDialogOpen} onOpenChange={setSmtpDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Select SMTP Server</DialogTitle>
+            <DialogDescription>
+              Choose an SMTP server from the list below
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Selected SMTP Tag */}
+            {formData.SMTPId !== 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md">
+                  <span className="text-sm">
+                    {smtpServers.find(server => server.id === formData.SMTPId)?.name || smtpServers.find(server => server.id === formData.SMTPId)?.host} ({smtpServers.find(server => server.id === formData.SMTPId)?.host}:{smtpServers.find(server => server.id === formData.SMTPId)?.port})
+                  </span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setFormData(prev => ({ ...prev, SMTPId: 0 }))}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Host</TableHead>
+                    <TableHead>Port</TableHead>
+                    <TableHead>Email</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {smtpServers.slice((smtpPage - 1) * pageSize, smtpPage * pageSize).map(server => (
+                    <TableRow
+                      key={server.id}
+                      className={`cursor-pointer ${formData.SMTPId === server.id ? 'bg-muted' : ''}`}
+                      onClick={() => setFormData(prev => ({ ...prev, SMTPId: server.id! }))}
+                    >
+                      <TableCell>{server.name || server.host}</TableCell>
+                      <TableCell>{server.host}</TableCell>
+                      <TableCell>{server.port}</TableCell>
+                      <TableCell>{server.mail}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            {/* Pagination */}
+            <Pagination
+              currentPage={smtpPage}
+              totalItems={smtpServers.length}
+              pageSize={pageSize}
+              onPageChange={setSmtpPage}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setSmtpDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => setSmtpDialogOpen(false)}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Selection Dialog */}
+      <EmailSelectDialog
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+        emails={mails}
+        selectedEmailIds={selectedEmailIds}
+        onSelectedEmailIdsChange={(ids) => {
+          setSelectedEmailIds(ids);
+          const emails = mails.filter(email => ids.includes(email.id!));
+          setSelectedEmails(emails);
+        }}
+        pageSize={pageSize}
+      />
+    </>
   );
 }

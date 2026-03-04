@@ -139,6 +139,22 @@ export class ApiClient {
     return responseData;
   }
 
+  async sendMailBySMTP(sendMail: any): Promise<{ code: number; data: string; message: string }> {
+    const response = await fetch(`${this.manageBaseUrl}/sendMailBySMTP`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sendMail),
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData;
+  }
+
   // 获取管理 API 地址 (端口 12566)
   getManageBaseUrl(): string {
     return this.manageBaseUrl;
@@ -563,6 +579,26 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error('Failed to send mail');
     }
+  }
+
+  async sendMailByToken(token: string, subject: string, content: string, recipients?: string[]): Promise<{ code: number; data: string; message: string }> {
+    const response = await fetch(`${this.sendMailBaseUrl}/sendMail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token,
+        subject,
+        content,
+        recipients,
+      }),
+    });
+    const responseData = await response.json();
+    if (response.ok) {
+      return { code: 200, data: 'ok', message: 'Success' };
+    }
+    return { code: response.status, data: 'error', message: responseData };
   }
 }
 

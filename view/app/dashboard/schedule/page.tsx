@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Edit, Trash2, Send } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { ScheduleConfig } from '@/types/schedule';
 import { TokenConfig } from '@/types/token';
 import { apiClient } from '@/lib/client-auth';
@@ -95,22 +95,6 @@ export default function SchedulePage() {
     }
   };
 
-  const handleSendMail = async (schedule: ScheduleConfig) => {
-    if (confirm('Send email now using this schedule configuration?')) {
-      try {
-        await apiClient.sendMailBySchedule(schedule);
-        alert('Email sent successfully');
-      } catch (err) {
-        if (err instanceof Error && err.message === 'Unauthorized') {
-          alert('Authentication failed, redirecting to home');
-          router.push('/');
-        } else {
-          setError('Failed to send email');
-          console.error('Failed to send email:', err);
-        }
-      }
-    }
-  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -196,14 +180,6 @@ export default function SchedulePage() {
                   <TableCell>{schedule.createTime ? new Date(schedule.createTime).toLocaleString() : '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleSendMail(schedule)}
-                        title="Send email now"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

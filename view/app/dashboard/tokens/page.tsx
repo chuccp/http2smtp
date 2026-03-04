@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Edit, Trash2, Copy, Check } from 'lucide-react';
+import { Edit, Trash2, Copy, Check, Send } from 'lucide-react';
 import { TokenConfig } from '@/types/token';
 import { SMTPConfig } from '@/types/smtp';
 import { MailConfig } from '@/types/mail';
@@ -19,6 +19,7 @@ import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
 import { Pagination } from '@/components/Pagination';
 import { TokenFormDialog } from '@/components/TokenFormDialog';
+import { SendMailByTokenDialog } from '@/components/SendMailByTokenDialog';
 
 export default function TokenPage() {
   const router = useRouter();
@@ -30,6 +31,8 @@ export default function TokenPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingToken, setEditingToken] = useState<TokenConfig | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [sendMailDialogOpen, setSendMailDialogOpen] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<TokenConfig | null>(null);
   const [pageNo, setPageNo] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -126,6 +129,11 @@ export default function TokenPage() {
     setPageNo(page);
   };
 
+  const handleSendMail = (token: TokenConfig) => {
+    setSelectedToken(token);
+    setSendMailDialogOpen(true);
+  };
+
   const getSMTPName = (id: number) => {
     const smtp = smtpServers.find(s => s.id === id);
     return smtp ? (smtp.name || smtp.host) : '-';
@@ -177,69 +185,81 @@ export default function TokenPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Token</TableHead>
-                <TableHead>Subject</TableHead>
-                <TableHead>SMTP Server</TableHead>
-                <TableHead>Recipients</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Create Time</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tokens.map((token) => (
-                <TableRow key={token.id}>
-                  <TableCell className="font-mono text-sm">
-                    <div className="flex items-center gap-2">
-                      {token.token.substring(0, 12)}...
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleCopy(token.token, token.id!)}
-                      >
-                        {copiedId === token.id ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>{token.subject || '-'}</TableCell>
-                  <TableCell>{token.SMTPStr || getSMTPName(token.SMTPId)}</TableCell>
-                  <TableCell>{token.receiveEmailsStr || getMailNames(token.receiveEmailIds)}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${token.isUse ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {token.isUse ? 'Active' : 'Inactive'}
-                    </span>
-                  </TableCell>
-                  <TableCell>{token.createTime ? new Date(token.createTime).toLocaleString() : '-'}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(token)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(token.id!)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/6">Token</TableHead>
+                  <TableHead className="w-1/6">Subject</TableHead>
+                  <TableHead className="w-1/6">SMTP Server</TableHead>
+                  <TableHead className="w-1/4">Recipients</TableHead>
+                  <TableHead className="w-1/12">Status</TableHead>
+                  <TableHead className="w-1/8">Create Time</TableHead>
+                  <TableHead className="w-1/12">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tokens.map((token) => (
+                  <TableRow key={token.id}>
+                    <TableCell className="font-mono text-sm">
+                      <div className="flex items-center gap-2">
+                        {token.token.substring(0, 12)}...
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleCopy(token.token, token.id!)}
+                        >
+                          {copiedId === token.id ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>{token.subject || '-'}</TableCell>
+                    <TableCell>{token.SMTPStr || getSMTPName(token.SMTPId)}</TableCell>
+                    <TableCell className="whitespace-pre-wrap break-words max-w-[200px]">
+                      {token.receiveEmailsStr || getMailNames(token.receiveEmailIds)}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs ${token.isUse ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        {token.isUse ? 'Active' : 'Inactive'}
+                      </span>
+                    </TableCell>
+                    <TableCell>{token.createTime ? new Date(token.createTime).toLocaleString() : '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSendMail(token)}
+                          title="Send Mail"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(token)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(token.id!)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           {tokens.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">No tokens configured yet</p>
@@ -260,6 +280,20 @@ export default function TokenPage() {
         onSuccess={handleFormSuccess}
         triggerButton={false}
       />
+
+      {selectedToken && (
+        <SendMailByTokenDialog
+          open={sendMailDialogOpen}
+          onOpenChange={setSendMailDialogOpen}
+          token={selectedToken.token}
+          tokenSubject={selectedToken.subject || ''}
+          mails={mails}
+          onSuccess={() => {
+            setSendMailDialogOpen(false);
+            setSelectedToken(null);
+          }}
+        />
+      )}
     </div>
   );
 }

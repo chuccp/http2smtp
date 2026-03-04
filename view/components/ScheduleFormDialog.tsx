@@ -19,6 +19,7 @@ import { ScheduleConfig, ScheduleHeader } from '@/types/schedule';
 import { TokenConfig } from '@/types/token';
 import { apiClient } from '@/lib/client-auth';
 import { useRouter } from 'next/navigation';
+import { TokenSelectDialog } from '@/components/TokenSelectDialog';
 
 interface ScheduleFormDialogProps {
   open?: boolean;
@@ -54,6 +55,9 @@ export function ScheduleFormDialog({
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [tokenDialogOpen, setTokenDialogOpen] = useState(false);
+  const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
+  const [selectedToken, setSelectedToken] = useState<TokenConfig | null>(null);
 
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -72,6 +76,10 @@ export function ScheduleFormDialog({
           headers = [];
         }
       }
+      // Find the token by token string to get the id
+      const token = tokens.find(t => t.token === externalEditingSchedule.token);
+      setSelectedTokenId(token?.id || null);
+      setSelectedToken(token || null);
       setFormData({
         name: externalEditingSchedule.name || '',
         token: externalEditingSchedule.token || '',
@@ -85,14 +93,17 @@ export function ScheduleFormDialog({
         isUse: externalEditingSchedule.isUse ?? true,
       });
     }
-  }, [externalEditingSchedule]);
+  }, [externalEditingSchedule, tokens]);
 
   // Reset form when dialog opens for new schedule
   useEffect(() => {
     if (open && !externalEditingSchedule) {
+      const defaultToken = tokens.length > 0 ? tokens[0] : null;
+      setSelectedTokenId(defaultToken?.id || null);
+      setSelectedToken(defaultToken || null);
       setFormData({
         name: '',
-        token: tokens.length > 0 ? tokens[0].token || '' : '',
+        token: defaultToken?.token || '',
         cron: '0 0 * * *',
         url: '',
         method: 'GET',
@@ -240,20 +251,34 @@ export function ScheduleFormDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="token">Token *</Label>
-              <select
-                id="token"
-                name="token"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={formData.token}
-                onChange={handleInputChange}
-              >
-                <option value="">Select Token</option>
-                {tokens.map(token => (
-                  <option key={token.id} value={token.token}>
-                    {token.subject || token.token?.substring(0, 12)}...
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 justify-start text-left"
+                  onClick={() => setTokenDialogOpen(true)}
+                >
+                  {selectedToken ? (
+                    <span>{selectedToken.subject || selectedToken.token?.substring(0, 12)}...</span>
+                  ) : (
+                    <span>Select Token</span>
+                  )}
+                </Button>
+                {selectedToken && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedTokenId(null);
+                      setSelectedToken(null);
+                      setFormData(prev => ({ ...prev, token: '' }));
+                    }}
+                  >
+                    ×
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -393,6 +418,19 @@ export function ScheduleFormDialog({
             <Button type="submit" disabled={submitting}>
               {submitting ? 'Saving...' : 'Save Schedule'}
             </Button>
+
+            <TokenSelectDialog
+              open={tokenDialogOpen}
+              onOpenChange={setTokenDialogOpen}
+              tokens={tokens}
+              selectedTokenId={selectedTokenId}
+              onSelectedTokenIdChange={(id) => {
+                setSelectedTokenId(id);
+                const token = tokens.find(t => t.id === id);
+                setSelectedToken(token || null);
+                setFormData(prev => ({ ...prev, token: token?.token || '' }));
+              }}
+            />
           </DialogFooter>
         </form>
       </DialogContent>
