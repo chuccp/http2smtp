@@ -4,6 +4,7 @@ import { MailConfig } from '@/types/mail';
 import { SetInfo } from '@/types/settings';
 import { TokenConfig } from '@/types/token';
 import { ScheduleConfig } from '@/types/schedule';
+import { LogEntry } from '@/types/log';
 import { md5, generateRandomString } from './auth-utils';
 
 export const USER_TOKEN_COOKIE = 'user_token';
@@ -599,6 +600,33 @@ export class ApiClient {
       return { code: 200, data: 'ok', message: 'Success' };
     }
     return { code: response.status, data: 'error', message: responseData };
+  }
+
+  // Log Management
+  async getLogs(pageNo: number = 1, pageSize: number = 10, searchKey: string = ''): Promise<{ list: LogEntry[]; total: number }> {
+    const response = await fetch(`${this.manageBaseUrl}/log?pageNo=${pageNo}&pageSize=${pageSize}&searchKey=${encodeURIComponent(searchKey)}`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    const data = responseData.data || responseData;
+    if (data && data.list) {
+      return { list: data.list, total: data.total || 0 };
+    }
+    return { list: Array.isArray(data) ? data : [], total: Array.isArray(data) ? data.length : 0 };
+  }
+
+  async getLog(id: number): Promise<LogEntry> {
+    const response = await fetch(`${this.manageBaseUrl}/log/${id}`, {
+      credentials: 'include',
+    });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    const responseData = await response.json();
+    return responseData.data || responseData;
   }
 }
 

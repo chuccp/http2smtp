@@ -13,6 +13,7 @@ import {
   Menu,
   Users,
   Clock,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/client-auth';
@@ -59,6 +60,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       title: t('schedules'),
       href: '/dashboard/schedule',
       icon: <Clock className="h-5 w-5" />,
+    },
+    {
+      title: t('logs'),
+      href: '/dashboard/log',
+      icon: <FileText className="h-5 w-5" />,
     },
     {
       title: t('settings'),
