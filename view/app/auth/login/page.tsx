@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -14,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LanguageSwitcher } from '@/lib/LanguageSwitcher';
 import { apiClient } from '@/lib/client-auth';
 
 export default function LoginPage() {
@@ -23,6 +25,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,19 +53,22 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
+        <div className="flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Sign in to your account
+            {t('signIn')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your credentials to access the admin panel
+            {t('signInDesc')}
           </p>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Login</CardTitle>
+            <CardTitle>{t('login')}</CardTitle>
             <CardDescription>
-              Enter your username and password below to access the dashboard.
+              {t('loginDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -72,7 +79,7 @@ export default function LoginPage() {
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">{t('username')}</Label>
                 <Input
                   id="username"
                   type="text"
@@ -83,7 +90,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -98,7 +105,7 @@ export default function LoginPage() {
                 className="w-full"
                 disabled={loading || !username || !password}
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? t('signingIn') : t('signIn')}
               </Button>
             </form>
           </CardContent>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -21,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { LanguageSwitcher } from '@/lib/LanguageSwitcher';
 import type { SetInfo, SystemInfo } from '@/types/auth';
 
 interface SetupFormData {
@@ -78,6 +80,8 @@ export default function SetupPage() {
   const [testingConnection, setTestingConnection] = useState(false);
   const [checkingInit, setCheckingInit] = useState(true);
   const router = useRouter();
+  const t = useTranslations('setup');
+  const tCommon = useTranslations('common');
 
   // Check if system is already initialized on mount
   useEffect(() => {
@@ -292,7 +296,7 @@ export default function SetupPage() {
   if (checkingInit) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -300,19 +304,22 @@ export default function SetupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-2xl space-y-8">
+        <div className="flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            System Setup
+            {t('systemSetup')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Please configure your database and administrator account to get started
+            {t('setupDesc')}
           </p>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Initial Configuration</CardTitle>
+            <CardTitle>{t('initialConfig')}</CardTitle>
             <CardDescription>
-              Configure database and administrator account for HTTP2SMTP
+              {t('initialConfigDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -325,14 +332,14 @@ export default function SetupPage() {
 
               {/* Database Type */}
               <div className="space-y-2">
-                <Label htmlFor="dbType">Database Type</Label>
+                <Label htmlFor="dbType">{t('dbType')}</Label>
                 <Select
                   value={formData.dbType}
                   onValueChange={handleDbTypeChange}
                   disabled={loading}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select database type" />
+                    <SelectValue placeholder={t('selectDbType')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="sqlite">SQLite</SelectItem>
@@ -344,9 +351,9 @@ export default function SetupPage() {
               {/* SQLite Configuration */}
               {formData.dbType === 'sqlite' && (
                 <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-                  <h3 className="text-sm font-medium">SQLite Configuration</h3>
+                  <h3 className="text-sm font-medium">{t('sqliteConfig')}</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="sqlite.filename">Database Filename</Label>
+                    <Label htmlFor="sqlite.filename">{t('dbFilename')}</Label>
                     <Input
                       id="sqlite.filename"
                       name="sqlite.filename"
@@ -363,10 +370,10 @@ export default function SetupPage() {
               {/* MySQL Configuration */}
               {formData.dbType === 'mysql' && (
                 <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-                  <h3 className="text-sm font-medium">MySQL Configuration</h3>
+                  <h3 className="text-sm font-medium">{t('mysqlConfig')}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="mysql.host">Host</Label>
+                      <Label htmlFor="mysql.host">{t('host')}</Label>
                       <Input
                         id="mysql.host"
                         name="mysql.host"
@@ -378,7 +385,7 @@ export default function SetupPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="mysql.port">Port</Label>
+                      <Label htmlFor="mysql.port">{t('port')}</Label>
                       <Input
                         id="mysql.port"
                         name="mysql.port"
@@ -391,7 +398,7 @@ export default function SetupPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mysql.dbname">Database Name</Label>
+                    <Label htmlFor="mysql.dbname">{t('dbName')}</Label>
                     <Input
                       id="mysql.dbname"
                       name="mysql.dbname"
@@ -404,7 +411,7 @@ export default function SetupPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="mysql.username">Username</Label>
+                      <Label htmlFor="mysql.username">{t('username')}</Label>
                       <Input
                         id="mysql.username"
                         name="mysql.username"
@@ -412,11 +419,11 @@ export default function SetupPage() {
                         value={formData.mysql.username}
                         onChange={handleChange}
                         disabled={loading}
-                        placeholder="MySQL username"
+                        placeholder={t('dbUsernamePlaceholder')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="mysql.password">Password</Label>
+                      <Label htmlFor="mysql.password">{t('password')}</Label>
                       <Input
                         id="mysql.password"
                         name="mysql.password"
@@ -424,12 +431,12 @@ export default function SetupPage() {
                         value={formData.mysql.password}
                         onChange={handleChange}
                         disabled={loading}
-                        placeholder="MySQL password"
+                        placeholder={t('dbPasswordPlaceholder')}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mysql.charset">Charset</Label>
+                    <Label htmlFor="mysql.charset">{t('charset')}</Label>
                     <Input
                       id="mysql.charset"
                       name="mysql.charset"
@@ -446,7 +453,7 @@ export default function SetupPage() {
                     onClick={handleTestConnection}
                     disabled={loading || testingConnection}
                   >
-                    {testingConnection ? 'Testing...' : 'Test Connection'}
+                    {testingConnection ? tCommon('testing') : tCommon('testConnection')}
                   </Button>
                 </div>
               )}
@@ -456,7 +463,7 @@ export default function SetupPage() {
               {/* Port Configuration */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="manage.port">Manage Port (12566)</Label>
+                  <Label htmlFor="manage.port">{t('managePort')} (12566)</Label>
                   <Input
                     id="manage.port"
                     name="manage.port"
@@ -467,11 +474,11 @@ export default function SetupPage() {
                     placeholder="12566"
                   />
                   <p className="text-xs text-gray-500">
-                    Web UI and admin API port
+                    {t('managePortDesc')}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="api.port">API Port (12567)</Label>
+                  <Label htmlFor="api.port">{t('apiPort')} (12567)</Label>
                   <Input
                     id="api.port"
                     name="api.port"
@@ -482,7 +489,7 @@ export default function SetupPage() {
                     placeholder="12567"
                   />
                   <p className="text-xs text-gray-500">
-                    Email sending API port
+                    {t('apiPortDesc')}
                   </p>
                 </div>
               </div>
@@ -491,9 +498,9 @@ export default function SetupPage() {
 
               {/* Admin Account */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Administrator Account</h3>
+                <h3 className="text-lg font-medium">{t('adminAccount')}</h3>
                 <div className="space-y-2">
-                  <Label htmlFor="manage.username">Username</Label>
+                  <Label htmlFor="manage.username">{t('username')}</Label>
                   <Input
                     id="manage.username"
                     name="manage.username"
@@ -502,11 +509,11 @@ export default function SetupPage() {
                     onChange={handleChange}
                     required
                     disabled={loading}
-                    placeholder="Enter administrator username"
+                    placeholder={t('adminUsernamePlaceholder')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="manage.password">Password</Label>
+                  <Label htmlFor="manage.password">{t('password')}</Label>
                   <Input
                     id="manage.password"
                     name="manage.password"
@@ -515,11 +522,11 @@ export default function SetupPage() {
                     onChange={handleChange}
                     required
                     disabled={loading}
-                    placeholder="Enter password (min 6 characters)"
+                    placeholder={t('passwordPlaceholder')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="manage.confirmPassword">Confirm Password</Label>
+                  <Label htmlFor="manage.confirmPassword">{t('confirmPassword')}</Label>
                   <Input
                     id="manage.confirmPassword"
                     name="manage.confirmPassword"
@@ -528,7 +535,7 @@ export default function SetupPage() {
                     onChange={handleChange}
                     required
                     disabled={loading}
-                    placeholder="Confirm your password"
+                    placeholder={t('confirmPasswordPlaceholder')}
                   />
                 </div>
               </div>
@@ -538,7 +545,7 @@ export default function SetupPage() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Setting up...' : 'Complete Setup'}
+                {loading ? t('settingUp') : t('completeSetup')}
               </Button>
             </form>
           </CardContent>
