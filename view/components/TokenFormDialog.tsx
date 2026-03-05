@@ -86,6 +86,7 @@ export function TokenFormDialog({
     if (externalEditingToken !== undefined && externalEditingToken !== null) {
       setEditingToken(externalEditingToken);
       setFormData({
+        id: externalEditingToken.id,
         token: externalEditingToken.token || '',
         subject: externalEditingToken.subject || '',
         receiveEmailIds: externalEditingToken.receiveEmailIds || '',
@@ -389,6 +390,10 @@ export function TokenFormDialog({
           setSelectedEmailIds(ids);
           const emails = mails.filter(email => ids.includes(email.id!));
           setSelectedEmails(emails);
+          setFormData(prev => ({
+            ...prev,
+            receiveEmailIds: ids.join(','),
+          }));
         }}
         pageSize={pageSize}
       />

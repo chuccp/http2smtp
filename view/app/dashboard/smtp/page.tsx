@@ -136,7 +136,6 @@ export default function SMTPPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('serverName')}</TableHead>
                 <TableHead>{t('host')}</TableHead>
                 <TableHead>{t('port')}</TableHead>
                 <TableHead>{t('fromAddress')}</TableHead>
@@ -148,7 +147,6 @@ export default function SMTPPage() {
             <TableBody>
               {smtpServers.map((server) => (
                 <TableRow key={server.id}>
-                  <TableCell className="font-medium">{server.name || server.username}</TableCell>
                   <TableCell>{server.host}</TableCell>
                   <TableCell>{server.port}</TableCell>
                   <TableCell>{server.mail}</TableCell>

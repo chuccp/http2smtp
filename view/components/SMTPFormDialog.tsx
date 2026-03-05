@@ -42,7 +42,6 @@ export function SMTPFormDialog({
   const [internalOpen, setInternalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<SMTPConfig | null>(null);
   const [formData, setFormData] = useState<SMTPConfig>({
-    name: '',
     host: '',
     port: 587,
     mail: '',
@@ -63,7 +62,7 @@ export function SMTPFormDialog({
     if (externalEditingServer !== undefined && externalEditingServer !== null) {
       setEditingServer(externalEditingServer);
       setFormData({
-        name: externalEditingServer.name || '',
+        id: externalEditingServer.id,
         host: externalEditingServer.host || '',
         port: externalEditingServer.port || 587,
         mail: externalEditingServer.mail || '',
@@ -111,7 +110,6 @@ export function SMTPFormDialog({
       setOpen(false);
       setEditingServer(null);
       setFormData({
-        name: '',
         host: '',
         port: 587,
         mail: '',
@@ -212,16 +210,6 @@ export function SMTPFormDialog({
               <AlertDescription>{testResult.message}</AlertDescription>
             </Alert>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="name">{t('serverName')}</Label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="e.g., Gmail, Outlook"
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="host">{t('host')} {tCommon('required')}</Label>
             <Input

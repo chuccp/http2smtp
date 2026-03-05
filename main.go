@@ -113,6 +113,7 @@ func main() {
 		&service.TokenService{},
 		&service.ScheduleService{},
 		&service.LogService{},
+		&service.SmtpService{},
 	)
 	err = frame.Start()
 	if err != nil {

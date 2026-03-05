@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(echo:*)",
+      "Bash(go build:*)",
+      "Bash(go doc:*)"
+    ]
+  }
+}
