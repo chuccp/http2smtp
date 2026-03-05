@@ -14,7 +14,7 @@ type SMTP struct {
 	Port       int       `gorm:"column:port" json:"port"`
 	Mail       string    `gorm:"column:mail" json:"mail"`
 	Username   string    `gorm:"column:username" json:"username"`
-	Name       string    `gorm:"column:name" json:"name"`
+	Name       string    `gorm:"_" json:"name"`
 	Password   string    `gorm:"column:password"  json:"password"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
 	UpdateTime time.Time `gorm:"column:update_time" json:"updateTime"`

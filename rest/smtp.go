@@ -16,9 +16,10 @@ import (
 )
 
 type Smtp struct {
-	context   *core.Context
-	schedule  *service.ScheduleService
-	smtpModel *model.SMTPModel
+	context     *core.Context
+	schedule    *service.ScheduleService
+	smtpModel   *model.SMTPModel
+	smtpService *service.SmtpService
 }
 
 func (smtp *Smtp) getOne(req *web.Request) (any, error) {
@@ -137,7 +138,7 @@ func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := smtp.smtpModel.PageForWeb(page)
+	p, err := smtp.smtpService.PageForWeb(page)
 	if err != nil {
 		return nil, err
 	}
@@ -146,9 +147,7 @@ func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 func (smtp *Smtp) Init(context *core.Context) error {
 	smtp.context = context
 	smtp.smtpModel = core.GetModel[*model.SMTPModel](context)
-	if smtp.smtpModel == nil {
-		return errors.New("failed to get SMTPModel")
-	}
+	smtp.smtpService = core.GetService[*service.SmtpService](context)
 	context.Get("/smtp/:id", smtp.getOne).WithMeta(auth2.WithLogin())
 	context.Delete("/smtp/:id", smtp.deleteOne).WithMeta(auth2.WithLogin())
 	context.Get("/smtp", smtp.getPage).WithMeta(auth2.WithLogin())

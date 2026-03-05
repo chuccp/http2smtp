@@ -57,6 +57,7 @@ export function MailFormDialog({
     if (externalEditingMail !== undefined && externalEditingMail !== null) {
       setEditingMail(externalEditingMail);
       setFormData({
+        id: externalEditingMail.id,
         name: externalEditingMail.name || '',
         mail: externalEditingMail.mail || '',
       });
