@@ -7,16 +7,16 @@ import (
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/db"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
-	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
 	"go.uber.org/zap"
 )
 
-func main() {
+func createAPP() (*wf.WebFrame, error) {
 
 	var webPort int
 	var apiPort int
@@ -30,8 +30,7 @@ func main() {
 	storageRoot = util.GetEnvOrDefault("storage_root", storageRoot)
 	fileConfig, err := config.LoadSingleFileConfig("config.ini")
 	if err != nil {
-		log.Panic("加载配置文件失败", zap.Error(err))
-		return
+		return nil, err
 	}
 	if webPort > 0 || apiPort > 0 {
 		if apiPort == 0 {
@@ -47,92 +46,67 @@ func main() {
 	if len(storageRoot) > 0 {
 		fileConfig.Put("core.cachePath", storageRoot)
 	}
-
-	var cfg = model.DefaultConfig()
-
-	err = fileConfig.Unmarshal(cfg)
-	if err != nil {
-		log.Panic("加载配置文件失败", zap.Error(err))
-		return
-	}
-
 	builder := wf.NewBuilder(fileConfig)
-	var serverConfig = web.DefaultServerConfig()
-	restGroup := core.NewRestGroupBuilder().ServerConfig(serverConfig).Build()
-	restGroup.AddRest(
-		&rest.Set{},
-		&rest.User{},
-		&rest.Token{},
-		&rest.Mail{},
-		&rest.Smtp{},
-		&rest.Schedule{},
-		&rest.Log{}).AddFilter(auth2.NewAuthenticationFilter(&auth.Authentication{}))
+
+	restGroupBuilder := core.NewRestGroupBuilder()
+	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{})
+	restGroupBuilder.Port(webPort)
+	restGroupBuilder.Filter(auth2.NewAuthenticationFilter(&auth.Authentication{}))
+	restGroup := restGroupBuilder.Build()
+
 	builder.RestGroup(restGroup)
 
-	//modelGroup := core.DefaultModelGroup()
+	apiRestGroupBuilder := core.NewRestGroupBuilder()
+	apiRestGroupBuilder.Rest(&rest.API{})
+	apiRestGroupBuilder.Port(apiPort)
+	builder.RestGroup(apiRestGroupBuilder.Build())
 
-	//builder.ModelGroup(modelGroup)
+	manageModelGroupBuilder := core.NewModelGroupBuilder()
 
-	//serverConfig.Port = cfg.Manage.Port
-	//authFilter := auth2.NewAuthenticationFilter(&auth.Authentication{})
-	//builder.RestGroup(serverConfig).Rest(
-	//	&rest.Set{},
-	//	&rest.User{},
-	//	&rest.Token{},
-	//	&rest.Mail{},
-	//	&rest.Smtp{},
-	//	&rest.Schedule{},
-	//	&rest.Log{},
-	//).Filter(authFilter)
-	//
-	//frame.GetDefaultModelGroup().AutoCreateTable(true)
-	//dbtype := fileConfig.GetString("core.dbtype")
-	//if dbtype == "sqlite" {
-	//	var sqliteConfig = model.DefaultSqliteConfig()
-	//	err := fileConfig.UnmarshalKey("sqlite", &sqliteConfig)
-	//	if err != nil {
-	//		log.Panic("启动失败", zap.Error(err))
-	//		return
-	//	}
-	//	connection, err := db.ConnectionSQLite(sqliteConfig.Filename)
-	//	if err != nil {
-	//		log.Panic("启动失败", zap.Error(err))
-	//		return
-	//	}
-	//	frame.SetDefaultDB(connection)
-	//} else if dbtype == "mysql" {
-	//	var mysqlConfig = model.DefaultMysqlConfig()
-	//	err := fileConfig.UnmarshalKey("mysql", &mysqlConfig)
-	//	if err != nil {
-	//		return
-	//	}
-	//	connection, err := db.ConnectionMysql(mysqlConfig.Host, mysqlConfig.Port, mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Dbname, mysqlConfig.Charset)
-	//	if err != nil {
-	//		log.Panic("启动失败", zap.Error(err))
-	//		return
-	//	}
-	//	frame.SetDefaultDB(connection)
-	//}
-	//frame.AddModel(
-	//	&model.MailModel{},
-	//	&model.SMTPModel{},
-	//	&model.TokenModel{},
-	//	&model.ScheduleModel{},
-	//	&model.LogModel{},
-	//)
-	//
-	//var apiServerConfig = web.DefaultServerConfig()
-	//apiServerConfig.Port = cfg.Api.Port
-	//frame.NewRestGroup(apiServerConfig).AddRest(&rest.API{})
-	//frame.AddService(
-	//	&service.TokenService{},
-	//	&service.ScheduleService{},
-	//	&service.LogService{},
-	//	&service.SmtpService{},
-	//)
-	//err = frame.Start()
-	//if err != nil {
-	//	log.Panic("启动失败", zap.Error(err))
-	//	return
-	//}
+	manageModelGroupBuilder.Model(
+		&model.MailModel{},
+		&model.SMTPModel{},
+		&model.TokenModel{},
+		&model.ScheduleModel{},
+		&model.LogModel{},
+	)
+
+	dbType := fileConfig.GetString("core.dbtype")
+	if dbType == "sqlite" {
+		var sqliteConfig = model.DefaultSqliteConfig()
+		err := fileConfig.UnmarshalKey("sqlite", &sqliteConfig)
+		if err != nil {
+			return nil, err
+		}
+		connection, err := db.ConnectionSQLite(sqliteConfig.Filename)
+		if err != nil {
+			return nil, err
+		}
+		manageModelGroupBuilder.DB(connection)
+	} else if dbType == "mysql" {
+		var mysqlConfig = model.DefaultMysqlConfig()
+		err := fileConfig.UnmarshalKey("mysql", &mysqlConfig)
+		if err != nil {
+			return nil, err
+		}
+		connection, err := db.ConnectionMysql(mysqlConfig.Host, mysqlConfig.Port, mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Dbname, mysqlConfig.Charset)
+		if err != nil {
+			return nil, err
+		}
+		manageModelGroupBuilder.DB(connection)
+	}
+	builder.ModelGroup(manageModelGroupBuilder.Build())
+	return builder.Build(), nil
+}
+func main() {
+	app, err := createAPP()
+	if err != nil {
+		log.Panic("启动失败", zap.Error(err))
+		return
+	}
+	err = app.Start()
+	if err != nil {
+		log.Panic("启动失败", zap.Error(err))
+		return
+	}
 }
