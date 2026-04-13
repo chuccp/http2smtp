@@ -13,6 +13,7 @@ import (
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
+	"github.com/chuccp/http2smtp/service"
 	"go.uber.org/zap"
 )
 
@@ -95,6 +96,7 @@ func createAPP() (*wf.WebFrame, error) {
 		}
 		manageModelGroupBuilder.DB(connection)
 	}
+	builder.Service(&service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{})
 	builder.ModelGroup(manageModelGroupBuilder.Build())
 	return builder.Build(), nil
 }
