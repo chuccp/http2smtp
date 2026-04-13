@@ -1,0 +1,284 @@
+@use "sass:map";
+
+// 响应式断点定义
+$breakpoints: (
+  xs: 576px,   // 手机
+  sm: 768px,   // 平板
+  md: 992px,   // 小桌面
+  lg: 1200px   // 大桌面
+);
+
+// 最大宽度媒体查询 mixin（小于等于某断点）
+@mixin respond-below($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+  @if $value != null {
+    @media (max-width: ($value - 1px)) {
+      @content;
+    }
+  } @else {
+    @warn "Breakpoint `#{$breakpoint}` not found in $breakpoints";
+  }
+}
+
+// 最小宽度媒体查询 mixin（大于等于某断点）
+@mixin respond-above($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+  @if $value != null {
+    @media (min-width: $value) {
+      @content;
+    }
+  } @else {
+    @warn "Breakpoint `#{$breakpoint}` not found in $breakpoints";
+  }
+}
+
+// 区间媒体查询 mixin
+@mixin respond-between($lower, $upper) {
+  $lower-value: map.get($breakpoints, $lower);
+  $upper-value: map.get($breakpoints, $upper);
+  @if $lower-value != null and $upper-value != null {
+    @media (min-width: $lower-value) and (max-width: ($upper-value - 1px)) {
+      @content;
+    }
+  } @else {
+    @warn "Breakpoint `#{$lower}` or `#{$upper}` not found in $breakpoints";
+  }
+}
+
+// 响应式工具类
+.hide-xs {
+  @include respond-below(xs) {
+    display: none !important;
+  }
+}
+
+.hide-sm {
+  @include respond-below(sm) {
+    display: none !important;
+  }
+}
+
+.hide-md {
+  @include respond-below(md) {
+    display: none !important;
+  }
+}
+
+.show-xs {
+  display: none !important;
+  @include respond-below(xs) {
+    display: block !important;
+  }
+}
+
+.show-sm {
+  display: none !important;
+  @include respond-below(sm) {
+    display: block !important;
+  }
+}
+
+// 表格响应式容器
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+
+  // 移动端表格最小宽度
+  @include respond-below(sm) {
+    .el-table {
+      min-width: 600px;
+    }
+  }
+}
+
+// Dialog 响应式
+.el-dialog {
+  @include respond-below(sm) {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin-top: 5vh !important;
+  }
+
+  @include respond-below(xs) {
+    width: 98% !important;
+    max-width: 98% !important;
+    margin-top: 2vh !important;
+  }
+}
+
+// 表单响应式
+.el-form {
+  @include respond-below(sm) {
+    .el-form-item {
+      margin-bottom: 18px;
+    }
+
+    .el-form-item__label {
+      float: none;
+      display: block;
+      text-align: left;
+      padding-bottom: 8px;
+    }
+
+    .el-form-item__content {
+      margin-left: 0 !important;
+    }
+  }
+}
+
+// 分页响应式
+.el-pagination {
+  @include respond-below(sm) {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+
+    .el-pagination__sizes,
+    .el-pagination__jump {
+      margin-left: 0;
+    }
+  }
+}
+
+// 搜索栏响应式
+.search-bar {
+  @include respond-below(sm) {
+    .el-form-item {
+      margin-bottom: 10px;
+      margin-right: 0;
+    }
+
+    .el-form--inline .el-form-item {
+      display: block;
+      width: 100%;
+    }
+  }
+}
+
+// 卡片响应式
+.el-card {
+  @include respond-below(sm) {
+    margin-bottom: 15px;
+  }
+}
+
+// 面包屑响应式
+.el-breadcrumb {
+  @include respond-below(sm) {
+    display: none;
+  }
+}
+
+/* ========================================
+   表格转卡片响应式样式
+   使用方法：在包含 el-table 的容器添加 class="table-card-responsive"
+   表格会自动在移动端转换为卡片形式
+   ======================================== */
+.table-card-responsive {
+  @include respond-below(sm) {
+    // 隐藏表格表头
+    .el-table__header-wrapper {
+      display: none;
+    }
+
+    // 表格主体
+    .el-table__body-wrapper {
+      overflow: visible;
+    }
+
+    .el-table {
+      display: block;
+      min-width: 100% !important;
+
+      .el-table__body {
+        display: block;
+        width: 100% !important;
+
+        colgroup {
+          display: none;
+        }
+
+        tbody {
+          display: block;
+          width: 100%;
+        }
+
+        // 每一行转换为卡片
+        .el-table__row {
+          display: flex;
+          flex-wrap: wrap;
+          width: 100%;
+          margin-bottom: 15px;
+          background: #fff;
+          border: 1px solid #ebeef5;
+          border-radius: 8px;
+          padding: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+          &:hover > td.el-table__cell {
+            background: transparent !important;
+          }
+        }
+
+        // 每个单元格转换为卡片项
+        td.el-table__cell {
+          display: flex;
+          flex-direction: column;
+          width: 50%;
+          padding: 8px 12px !important;
+          border: none !important;
+
+          // 全宽显示的列（操作列等）
+          &.full-width-on-mobile {
+            width: 100%;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: center;
+            padding-top: 12px !important;
+            border-top: 1px solid #f0f0f0 !important;
+            margin-top: 8px;
+          }
+
+          .cell {
+            padding: 0;
+            word-break: break-all;
+          }
+        }
+
+        // 固定列隐藏
+        .el-table__fixed,
+        .el-table__fixed-right {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+/* 卡片表格内部标签样式 */
+.mobile-card-item {
+  .card-label {
+    display: none;
+  }
+
+  .card-value {
+    // 默认正常显示
+  }
+}
+
+/* 移动端显示标签 */
+@include respond-below(sm) {
+  .mobile-card-item {
+    .card-label {
+      display: block;
+      font-size: 12px;
+      color: #909399;
+      margin-bottom: 4px;
+    }
+
+    .card-value {
+      font-size: 14px;
+      color: #303133;
+    }
+  }
+}

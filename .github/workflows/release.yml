@@ -1,0 +1,215 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+env:
+  REGISTRY_IMAGE: cooge123/http2smtp
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # Include amd64 on all platforms.
+        goos: [ windows,linux ]
+        goarch: [ amd64 ]
+        exclude:
+          # Exclude i386 on darwin and dragonfly.
+          - goarch: 386
+            goos: dragonfly
+          - goarch: 386
+            goos: darwin
+          - goarch: 386
+            goos: windows
+        include:
+          # BEGIN Other architectures
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: riscv64
+          - goos: windows
+            goarch: arm64
+          - goos: darwin
+            goarch: arm64
+          # END Other architectures
+      fail-fast: false
+
+    runs-on: windows-latest
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show workflow information
+        id: get_filename
+        run: |
+          $NAME=$env:GOOS+'-'+$env:GOARCH
+          $ASSET_NAME=$NAME
+          echo "GOOS:"$env:GOOS",GOARCH:"$env:GOARCH",GOARM:"$env:GOARM", RELEASE_NAME:"$env:NAME
+          echo "ASSET_NAME=$NAME" >> $GITHUB_OUTPUT
+          echo "ASSET_NAME=$NAME" >> $GITHUB_ENV
+
+      - name: download web view
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'chuccp/d-mail-view'
+          latest: true
+          fileName: 'd-mail-view.zip'
+
+      - name: unzip web view
+        run: |
+          unzip -o d-mail-view.zip -d webview
+          mkdir -p build_assets
+          cp -r webview ./build_assets/web
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.5'
+
+      - name: Get project dependencies
+        run: go mod download
+
+      - name: Build http2smtp
+        run: |
+          go build  -v -o build_assets/http2smtp  ./
+
+      - name: Rename Windows http2smtp
+        if: matrix.goos == 'windows'
+        run: |
+          cd ./build_assets || exit 1
+          mv http2smtp http2smtp.exe
+
+      - name: Sign Windows d-mail
+        if: matrix.goos == 'windows'
+        uses: dlemstra/code-sign-action@v1
+        with:
+          certificate: '${{ secrets.CERTIFICATE }}'
+          password: '${{ secrets.CERTIFICATE_PASSWORD }}'
+          folder: 'build_assets'
+          recursive: true
+          files: |
+            http2smtp.exe
+          description: 'sign http2smtp.exe'
+
+      - name: Create tar.gz archive
+        run: |
+          pushd build_assets || exit 1
+          tar -czvf ../http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz .
+          popd || exit 1
+
+      - name: Upload files to GitHub release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: ./http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz*
+          tag: ${{ github.ref }}
+  build-docker:
+    strategy:
+      matrix:
+        goos: [ linux ]
+        goarch: [ amd64,arm64,riscv64 ]
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
+    steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.goos }}/${{ matrix.goarch }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            goarch=${{env.GOARCH}}
+          platforms: ${{ matrix.goos }}/${{ matrix.goarch }}
+          labels: ${{ env.REGISTRY_IMAGE }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+  merge:
+    runs-on: ubuntu-latest
+    needs:
+      - build-docker
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+
+
+

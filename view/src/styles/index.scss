@@ -1,0 +1,203 @@
+/* 全局样式 */
+@use './responsive.scss' as *;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #dcdfe6;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #c0c4cc;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f5f7fa;
+}
+
+/* 表格样式统一：竖分割线 + 三色交替 */
+.el-table {
+  border: 1px solid #ebeef5 !important;
+}
+
+/* 表头竖分割线 */
+.el-table th.el-table__cell {
+  border-right: 1px solid #ebeef5 !important;
+  border-bottom: 1px solid #ebeef5 !important;
+}
+
+.el-table th.el-table__cell:last-child {
+  border-right: none !important;
+}
+
+/* 表格内容竖分割线 */
+.el-table td.el-table__cell {
+  border-right: 1px solid #ebeef5 !important;
+}
+
+.el-table td.el-table__cell:last-child {
+  border-right: none !important;
+}
+
+/* 行间横线 */
+.el-table__body tr > td.el-table__cell {
+  border-bottom: 1px solid #ebeef5 !important;
+}
+
+/* 固定列边框 */
+.el-table__fixed,
+.el-table__fixed-right {
+  border: 1px solid #ebeef5 !important;
+}
+
+/* 表格三色交替显示 */
+.el-table--striped .el-table__body-wrapper .el-table__body tbody tr:nth-child(3n+1) {
+  background-color: #ffffff;
+}
+
+.el-table--striped .el-table__body-wrapper .el-table__body tbody tr:nth-child(3n+2) {
+  background-color: #f5f7fa;
+}
+
+.el-table--striped .el-table__body-wrapper .el-table__body tbody tr:nth-child(3n) {
+  background-color: #faf9f7;
+}
+
+/* 普通表格三色交替（无 striped 属性时） */
+.el-table .el-table__body-wrapper .el-table__body tbody tr:nth-child(3n+2) {
+  background-color: #f5f7fa;
+}
+
+.el-table .el-table__body-wrapper .el-table__body tbody tr:nth-child(3n) {
+  background-color: #faf9f7;
+}
+
+/* 鼠标悬停时保持背景色可见 */
+.el-table__body tr.hover-row > td {
+  background-color: #ecf5ff !important;
+}
+
+/* 表格操作按钮间距 */
+.el-table .el-button + .el-button {
+  margin-left: 8px;
+}
+
+/* 分页样式 */
+.el-pagination {
+  padding: 15px 0;
+}
+
+/* 卡片样式 */
+.el-card {
+  border: none;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* 表单样式 */
+.el-form-item__label {
+  font-weight: normal;
+}
+
+/* 搜索栏样式 */
+.search-bar {
+  background: #fff;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+
+  /* 输入框固定宽度，防止清除按钮出现时拉伸 */
+  .el-form--inline .el-form-item .el-input,
+  .el-form.inline .el-form-item .el-input {
+    width: 200px;
+  }
+
+  /* 下拉框固定宽度 */
+  .el-form--inline .el-form-item .el-select,
+  .el-form.inline .el-form-item .el-select {
+    width: 150px;
+  }
+
+  /* 日期范围选择器宽度 */
+  .el-form--inline .el-form-item .el-date-editor--daterange,
+  .el-form.inline .el-form-item .el-date-editor--daterange {
+    width: 240px;
+  }
+}
+
+/* 工具栏样式 */
+.toolbar {
+  margin-bottom: 15px;
+}
+
+/* app-container */
+.app-container {
+  padding: 20px;
+  background: #fff;
+  border-radius: 4px;
+  min-height: calc(100vh - 130px);
+
+  /* 响应式 padding */
+  @media (max-width: 768px) {
+    padding: 15px;
+    min-height: calc(100vh - 110px);
+  }
+
+  @media (max-width: 576px) {
+    padding: 10px;
+    min-height: calc(100vh - 100px);
+  }
+}
+
+/* 修复 el-scrollbar__view 不填满宽度问题 */
+.el-scrollbar__view {
+  width: 100% !important;
+  display: block !important;
+}
+
+/* 移动端输入框样式 */
+.mobile-container {
+  .el-input__wrapper {
+    padding: 8px 15px;
+    min-height: 44px;
+  }
+
+  .el-input__inner {
+    height: 28px;
+    line-height: 28px;
+    font-size: 16px;
+  }
+
+  .el-input-number {
+    width: 100%;
+  }
+
+  .el-input-number .el-input__wrapper {
+    padding: 8px 15px;
+    min-height: 44px;
+  }
+
+  .el-input-number__decrease,
+  .el-input-number__increase {
+    width: 44px;
+    height: 42px;
+    line-height: 42px;
+    font-size: 16px;
+  }
+}
