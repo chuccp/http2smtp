@@ -154,8 +154,8 @@ func (set *Set) testConnection(req *web.Request) (any, error) {
 	return "ok", nil
 }
 func (set *Set) readSet(req *web.Request) (any, error) {
-	var cfg config.SetInfo
-	err := set.context.GetConfig().Unmarshal(&cfg)
+	cfg := config.DefaultSetInfo
+	err := set.context.GetConfig().Unmarshal(cfg)
 	if err != nil {
 		return nil, err
 	}

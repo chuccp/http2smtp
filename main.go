@@ -11,6 +11,7 @@ import (
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/http2smtp/auth"
+	config2 "github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
 	"github.com/chuccp/http2smtp/service"
@@ -48,10 +49,13 @@ func createAPP() (*wf.WebFrame, error) {
 		fileConfig.Put("core.cachePath", storageRoot)
 	}
 	builder := wf.NewBuilder(fileConfig)
-
+	if webPort == 0 {
+		webPort = config2.ManagePort
+	}
 	restGroupBuilder := core.NewRestGroupBuilder()
 	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{})
 	restGroupBuilder.Port(webPort)
+	restGroupBuilder.ContextPath("/api")
 	restGroupBuilder.Filter(auth2.NewAuthenticationFilter(&auth.Authentication{}))
 	restGroup := restGroupBuilder.Build()
 
@@ -59,7 +63,11 @@ func createAPP() (*wf.WebFrame, error) {
 
 	apiRestGroupBuilder := core.NewRestGroupBuilder()
 	apiRestGroupBuilder.Rest(&rest.API{})
+	if apiPort == 0 {
+		apiPort = config2.ApiPort
+	}
 	apiRestGroupBuilder.Port(apiPort)
+	apiRestGroupBuilder.ContextPath("/api")
 	builder.RestGroup(apiRestGroupBuilder.Build())
 
 	manageModelGroupBuilder := core.NewModelGroupBuilder()

@@ -13,34 +13,34 @@
         <!-- Database Configuration -->
         <el-divider content-position="left">{{ t('setup.databaseConfig') }}</el-divider>
 
-        <el-form-item label="{{ t('setup.databaseType') }}" prop="dbType">
+        <el-form-item :label="t('setup.databaseType')" prop="dbType">
           <el-radio-group v-model="setupForm.dbType">
             <el-radio label="sqlite">{{ t('setup.sqlite') }}</el-radio>
             <el-radio label="mysql">{{ t('setup.mysql') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item v-if="setupForm.dbType === 'sqlite'" label="{{ t('setup.sqliteFile') }}" prop="dbFile">
+        <el-form-item v-if="setupForm.dbType === 'sqlite'" :label="t('setup.sqliteFile')" prop="dbFile">
           <el-input v-model="setupForm.dbFile" :placeholder="'data.db'" />
         </el-form-item>
 
         <template v-if="setupForm.dbType === 'mysql'">
-          <el-form-item label="{{ t('setup.mysqlHost') }}" prop="dbHost">
+          <el-form-item :label="t('setup.mysqlHost')" prop="dbHost">
             <el-input v-model="setupForm.dbHost" placeholder="127.0.0.1" />
           </el-form-item>
-          <el-form-item label="{{ t('setup.mysqlPort') }}" prop="dbPort">
+          <el-form-item :label="t('setup.mysqlPort')" prop="dbPort">
             <el-input-number v-model="setupForm.dbPort" :min="1" :max="65535" />
           </el-form-item>
-          <el-form-item label="{{ t('setup.mysqlDatabase') }}" prop="dbName">
+          <el-form-item :label="t('setup.mysqlDatabase')" prop="dbName">
             <el-input v-model="setupForm.dbName" />
           </el-form-item>
-          <el-form-item label="{{ t('setup.mysqlUser') }}" prop="dbUser">
+          <el-form-item :label="t('setup.mysqlUser')" prop="dbUser">
             <el-input v-model="setupForm.dbUser" />
           </el-form-item>
-          <el-form-item label="{{ t('setup.mysqlPassword') }}" prop="dbPass">
+          <el-form-item :label="t('setup.mysqlPassword')" prop="dbPass">
             <el-input v-model="setupForm.dbPass" type="password" />
           </el-form-item>
-          <el-form-item label="{{ t('setup.mysqlCharset') }}" prop="dbCharset">
+          <el-form-item :label="t('setup.mysqlCharset')" prop="dbCharset">
             <el-input v-model="setupForm.dbCharset" placeholder="utf8mb4" />
           </el-form-item>
           <el-form-item>
@@ -53,26 +53,26 @@
         <!-- Port Configuration -->
         <el-divider content-position="left">{{ t('setup.portConfig') }}</el-divider>
 
-        <el-form-item label="{{ t('setup.webPort') }}" prop="webPort">
+        <el-form-item :label="t('setup.webPort')" prop="webPort">
           <el-input-number v-model="setupForm.webPort" :min="1" :max="65535" />
         </el-form-item>
 
-        <el-form-item label="{{ t('setup.apiPort') }}" prop="apiPort">
+        <el-form-item :label="t('setup.apiPort')" prop="apiPort">
           <el-input-number v-model="setupForm.apiPort" :min="1" :max="65535" />
         </el-form-item>
 
         <!-- Admin Account -->
         <el-divider content-position="left">{{ t('setup.adminAccount') }}</el-divider>
 
-        <el-form-item label="{{ t('setup.adminUsername') }}" prop="adminUser">
+        <el-form-item :label="t('setup.adminUsername')" prop="adminUser">
           <el-input v-model="setupForm.adminUser" />
         </el-form-item>
 
-        <el-form-item label="{{ t('setup.adminPassword') }}" prop="adminPass">
+        <el-form-item :label="t('setup.adminPassword')" prop="adminPass">
           <el-input v-model="setupForm.adminPass" type="password" />
         </el-form-item>
 
-        <el-form-item label="{{ t('setup.confirmPassword') }}" prop="confirmPassword">
+        <el-form-item :label="t('setup.confirmPassword')" prop="confirmPassword">
           <el-input v-model="confirmPassword" type="password" />
         </el-form-item>
 
@@ -201,7 +201,7 @@ const handleInitialize = async () => {
   min-height: 100vh;
   padding: 40px 20px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }

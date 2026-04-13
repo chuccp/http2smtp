@@ -34,14 +34,17 @@ type SetInfo struct {
 	Schedule  *Schedule `json:"schedule"`
 }
 
-var defaultSetInfo = &SetInfo{
+var ManagePort = 12566
+var ApiPort = 12567
+
+var DefaultSetInfo = &SetInfo{
 	HasInit:   false,
 	DbType:    "sqlite",
 	CachePath: ".cache",
 	Sqlite:    &Sqlite{Filename: "d-mail.db"},
 	Mysql:     &Mysql{Host: "", Port: 3306, Dbname: "d-main", Username: "", Password: "", Charset: "utf8"},
-	Manage:    &Manage{WebPath: "web", Port: 12566, Username: "", Password: "", ConfirmPassword: ""},
-	Api:       &Api{Port: 12567},
+	Manage:    &Manage{WebPath: "web", Port: ManagePort, Username: "", Password: "", ConfirmPassword: ""},
+	Api:       &Api{Port: ApiPort},
 	Schedule:  &Schedule{Start: true},
 }
 
