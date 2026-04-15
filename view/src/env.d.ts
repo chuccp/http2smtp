@@ -45,12 +45,10 @@ interface TokenConfig {
   id: number
   token: string
   name: string
-  smtpId: number
   SMTPId: number
   receiveEmailIds: string
   subject: string
   isUse: boolean
-  enable: boolean
   createTime: string
   updateTime: string
 }

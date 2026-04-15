@@ -28,7 +28,7 @@ func (token *Token) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (token *Token) getPage(req *web.Request) (any, error) {
 
@@ -50,7 +50,7 @@ func (token *Token) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (token *Token) putOne(req *web.Request) (any, error) {
 	var st model.Token
@@ -59,11 +59,16 @@ func (token *Token) putOne(req *web.Request) (any, error) {
 		return nil, err
 	}
 	st.ReceiveEmailIds = util.DeduplicateIds(st.ReceiveEmailIds)
+	// 保留原有 token
+	exist, _ := token.tokenModel.FindById(st.Id)
+	if exist != nil && exist.Token != "" {
+		st.Token = exist.Token
+	}
 	err = token.tokenModel.UpdateById(&st)
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 
 func (token *Token) sendMail(req *web.Request) (any, error) {

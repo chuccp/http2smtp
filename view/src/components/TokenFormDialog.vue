@@ -13,6 +13,15 @@
       <el-form-item :label="t('token.tokenName')" prop="name">
         <el-input v-model="form.name" :placeholder="t('token.tokenName')" />
       </el-form-item>
+      <el-form-item :label="t('token.tokenValue')" prop="token">
+        <el-input v-model="form.token" :placeholder="t('token.tokenValue')">
+          <template #suffix>
+            <el-button link size="small" @click="form.token = generateRandomString(32)">
+              {{ t('token.generateToken') }}
+            </el-button>
+          </template>
+        </el-input>
+      </el-form-item>
       <el-form-item :label="t('token.associatedSMTP')" prop="SMTPId">
         <el-select v-model="form.SMTPId" :placeholder="t('token.pleaseSelectSMTP')" filterable clearable>
           <el-option
@@ -59,6 +68,7 @@ import { createToken, updateToken } from '@/api/token'
 import { getSMTPServers } from '@/api/smtp'
 import { getMails } from '@/api/mail'
 import { ElMessage } from 'element-plus'
+import { generateRandomString } from '@/utils/crypto'
 
 interface Props {
   open: boolean
@@ -79,6 +89,7 @@ const selectedRecipientIds = ref<number[]>([])
 
 const defaultForm: Partial<TokenConfig> = {
   name: '',
+  token: generateRandomString(32),
   SMTPId: 0,
   receiveEmailIds: '',
   isUse: true
@@ -88,7 +99,8 @@ const form = ref<Partial<TokenConfig>>({ ...defaultForm })
 
 const rules = computed<FormRules<Partial<TokenConfig>>>(() => ({
   name: [{ required: true, message: t('token.tokenName'), trigger: 'blur' }],
-  smtpId: [{ required: true, message: t('token.pleaseSelectSMTP'), trigger: 'change' }]
+  token: [{ required: true, message: t('token.tokenValue'), trigger: 'blur' }],
+  SMTPId: [{ required: true, message: t('token.pleaseSelectSMTP'), trigger: 'change' }]
 }))
 
 const loadOptions = async () => {
@@ -122,7 +134,7 @@ watch(() => props.editing, () => {
       selectedRecipientIds.value = []
     }
   } else {
-    form.value = { ...defaultForm }
+    form.value = { ...defaultForm, token: generateRandomString(32) }
     selectedRecipientIds.value = []
   }
 }, { immediate: true })
@@ -131,7 +143,7 @@ watch(() => props.open, (newVal) => {
   if (newVal) {
     loadOptions()
     if (!props.editing) {
-      form.value = { ...defaultForm }
+      form.value = { ...defaultForm, token: generateRandomString(32) }
       selectedRecipientIds.value = []
     }
   }

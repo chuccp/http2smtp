@@ -18,9 +18,9 @@ func (s *SmtpService) PageForWeb(page *web.Page) (*web.PageAble[*model.SMTP], er
 		return nil, err
 	}
 	// 将 Username 的值赋给 Name
-	for _, item := range result.List {
-		item.Name = item.Username
-	}
+	//for _, item := range result.List {
+	//	item.Name = item.Username
+	//}
 	return result, nil
 }
 

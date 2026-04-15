@@ -15,10 +15,10 @@
         v-loading="loading"
       >
         <el-table-column prop="name" :label="t('token.tokenName')" />
-        <el-table-column prop="token" :label="t('token.tokenValue')" min-width="120">
+        <el-table-column prop="token" :label="t('token.tokenValue')" min-width="280">
           <template #default="{ row }">
             <div class="token-cell">
-              <span>{{ row.token.slice(0, 8) }}...{{ row.token.slice(-8) }}</span>
+              <span>{{ row.token }}</span>
               <el-button size="small" link @click="copyToken(row.token)">
                 <el-icon><CopyDocument /></el-icon>
                 {{ t('token.copyToken') }}
@@ -38,7 +38,7 @@
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.operations')" width="200" class="full-width-on-mobile">
+        <el-table-column :label="t('common.operations')" width="240" class="full-width-on-mobile">
           <template #default="{ row }">
             <el-button size="small" @click="handleSendTest(row)">
               {{ t('token.sendTestMail') }}

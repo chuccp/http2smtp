@@ -11,7 +11,7 @@ import (
 type Token struct {
 	Id               uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	Token            string    `gorm:"unique;column:token" json:"token"`
-	Name             string    `gorm:"-" json:"name"`
+	Name             string    `gorm:"name" json:"name"`
 	Subject          string    `gorm:"column:subject" json:"subject"`
 	ReceiveEmailIds  string    `gorm:"column:receive_emails" json:"receiveEmailIds"`
 	ReceiveEmails    []*Mail   `gorm:"-" json:"receiveEmails"`

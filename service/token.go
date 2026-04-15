@@ -179,7 +179,6 @@ func (l *TokenService) supplementToken(st ...*model.Token) {
 	mailIds := make([]uint, 0)
 	stmpIds := make([]uint, 0)
 	for _, d := range st {
-		d.Name = d.Token
 		mailIds = append(mailIds, util.StringToUintIds(d.ReceiveEmailIds)...)
 		stmpIds = append(stmpIds, d.SMTPId)
 	}
