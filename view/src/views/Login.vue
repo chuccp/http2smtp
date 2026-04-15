@@ -22,6 +22,7 @@
           <el-input
             v-model="loginForm.password"
             type="password"
+            show-password
             :placeholder="t('auth.password')"
             prefix-icon="Lock"
             size="large"
@@ -86,6 +87,7 @@ const handleLogin = async () => {
       loginForm.value.rememberMe
     )
     if (success) {
+      ElMessage.success(t('auth.loginSuccess'))
       router.push('/dashboard')
     }
   } finally {

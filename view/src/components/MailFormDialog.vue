@@ -10,10 +10,10 @@
       :rules="rules"
       label-width="100px"
     >
-      <el-form-item label="{{ t('mail.recipientName') }}" prop="name">
-        <el-input v-model="form.name" placeholder="{{ t('mail.recipientName') }}" />
+      <el-form-item :label="t('mail.recipientName')" prop="name">
+        <el-input v-model="form.name" :placeholder="t('mail.recipientName')" />
       </el-form-item>
-      <el-form-item label="{{ t('mail.emailAddress') }}" prop="email">
+      <el-form-item :label="t('mail.emailAddress')" prop="email">
         <el-input v-model="form.email" placeholder="recipient@example.com" />
       </el-form-item>
     </el-form>

@@ -10,8 +10,8 @@
       :rules="rules"
       label-width="100px"
     >
-      <el-form-item label="{{ t('mail.recipientName') }}" prop="toEmail">
-        <el-select v-model="form.toEmail" placeholder="{{ t('smtp.pleaseSelectRecipient') }}" filterable clearable>
+      <el-form-item :label="t('mail.recipientName')" prop="toEmail">
+        <el-select v-model="form.toEmail" :placeholder="t('smtp.pleaseSelectRecipient')" filterable clearable>
           <el-option
             v-for="item in mailList"
             :key="item.id"
@@ -20,10 +20,10 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="{{ t('token.subject') }}" prop="subject">
+      <el-form-item :label="t('token.subject')" prop="subject">
         <el-input v-model="form.subject" :placeholder="t('smtp.testEmailSubject')" />
       </el-form-item>
-      <el-form-item label="{{ t('log.content') }}" prop="content">
+      <el-form-item :label="t('log.content')" prop="content">
         <el-input
           v-model="form.content"
           type="textarea"

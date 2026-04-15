@@ -37,6 +37,8 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error('Check system status error', e)
+    // Fallback: go to login on error
+    router.push('/login')
   }
 })
 </script>

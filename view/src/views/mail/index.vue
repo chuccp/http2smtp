@@ -14,14 +14,14 @@
         striped
         v-loading="loading"
       >
-        <el-table-column prop="name" label="{{ t('mail.recipientName') }}" />
-        <el-table-column prop="email" label="{{ t('mail.emailAddress') }}" />
-        <el-table-column prop="createTime" label="{{ t('common.createTime') }}" width="180">
+        <el-table-column prop="name" :label="t('mail.recipientName')" />
+        <el-table-column prop="email" :label="t('mail.emailAddress')" />
+        <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="{{ t('common.operations') }}" width="140" class="full-width-on-mobile">
+        <el-table-column :label="t('common.operations')" width="140" class="full-width-on-mobile">
           <template #default="{ row }">
             <el-button size="small" @click="handleEdit(row)">
               {{ t('common.edit') }}

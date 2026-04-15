@@ -14,8 +14,8 @@
         striped
         v-loading="loading"
       >
-        <el-table-column prop="name" label="{{ t('token.tokenName') }}" />
-        <el-table-column prop="token" label="{{ t('token.tokenValue') }}" min-width="120">
+        <el-table-column prop="name" :label="t('token.tokenName')" />
+        <el-table-column prop="token" :label="t('token.tokenValue')" min-width="120">
           <template #default="{ row }">
             <div class="token-cell">
               <span>{{ row.token.slice(0, 8) }}...{{ row.token.slice(-8) }}</span>
@@ -26,19 +26,19 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="enable" label="{{ t('common.status') }}" width="80" align="center">
+        <el-table-column prop="enable" :label="t('common.status')" width="80" align="center">
           <template #default="{ row }">
             <el-tag :type="row.enable ? 'success' : 'danger'">
               {{ row.enable ? t('token.enabled') : t('token.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="{{ t('common.createTime') }}" width="180">
+        <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="{{ t('common.operations') }}" width="200" class="full-width-on-mobile">
+        <el-table-column :label="t('common.operations')" width="200" class="full-width-on-mobile">
           <template #default="{ row }">
             <el-button size="small" @click="handleSendTest(row)">
               {{ t('token.sendTestMail') }}

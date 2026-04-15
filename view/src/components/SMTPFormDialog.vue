@@ -10,25 +10,25 @@
       :rules="rules"
       label-width="100px"
     >
-      <el-form-item label="{{ t('smtp.smtpName') }}" prop="name">
-        <el-input v-model="form.name" placeholder="{{ t('smtp.smtpName') }}" />
+      <el-form-item :label="t('smtp.smtpName')" prop="name">
+        <el-input v-model="form.name" :placeholder="t('smtp.smtpName')" />
       </el-form-item>
-      <el-form-item label="{{ t('smtp.host') }}" prop="host">
+      <el-form-item :label="t('smtp.host')" prop="host">
         <el-input v-model="form.host" placeholder="smtp.gmail.com" />
       </el-form-item>
-      <el-form-item label="{{ t('smtp.port') }}" prop="port">
+      <el-form-item :label="t('smtp.port')" prop="port">
         <el-input-number v-model="form.port" :min="1" :max="65535" />
       </el-form-item>
-      <el-form-item label="{{ t('smtp.fromAddress') }}" prop="from">
+      <el-form-item :label="t('smtp.fromAddress')" prop="from">
         <el-input v-model="form.from" placeholder="sender@example.com" />
       </el-form-item>
-      <el-form-item label="{{ t('smtp.username') }}" prop="username">
+      <el-form-item :label="t('smtp.username')" prop="username">
         <el-input v-model="form.username" />
       </el-form-item>
-      <el-form-item label="{{ t('smtp.password') }}" prop="password">
+      <el-form-item :label="t('smtp.password')" prop="password">
         <el-input v-model="form.password" type="password" show-password />
       </el-form-item>
-      <el-form-item label="{{ t('smtp.ssl') }}" prop="ssl">
+      <el-form-item :label="t('smtp.ssl')" prop="ssl">
         <el-switch v-model="form.ssl" />
       </el-form-item>
     </el-form>

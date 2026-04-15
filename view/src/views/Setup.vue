@@ -15,8 +15,8 @@
 
         <el-form-item :label="t('setup.databaseType')" prop="dbType">
           <el-radio-group v-model="setupForm.dbType">
-            <el-radio label="sqlite">{{ t('setup.sqlite') }}</el-radio>
-            <el-radio label="mysql">{{ t('setup.mysql') }}</el-radio>
+            <el-radio value="sqlite">{{ t('setup.sqlite') }}</el-radio>
+            <el-radio value="mysql">{{ t('setup.mysql') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -38,7 +38,7 @@
             <el-input v-model="setupForm.dbUser" />
           </el-form-item>
           <el-form-item :label="t('setup.mysqlPassword')" prop="dbPass">
-            <el-input v-model="setupForm.dbPass" type="password" />
+            <el-input v-model="setupForm.dbPass" type="password" show-password />
           </el-form-item>
           <el-form-item :label="t('setup.mysqlCharset')" prop="dbCharset">
             <el-input v-model="setupForm.dbCharset" placeholder="utf8mb4" />
@@ -69,11 +69,11 @@
         </el-form-item>
 
         <el-form-item :label="t('setup.adminPassword')" prop="adminPass">
-          <el-input v-model="setupForm.adminPass" type="password" />
+          <el-input v-model="setupForm.adminPass" type="password" show-password />
         </el-form-item>
 
         <el-form-item :label="t('setup.confirmPassword')" prop="confirmPassword">
-          <el-input v-model="confirmPassword" type="password" />
+          <el-input v-model="confirmPassword" type="password" show-password />
         </el-form-item>
 
         <el-form-item>

@@ -30,25 +30,25 @@
         v-loading="loading"
         @row-click="handleRowClick"
       >
-        <el-table-column prop="token" label="{{ t('log.token') }}" width="120">
+        <el-table-column prop="token" :label="t('log.token')" width="120">
           <template #default="{ row }">
             {{ row.token.slice(0, 12) }}...
           </template>
         </el-table-column>
-        <el-table-column prop="subject" label="{{ t('log.subject') }}" min-width="150" />
-        <el-table-column prop="status" label="{{ t('log.status') }}" width="80" align="center">
+        <el-table-column prop="subject" :label="t('log.subject')" min-width="150" />
+        <el-table-column prop="status" :label="t('log.status')" width="80" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 'success' ? 'success' : row.status === 'error' ? 'danger' : 'warning'">
               {{ t('log.' + row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="{{ t('log.createTime') }}" width="180">
+        <el-table-column prop="createTime" :label="t('log.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="{{ t('common.action') }}" width="100" align="center" class="full-width-on-mobile">
+        <el-table-column :label="t('common.action')" width="100" align="center" class="full-width-on-mobile">
           <template #default="{ row }">
             <el-button size="small" @click.stop="handleDetail(row)">
               {{ t('log.logDetail') }}
@@ -74,24 +74,24 @@
       width="600px"
     >
       <el-descriptions :column="1" border v-if="currentDetail">
-        <el-descriptions-item label="{{ t('log.token') }}">
+        <el-descriptions-item :label="t('log.token')">
           {{ currentDetail.token }}
         </el-descriptions-item>
-        <el-descriptions-item label="{{ t('log.subject') }}">
+        <el-descriptions-item :label="t('log.subject')">
           {{ currentDetail.subject }}
         </el-descriptions-item>
-        <el-descriptions-item label="{{ t('log.content') }}">
+        <el-descriptions-item :label="t('log.content')">
           <pre>{{ currentDetail.content }}</pre>
         </el-descriptions-item>
-        <el-descriptions-item label="{{ t('log.result') }}">
+        <el-descriptions-item :label="t('log.result')">
           {{ currentDetail.result }}
         </el-descriptions-item>
-        <el-descriptions-item label="{{ t('log.status') }}">
+        <el-descriptions-item :label="t('log.status')">
           <el-tag :type="currentDetail.status === 'success' ? 'success' : 'danger'">
             {{ currentDetail.status }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="{{ t('log.createTime') }}">
+        <el-descriptions-item :label="t('log.createTime')">
           {{ formatTime(currentDetail.createTime) }}
         </el-descriptions-item>
       </el-descriptions>

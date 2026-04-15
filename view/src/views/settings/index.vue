@@ -11,10 +11,10 @@
             :model="settingsForm"
             label-width="140px"
           >
-            <el-form-item label="{{ t('settings.managementPort') }}">
+            <el-form-item :label="t('settings.managementPort')">
               <el-input-number v-model="settingsForm.webPort" :min="1" :max="65535" />
             </el-form-item>
-            <el-form-item label="{{ t('settings.apiPort') }}">
+            <el-form-item :label="t('settings.apiPort')">
               <el-input-number v-model="settingsForm.apiPort" :min="1" :max="65535" />
             </el-form-item>
           </el-form>
@@ -32,32 +32,32 @@
             :model="settingsForm"
             label-width="140px"
           >
-            <el-form-item label="{{ t('settings.databaseType') }}">
+            <el-form-item :label="t('settings.databaseType')">
               <el-radio-group v-model="settingsForm.dbType">
-                <el-radio label="sqlite">{{ t('settings.sqlite') }}</el-radio>
-                <el-radio label="mysql">{{ t('settings.mysql') }}</el-radio>
+                <el-radio value="sqlite">{{ t('settings.sqlite') }}</el-radio>
+                <el-radio value="mysql">{{ t('settings.mysql') }}</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item v-if="settingsForm.dbType === 'sqlite'" label="{{ t('settings.sqliteFile') }}">
+            <el-form-item v-if="settingsForm.dbType === 'sqlite'" :label="t('settings.sqliteFile')">
               <el-input v-model="settingsForm.dbFile" />
             </el-form-item>
             <template v-if="settingsForm.dbType === 'mysql'">
-              <el-form-item label="{{ t('settings.mysqlHost') }}">
+              <el-form-item :label="t('settings.mysqlHost')">
                 <el-input v-model="settingsForm.dbHost" />
               </el-form-item>
-              <el-form-item label="{{ t('settings.mysqlPort') }}">
+              <el-form-item :label="t('settings.mysqlPort')">
                 <el-input-number v-model="settingsForm.dbPort" :min="1" :max="65535" />
               </el-form-item>
-              <el-form-item label="{{ t('settings.mysqlDatabase') }}">
+              <el-form-item :label="t('settings.mysqlDatabase')">
                 <el-input v-model="settingsForm.dbName" />
               </el-form-item>
-              <el-form-item label="{{ t('settings.mysqlUser') }}">
+              <el-form-item :label="t('settings.mysqlUser')">
                 <el-input v-model="settingsForm.dbUser" />
               </el-form-item>
-              <el-form-item label="{{ t('settings.mysqlPassword') }}">
+              <el-form-item :label="t('settings.mysqlPassword')">
                 <el-input v-model="settingsForm.dbPass" type="password" show-password/>
               </el-form-item>
-              <el-form-item label="{{ t('settings.mysqlCharset') }}">
+              <el-form-item :label="t('settings.mysqlCharset')">
                 <el-input v-model="settingsForm.dbCharset" />
               </el-form-item>
             </template>
@@ -76,13 +76,13 @@
             :model="adminForm"
             label-width="140px"
           >
-            <el-form-item label="{{ t('settings.adminUsername') }}">
+            <el-form-item :label="t('settings.adminUsername')">
               <el-input v-model="adminForm.username" />
             </el-form-item>
-            <el-form-item label="{{ t('settings.newPassword') }}">
+            <el-form-item :label="t('settings.newPassword')">
               <el-input v-model="adminForm.password" type="password" show-password/>
             </el-form-item>
-            <el-form-item label="{{ t('settings.confirmPassword') }}">
+            <el-form-item :label="t('settings.confirmPassword')">
               <el-input v-model="adminForm.confirmPassword" type="password" show-password/>
             </el-form-item>
           </el-form>

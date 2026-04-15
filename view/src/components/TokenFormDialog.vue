@@ -10,11 +10,11 @@
       :rules="rules"
       label-width="120px"
     >
-      <el-form-item label="{{ t('token.tokenName') }}" prop="name">
-        <el-input v-model="form.name" placeholder="{{ t('token.tokenName') }}" />
+      <el-form-item :label="t('token.tokenName')" prop="name">
+        <el-input v-model="form.name" :placeholder="t('token.tokenName')" />
       </el-form-item>
-      <el-form-item label="{{ t('token.associatedSMTP') }}" prop="smtpId">
-        <el-select v-model="form.smtpId" placeholder="{{ t('token.pleaseSelectSMTP') }}" filterable clearable>
+      <el-form-item :label="t('token.associatedSMTP')" prop="smtpId">
+        <el-select v-model="form.smtpId" :placeholder="t('token.pleaseSelectSMTP')" filterable clearable>
           <el-option
             v-for="item in smtpList"
             :key="item.id"
@@ -23,8 +23,8 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="{{ t('token.allowedRecipients') }}" prop="receiveEmailIds">
-        <el-select v-model="selectedRecipientIds" multiple placeholder="{{ t('token.pleaseSelectRecipients') }}" filterable clearable>
+      <el-form-item :label="t('token.allowedRecipients')" prop="receiveEmailIds">
+        <el-select v-model="selectedRecipientIds" multiple :placeholder="t('token.pleaseSelectRecipients')" filterable clearable>
           <el-option
             v-for="item in mailList"
             :key="item.id"
@@ -33,7 +33,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="{{ t('common.status') }}" prop="enable">
+      <el-form-item :label="t('common.status')" prop="enable">
         <el-switch v-model="form.enable" />
       </el-form-item>
     </el-form>

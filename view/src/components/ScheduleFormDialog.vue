@@ -10,11 +10,11 @@
       :rules="rules"
       label-width="120px"
     >
-      <el-form-item label="{{ t('schedule.taskName') }}" prop="name">
-        <el-input v-model="form.name" placeholder="{{ t('schedule.taskName') }}" />
+      <el-form-item :label="t('schedule.taskName')" prop="name">
+        <el-input v-model="form.name" :placeholder="t('schedule.taskName')" />
       </el-form-item>
-      <el-form-item label="{{ t('schedule.associatedToken') }}" prop="tokenId">
-        <el-select v-model="form.tokenId" placeholder="{{ t('schedule.associatedToken') }}" filterable clearable>
+      <el-form-item :label="t('schedule.associatedToken')" prop="tokenId">
+        <el-select v-model="form.tokenId" :placeholder="t('schedule.associatedToken')" filterable clearable>
           <el-option
             v-for="item in tokenList"
             :key="item.id"
@@ -23,23 +23,23 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="{{ t('schedule.cronExpression') }}" prop="cron">
+      <el-form-item :label="t('schedule.cronExpression')" prop="cron">
         <el-input v-model="form.cron" placeholder="* * * * *" />
         <div class="help-text">
           {{ t('schedule.cronHelp') }}<br>
           {{ t('schedule.exampleCron') }}
         </div>
       </el-form-item>
-      <el-form-item label="{{ t('schedule.requestUrl') }}" prop="url">
+      <el-form-item :label="t('schedule.requestUrl')" prop="url">
         <el-input v-model="form.url" placeholder="https://example.com/api/data" />
       </el-form-item>
-      <el-form-item label="{{ t('schedule.requestMethod') }}" prop="method">
+      <el-form-item :label="t('schedule.requestMethod')" prop="method">
         <el-radio-group v-model="form.method">
-          <el-radio label="GET">GET</el-radio>
-          <el-radio label="POST">POST</el-radio>
+          <el-radio value="GET">GET</el-radio>
+          <el-radio value="POST">POST</el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="{{ t('schedule.requestHeaders') }}" prop="headers">
+      <el-form-item :label="t('schedule.requestHeaders')" prop="headers">
         <el-input
           v-model="form.headers"
           type="textarea"
@@ -47,7 +47,7 @@
           placeholder='{"Authorization": "Bearer token"}'
         />
       </el-form-item>
-      <el-form-item label="{{ t('schedule.requestBody') }}" prop="body">
+      <el-form-item :label="t('schedule.requestBody')" prop="body">
         <el-input
           v-model="form.body"
           type="textarea"
@@ -55,10 +55,10 @@
           placeholder="{}"
         />
       </el-form-item>
-      <el-form-item label="{{ t('schedule.useTemplate') }}" prop="useTemplate">
+      <el-form-item :label="t('schedule.useTemplate')" prop="useTemplate">
         <el-switch v-model="form.useTemplate" />
       </el-form-item>
-      <el-form-item label="{{ t('common.status') }}" prop="enable">
+      <el-form-item :label="t('common.status')" prop="enable">
         <el-switch v-model="form.enable" />
       </el-form-item>
     </el-form>

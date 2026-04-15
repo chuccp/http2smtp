@@ -59,7 +59,7 @@ export function testConnection(settings: SetInfo): Promise<ApiResponse<any>> {
 }
 
 export function initializeSystem(settings: SetInfo): Promise<ApiResponse<any>> {
-  return request.put('/reSet', {
+  return request.put('/set', {
     dbType: settings.dbType,
     sqlite: { filename: settings.dbFile },
     mysql: {

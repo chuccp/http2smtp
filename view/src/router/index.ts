@@ -83,7 +83,7 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const authStore = useAuthStore()
 
   // Set page title
@@ -97,12 +97,9 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth) {
     if (!authStore.isLoggedIn) {
       ElMessage.error(t('auth.pleaseEnterUsername'))
-      next('/')
-      return
+      return '/'
     }
   }
-
-  next()
 })
 
 export default router

@@ -10,13 +10,13 @@
       :rules="rules"
       label-width="100px"
     >
-      <el-form-item label="{{ t('mail.emailAddress') }}" prop="toEmail">
+      <el-form-item :label="t('mail.emailAddress')" prop="toEmail">
         <el-input v-model="form.toEmail" placeholder="recipient@example.com" />
       </el-form-item>
-      <el-form-item label="{{ t('token.subject') }}" prop="subject">
+      <el-form-item :label="t('token.subject')" prop="subject">
         <el-input v-model="form.subject" :placeholder="t('smtp.testEmailSubject')" />
       </el-form-item>
-      <el-form-item label="{{ t('log.content') }}" prop="content">
+      <el-form-item :label="t('log.content')" prop="content">
         <el-input
           v-model="form.content"
           type="textarea"

@@ -100,7 +100,7 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 		return nil, err
 	}
 
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 
 func (set *Set) getSet(req *web.Request) (any, error) {
@@ -173,7 +173,7 @@ func (set *Set) Init(context *core.Context) error {
 	context.Get("/set", set.getSet)
 	context.Get("/defaultSet", set.defaultSet)
 	context.Put("/set", set.putSet)
-	context.Get("/readSet", set.readSet).WithMeta(auth2.WithLogin())
+	context.Get("/readSet", set.readSet)
 	context.Put("/reSet", set.putReSet).WithMeta(auth2.WithLogin())
 	context.Post("/reStart", set.reStart).WithMeta(auth2.WithLogin())
 	context.Post("/testConnection", set.testConnection)

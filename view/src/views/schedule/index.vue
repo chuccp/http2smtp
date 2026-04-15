@@ -14,21 +14,21 @@
         striped
         v-loading="loading"
       >
-        <el-table-column prop="name" label="{{ t('schedule.taskName') }}" />
-        <el-table-column prop="cron" label="{{ t('schedule.cronExpression') }}" width="140" />
-        <el-table-column prop="enable" label="{{ t('common.status') }}" width="80" align="center">
+        <el-table-column prop="name" :label="t('schedule.taskName')" />
+        <el-table-column prop="cron" :label="t('schedule.cronExpression')" width="140" />
+        <el-table-column prop="enable" :label="t('common.status')" width="80" align="center">
           <template #default="{ row }">
             <el-tag :type="row.enable ? 'success' : 'danger'">
               {{ row.enable ? t('schedule.enabled') : t('schedule.disabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="{{ t('common.createTime') }}" width="180">
+        <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="{{ t('common.operations') }}" width="200" class="full-width-on-mobile">
+        <el-table-column :label="t('common.operations')" width="200" class="full-width-on-mobile">
           <template #default="{ row }">
             <el-button size="small" @click="handleTrigger(row)">
               {{ t('schedule.triggerNow') }}
