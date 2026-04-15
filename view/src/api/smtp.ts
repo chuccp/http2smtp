@@ -29,6 +29,6 @@ export function testSMTPConnection(server: Partial<SMTPConfig>): Promise<ApiResp
   return request.post('/test', server)
 }
 
-export function sendTestMail(data: { smtpId: number; toEmail: string; subject: string; content: string }): Promise<ApiResponse<any>> {
+export function sendTestMail(data: { SMTPId: number; recipients: string[]; subject: string; content: string }): Promise<ApiResponse<any>> {
   return request.post('/sendMailBySMTP', data)
 }

@@ -55,6 +55,8 @@ request.interceptors.response.use(
 
       if (status === 401) {
         handleUnauthorized()
+      } else if (status >= 500) {
+        ElMessage.error(errorMsg)
       } else {
         ElMessage.error(errorMsg)
       }

@@ -38,7 +38,7 @@
         {{ t('common.cancel') }}
       </el-button>
       <el-button type="primary" @click="handleSubmit" :loading="submitting">
-        {{ t('common.save') }}
+        {{ t('smtp.sendTestMail') }}
       </el-button>
     </template>
   </el-dialog>
@@ -107,8 +107,8 @@ const handleSubmit = async () => {
       submitting.value = true
       try {
         await sendTestMail({
-          smtpId: props.smtpId,
-          toEmail: form.value.toEmail,
+          SMTPId: props.smtpId,
+          recipients: [form.value.toEmail],
           subject: form.value.subject,
           content: form.value.content
         })

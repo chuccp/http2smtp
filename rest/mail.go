@@ -38,7 +38,7 @@ func (m *Mail) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (m *Mail) getPage(req *web.Request) (any, error) {
 	page, err := req.Page()
@@ -61,7 +61,7 @@ func (m *Mail) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (m *Mail) putOne(req *web.Request) (any, error) {
 	var st model.Mail
@@ -79,7 +79,7 @@ func (m *Mail) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (m *Mail) Init(context *core.Context) error {
 	m.context = context

@@ -54,7 +54,6 @@ func (smtp *Smtp) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	st.Username = st.Name
 	_, err = mail.ParseAddress(st.Mail)
 	if err != nil {
 		return nil, err
