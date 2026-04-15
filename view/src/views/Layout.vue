@@ -321,7 +321,7 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar {
-  width: 210px;
+  width: 160px;
   background-color: #304156;
   transition: all 0.3s;
   overflow: hidden;
@@ -342,13 +342,13 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar.is-mobile.is-collapse {
-  width: 210px;
+  width: 160px;
   transform: translateX(0);
 }
 
 .sidebar.is-mobile.is-hidden {
   transform: translateX(-100%);
-  width: 210px;
+  width: 160px;
 }
 
 .logo {
