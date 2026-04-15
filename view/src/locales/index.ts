@@ -1,10 +1,14 @@
 import { createI18n } from 'vue-i18n'
 import en from './en'
 import zhCN from './zh-cn'
+import zhTW from './zh-tw'
+import ja from './ja'
 
 const messages = {
   en,
-  'zh-cn': zhCN
+  'zh-cn': zhCN,
+  'zh-tw': zhTW,
+  ja
 }
 
 // Get browser language or default to zh-cn

@@ -13,8 +13,8 @@
       <el-form-item :label="t('token.tokenName')" prop="name">
         <el-input v-model="form.name" :placeholder="t('token.tokenName')" />
       </el-form-item>
-      <el-form-item :label="t('token.associatedSMTP')" prop="smtpId">
-        <el-select v-model="form.smtpId" :placeholder="t('token.pleaseSelectSMTP')" filterable clearable>
+      <el-form-item :label="t('token.associatedSMTP')" prop="SMTPId">
+        <el-select v-model="form.SMTPId" :placeholder="t('token.pleaseSelectSMTP')" filterable clearable>
           <el-option
             v-for="item in smtpList"
             :key="item.id"
@@ -28,13 +28,13 @@
           <el-option
             v-for="item in mailList"
             :key="item.id"
-            :label="`${item.name} (${item.email})`"
+            :label="`${item.name} (${item.mail})`"
             :value="item.id"
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="t('common.status')" prop="enable">
-        <el-switch v-model="form.enable" />
+      <el-form-item :label="t('common.status')" prop="isUse">
+        <el-switch v-model="form.isUse" />
       </el-form-item>
     </el-form>
 
@@ -79,9 +79,9 @@ const selectedRecipientIds = ref<number[]>([])
 
 const defaultForm: Partial<TokenConfig> = {
   name: '',
-  smtpId: 0,
+  SMTPId: 0,
   receiveEmailIds: '',
-  enable: true
+  isUse: true
 }
 
 const form = ref<Partial<TokenConfig>>({ ...defaultForm })

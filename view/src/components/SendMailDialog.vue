@@ -15,8 +15,8 @@
           <el-option
             v-for="item in mailList"
             :key="item.id"
-            :label="`${item.name} <${item.email}>`"
-            :value="item.email"
+            :label="`${item.name} <${item.mail}>`"
+            :value="item.mail"
           />
         </el-select>
       </el-form-item>

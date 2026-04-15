@@ -62,6 +62,11 @@
           <span>{{ t('layout.sidebar.settings') }}</span>
         </el-menu-item>
       </el-menu>
+
+      <div class="sidebar-footer" @click="logout">
+        <el-icon><SwitchButton /></el-icon>
+        <span v-show="!isCollapse">{{ t('auth.logout') }}</span>
+      </div>
     </div>
 
     <!-- 右侧内容 -->
@@ -85,17 +90,24 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <el-dropdown trigger="click">
-            <div class="user-info">
-              <el-avatar :size="32">
-                <el-icon><UserFilled /></el-icon>
-              </el-avatar>
-              <span class="username">{{ username }}</span>
+          <el-dropdown trigger="click" @command="handleLangChange">
+            <div class="lang-switcher">
+              <el-icon><ChatDotRound /></el-icon>
+              <span class="lang-label">{{ langLabels[currentLang] || 'EN' }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item divided @click="logout">
-                  {{ t('auth.logout') }}
+                <el-dropdown-item command="zh-cn" :disabled="currentLang === 'zh-cn'">
+                  中文
+                </el-dropdown-item>
+                <el-dropdown-item command="zh-tw" :disabled="currentLang === 'zh-tw'">
+                  繁體
+                </el-dropdown-item>
+                <el-dropdown-item command="ja" :disabled="currentLang === 'ja'">
+                  日本語
+                </el-dropdown-item>
+                <el-dropdown-item command="en" :disabled="currentLang === 'en'">
+                  English
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -158,6 +170,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useTabsStore } from '@/store/tabs'
 import { useI18n } from 'vue-i18n'
+import { ElMessageBox } from 'element-plus'
 import {
   HomeFilled,
   Setting,
@@ -168,10 +181,11 @@ import {
   Tools,
   Fold,
   Expand,
-  UserFilled,
   Close,
   ArrowDown,
-  Menu
+  Menu,
+  ChatDotRound,
+  SwitchButton
 } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
@@ -216,8 +230,21 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
+const { locale } = useI18n()
+const currentLang = computed(() => locale.value)
+const langLabels: Record<string, string> = {
+  'zh-cn': '中文',
+  'zh-tw': '繁體',
+  ja: '日本語',
+  en: 'EN'
+}
+
+const handleLangChange = (command: string) => {
+  locale.value = command
+  localStorage.setItem('http2smtp-lang', command)
+}
+
 const activeMenu = computed(() => route.path)
-const username = computed(() => authStore.username || 'Admin')
 
 const breadcrumbs = computed(() => {
   const matched = route.matched.filter(item => item.meta && item.meta.titleKey)
@@ -265,8 +292,14 @@ const handleMenuSelect = () => {
 }
 
 const logout = () => {
-  authStore.logoutAction()
-  router.push('/login')
+  ElMessageBox.confirm(t('layout.logoutConfirm'), t('common.confirm'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning'
+  }).then(() => {
+    authStore.logoutAction()
+    router.push('/login')
+  }).catch(() => {})
 }
 
 // 点击tab切换 - 使用fullPath跳转以保留参数
@@ -365,7 +398,7 @@ const handleCommand = (command: string) => {
 
 .sidebar-menu {
   border-right: none;
-  height: calc(100% - 50px);
+  height: calc(100% - 50px - 50px);
 
   :deep(.el-scrollbar) {
     height: 100%;
@@ -380,6 +413,26 @@ const handleCommand = (command: string) => {
 
 .sidebar-menu:not(.el-menu--collapse) {
   width: 210px;
+}
+
+.sidebar-footer {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  color: #bfcbd9;
+  background-color: #263445;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.sidebar-footer:hover {
+  background-color: #1b2530;
+  color: #409EFF;
 }
 
 .main-container {
@@ -423,18 +476,27 @@ const handleCommand = (command: string) => {
   align-items: center;
 }
 
-.user-info {
+.lang-switcher {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-.username {
+.lang-switcher:hover {
+  background: #f0f2f5;
+}
+
+.lang-label {
   color: #606266;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-/* Tab样式 */
+// Tab样式 */
 .tabs-container {
   display: flex;
   align-items: center;
@@ -540,7 +602,11 @@ const handleCommand = (command: string) => {
     padding: 0 15px;
   }
 
-  .username {
+  .lang-switcher {
+    padding: 4px 8px;
+  }
+
+  .lang-label {
     display: none;
   }
 

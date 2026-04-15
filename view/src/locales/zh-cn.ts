@@ -133,6 +133,7 @@ export default {
     editToken: '编辑令牌',
     tokenName: '令牌名称',
     tokenValue: '令牌',
+    subject: '主题',
     associatedSMTP: 'SMTP 服务器',
     allowedRecipients: '允许的收件人',
     status: '状态',
@@ -236,6 +237,7 @@ export default {
     tabs: {
       closeOthers: '关闭其他',
       closeAll: '关闭全部'
-    }
+    },
+    logoutConfirm: '确定要退出登录吗？'
   }
 }

@@ -7,7 +7,8 @@ import (
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/core"
-	"github.com/chuccp/go-web-frame/db"
+	"github.com/chuccp/http2smtp/db"
+
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/http2smtp/auth"
@@ -34,6 +35,7 @@ func createAPP() (*wf.WebFrame, error) {
 	if err != nil {
 		return nil, err
 	}
+	init := fileConfig.GetBoolOrDefault("core.init", false)
 	if webPort > 0 || apiPort > 0 {
 		if apiPort == 0 {
 			apiPort = webPort
@@ -41,12 +43,12 @@ func createAPP() (*wf.WebFrame, error) {
 		if webPort == 0 {
 			webPort = apiPort
 		}
-		fileConfig.Put("core.isDocker", "true")
+		fileConfig.Put("core.isdocker", "true")
 		fileConfig.Put("manage.port", webPort)
 		fileConfig.Put("api.port", apiPort)
 	}
 	if len(storageRoot) > 0 {
-		fileConfig.Put("core.cachePath", storageRoot)
+		fileConfig.Put("core.cachepath", storageRoot)
 	}
 	builder := wf.NewBuilder(fileConfig)
 	if webPort == 0 {
@@ -67,11 +69,10 @@ func createAPP() (*wf.WebFrame, error) {
 		apiPort = config2.ApiPort
 	}
 	apiRestGroupBuilder.Port(apiPort)
-	apiRestGroupBuilder.ContextPath("/api")
 	builder.RestGroup(apiRestGroupBuilder.Build())
 
 	manageModelGroupBuilder := core.NewModelGroupBuilder()
-
+	manageModelGroupBuilder.AutoCreateTable(true)
 	manageModelGroupBuilder.Model(
 		&model.MailModel{},
 		&model.SMTPModel{},
@@ -80,25 +81,8 @@ func createAPP() (*wf.WebFrame, error) {
 		&model.LogModel{},
 	)
 
-	dbType := fileConfig.GetString("core.dbtype")
-	if dbType == "sqlite" {
-		var sqliteConfig = model.DefaultSqliteConfig()
-		err := fileConfig.UnmarshalKey("sqlite", &sqliteConfig)
-		if err != nil {
-			return nil, err
-		}
-		connection, err := db.ConnectionSQLite(sqliteConfig.Filename)
-		if err != nil {
-			return nil, err
-		}
-		manageModelGroupBuilder.DB(connection)
-	} else if dbType == "mysql" {
-		var mysqlConfig = model.DefaultMysqlConfig()
-		err := fileConfig.UnmarshalKey("mysql", &mysqlConfig)
-		if err != nil {
-			return nil, err
-		}
-		connection, err := db.ConnectionMysql(mysqlConfig.Host, mysqlConfig.Port, mysqlConfig.Username, mysqlConfig.Password, mysqlConfig.Dbname, mysqlConfig.Charset)
+	if init {
+		connection, err := db.GetDb(fileConfig)
 		if err != nil {
 			return nil, err
 		}

@@ -19,8 +19,8 @@
       <el-form-item :label="t('smtp.port')" prop="port">
         <el-input-number v-model="form.port" :min="1" :max="65535" />
       </el-form-item>
-      <el-form-item :label="t('smtp.fromAddress')" prop="from">
-        <el-input v-model="form.from" placeholder="sender@example.com" />
+      <el-form-item :label="t('smtp.fromAddress')" prop="mail">
+        <el-input v-model="form.mail" placeholder="sender@example.com" />
       </el-form-item>
       <el-form-item :label="t('smtp.username')" prop="username">
         <el-input v-model="form.username" />
@@ -28,12 +28,12 @@
       <el-form-item :label="t('smtp.password')" prop="password">
         <el-input v-model="form.password" type="password" show-password />
       </el-form-item>
-      <el-form-item :label="t('smtp.ssl')" prop="ssl">
-        <el-switch v-model="form.ssl" />
-      </el-form-item>
     </el-form>
 
     <template #footer>
+      <el-button @click="handleTest" :loading="testLoading">
+        {{ t('smtp.testConnection') }}
+      </el-button>
       <el-button @click="open = false">
         {{ t('common.cancel') }}
       </el-button>
@@ -50,7 +50,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-import { createSMTP, updateSMTP } from '@/api/smtp'
+import { createSMTP, updateSMTP, testSMTPConnection } from '@/api/smtp'
 import { ElMessage } from 'element-plus'
 
 interface Props {
@@ -66,15 +66,15 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
+const testLoading = ref(false)
 
 const defaultForm: Partial<SMTPConfig> = {
   name: '',
   host: '',
-  port: 587,
+  port: 25,
   username: '',
   password: '',
-  from: '',
-  ssl: true
+  mail: ''
 }
 
 const form = ref<Partial<SMTPConfig>>({ ...defaultForm })
@@ -83,7 +83,7 @@ const rules = computed<FormRules<Partial<SMTPConfig>>>(() => ({
   name: [{ required: true, message: t('smtp.smtpName'), trigger: 'blur' }],
   host: [{ required: true, message: t('smtp.host'), trigger: 'blur' }],
   port: [{ required: true, message: t('smtp.port'), trigger: 'blur' }],
-  from: [{ required: true, message: t('smtp.fromAddress'), trigger: 'blur' }],
+  mail: [{ required: true, message: t('smtp.fromAddress'), trigger: 'blur' }],
   username: [{ required: true, message: t('smtp.username'), trigger: 'blur' }],
   password: [{ required: true, message: t('smtp.password'), trigger: 'blur' }]
 }))
@@ -101,6 +101,19 @@ watch(() => props.open, (newVal) => {
     form.value = { ...defaultForm }
   }
 })
+
+const handleTest = async () => {
+  await formRef.value?.validate().catch(() => {})
+  testLoading.value = true
+  try {
+    await testSMTPConnection(form.value)
+    ElMessage.success(t('smtp.connectionSuccess'))
+  } catch {
+    ElMessage.error(t('smtp.connectionFailed'))
+  } finally {
+    testLoading.value = false
+  }
+}
 
 const handleSubmit = async () => {
   if (!formRef.value) return

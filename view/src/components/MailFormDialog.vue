@@ -13,8 +13,8 @@
       <el-form-item :label="t('mail.recipientName')" prop="name">
         <el-input v-model="form.name" :placeholder="t('mail.recipientName')" />
       </el-form-item>
-      <el-form-item :label="t('mail.emailAddress')" prop="email">
-        <el-input v-model="form.email" placeholder="recipient@example.com" />
+      <el-form-item :label="t('mail.emailAddress')" prop="mail">
+        <el-input v-model="form.mail" placeholder="recipient@example.com" />
       </el-form-item>
     </el-form>
 
@@ -54,14 +54,14 @@ const submitting = ref(false)
 
 const defaultForm: Partial<MailConfig> = {
   name: '',
-  email: ''
+  mail: ''
 }
 
 const form = ref<Partial<MailConfig>>({ ...defaultForm })
 
 const rules = computed<FormRules<Partial<MailConfig>>>(() => ({
   name: [{ required: true, message: t('mail.recipientName'), trigger: 'blur' }],
-  email: [
+  mail: [
     { required: true, message: t('mail.emailAddress'), trigger: 'blur' },
     { type: 'email', message: t('mail.pleaseEnterValidEmail'), trigger: 'blur' }
   ]

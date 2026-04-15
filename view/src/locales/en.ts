@@ -133,6 +133,7 @@ export default {
     editToken: 'Edit Token',
     tokenName: 'Token Name',
     tokenValue: 'Token',
+    subject: 'Subject',
     associatedSMTP: 'SMTP Server',
     allowedRecipients: 'Allowed Recipients',
     status: 'Status',
@@ -236,6 +237,7 @@ export default {
     tabs: {
       closeOthers: 'Close Others',
       closeAll: 'Close All'
-    }
+    },
+    logoutConfirm: 'Are you sure you want to logout?'
   }
 }

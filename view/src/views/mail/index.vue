@@ -15,7 +15,7 @@
         v-loading="loading"
       >
         <el-table-column prop="name" :label="t('mail.recipientName')" />
-        <el-table-column prop="email" :label="t('mail.emailAddress')" />
+        <el-table-column prop="mail" :label="t('mail.emailAddress')" />
         <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}

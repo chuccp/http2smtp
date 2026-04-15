@@ -1,6 +1,5 @@
 import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
-import router from '@/router'
 
 const request = axios.create({
   baseURL: '/api',
@@ -9,11 +8,14 @@ const request = axios.create({
 })
 
 // 处理未登录状态，跳转到登录页
+let isRedirecting = false
 const handleUnauthorized = () => {
+  if (isRedirecting) return
+  isRedirecting = true
   localStorage.removeItem('http2smtp-token')
   localStorage.removeItem('http2smtp-username')
-  router.push('/')
   ElMessage.error('登录已过期，请重新登录')
+  window.location.href = '/login'
 }
 
 // 请求拦截器

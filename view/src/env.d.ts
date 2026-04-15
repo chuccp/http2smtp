@@ -28,16 +28,17 @@ interface SMTPConfig {
   port: number
   username: string
   password: string
-  from: string
-  ssl: boolean
+  mail: string
   createTime: string
+  updateTime: string
 }
 
 interface MailConfig {
   id: number
   name: string
-  email: string
+  mail: string
   createTime: string
+  updateTime: string
 }
 
 interface TokenConfig {
@@ -45,23 +46,33 @@ interface TokenConfig {
   token: string
   name: string
   smtpId: number
+  SMTPId: number
   receiveEmailIds: string
+  subject: string
+  isUse: boolean
   enable: boolean
   createTime: string
+  updateTime: string
 }
 
 interface ScheduleConfig {
   id: number
   name: string
+  token: string
   tokenId: number
   cron: string
   url: string
-  method: 'GET' | 'POST'
+  method: string
+  headerStr: string
   headers: string
   body: string
   useTemplate: boolean
+  template: string
+  isUse: boolean
   enable: boolean
+  isSendOnlyByError: boolean
   createTime: string
+  updateTime: string
 }
 
 interface LogEntry {

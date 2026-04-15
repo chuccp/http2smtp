@@ -5,6 +5,8 @@ import (
 
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/http2smtp/db"
+
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
@@ -43,7 +45,7 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 
 	// Update database configuration
 	if setInfo.DbType != "" {
-		set.context.GetConfig().Put("core.dbType", setInfo.DbType)
+		set.context.GetConfig().Put("core.dbtype", setInfo.DbType)
 	}
 	if setInfo.Sqlite != nil {
 		if setInfo.Sqlite.Filename != "" {
@@ -100,6 +102,14 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 		return nil, err
 	}
 
+	createDB, err := db.GetDb(set.context.GetConfig())
+	if err != nil {
+		return nil, err
+	}
+	err = set.context.DefaultModelGroup().SwitchDB(createDB, set.context)
+	if err != nil {
+		return nil, err
+	}
 	return web.Ok("ok"), nil
 }
 

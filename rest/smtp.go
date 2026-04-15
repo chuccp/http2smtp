@@ -45,7 +45,7 @@ func (smtp *Smtp) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 
 }
 func (smtp *Smtp) postOne(req *web.Request) (any, error) {
@@ -54,7 +54,7 @@ func (smtp *Smtp) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	st.Username = st.Name
 	_, err = mail.ParseAddress(st.Mail)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (smtp *Smtp) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 
 }
 func (smtp *Smtp) putOne(req *web.Request) (any, error) {
@@ -81,7 +81,7 @@ func (smtp *Smtp) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 
 }
 func (smtp *Smtp) test(req *web.Request) (any, error) {
@@ -98,7 +98,7 @@ func (smtp *Smtp) test(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 
 }
 
@@ -131,7 +131,7 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 	page, err := req.Page()

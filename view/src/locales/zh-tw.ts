@@ -1,0 +1,243 @@
+export default {
+  // Common
+  common: {
+    confirm: '確認',
+    cancel: '取消',
+    save: '儲存',
+    add: '新增',
+    edit: '編輯',
+    delete: '刪除',
+    search: '搜尋',
+    reset: '重設',
+    action: '操作',
+    operations: '操作',
+    create: '建立',
+    update: '更新',
+    close: '關閉',
+    yes: '是',
+    no: '否',
+    loading: '載入中...',
+    success: '成功',
+    failed: '失敗',
+    copied: '已複製到剪貼簿',
+    enable: '啟用',
+    disable: '停用',
+    status: '狀態',
+    name: '名稱',
+    createTime: '建立時間',
+    description: '描述'
+  },
+
+  // Auth
+  auth: {
+    login: '登入',
+    logout: '登出',
+    username: '使用者名稱',
+    password: '密碼',
+    rememberMe: '記住我',
+    loginSuccess: '登入成功',
+    loginFailed: '登入失敗',
+    pleaseEnterUsername: '請輸入使用者名稱',
+    pleaseEnterPassword: '請輸入密碼'
+  },
+
+  // Setup
+  setup: {
+    systemSetup: '系統初始化',
+    setupWizard: '安裝精靈',
+    databaseConfig: '資料庫設定',
+    databaseType: '資料庫類型',
+    sqlite: 'SQLite',
+    mysql: 'MySQL',
+    sqliteFile: '資料庫檔案路徑',
+    mysqlHost: 'MySQL 主機',
+    mysqlPort: 'MySQL 連接埠',
+    mysqlDatabase: '資料庫名稱',
+    mysqlUser: '使用者名稱',
+    mysqlPassword: '密碼',
+    mysqlCharset: '字元集',
+    testConnection: '測試連線',
+    connectionSuccess: '連線成功',
+    connectionFailed: '連線失敗',
+    portConfig: '連接埠設定',
+    webPort: '管理連接埠',
+    apiPort: 'API 連接埠',
+    adminAccount: '管理員帳號',
+    adminUsername: '管理員使用者名稱',
+    adminPassword: '管理員密碼',
+    confirmPassword: '確認密碼',
+    passwordsNotMatch: '兩次密碼輸入不一致',
+    initialize: '初始化系統',
+    initializing: '初始化中...',
+    initializationSuccess: '系統初始化成功',
+    alreadyInitialized: '系統已初始化，正在跳轉...'
+  },
+
+  // Dashboard
+  dashboard: {
+    dashboard: '儀表板',
+    systemInfo: '系統資訊',
+    quickActions: '快捷操作',
+    statistics: '統計資訊',
+    version: '版本',
+    initialized: '已初始化',
+    notInitialized: '未初始化',
+    smtpServers: 'SMTP 伺服器',
+    recipients: '收件人',
+    tokens: 'API 權杖',
+    scheduledTasks: '排程任務',
+    goToSMTP: '管理 SMTP',
+    goToMail: '管理收件人',
+    goToTokens: '管理權杖',
+    goToSchedule: '管理排程'
+  },
+
+  // SMTP
+  smtp: {
+    smtpManagement: 'SMTP 管理',
+    addSMTP: '新增 SMTP 伺服器',
+    editSMTP: '編輯 SMTP 伺服器',
+    smtpName: '伺服器名稱',
+    host: '主機位址',
+    port: '連接埠',
+    username: '使用者名稱',
+    password: '密碼',
+    fromAddress: '寄件人位址',
+    ssl: '使用 SSL',
+    testConnection: '測試連線',
+    sendTestMail: '發送測試郵件',
+    deleteConfirm: '確定要刪除這個 SMTP 伺服器嗎？',
+    connectionSuccess: '連線測試成功',
+    connectionFailed: '連線測試失敗',
+    pleaseSelectRecipient: '請選擇一個收件人',
+    testEmailSubject: '測試郵件',
+    testEmailContent: '這是來自 HTTP2SMTP 的測試郵件。',
+    testEmailSent: '測試郵件發送成功'
+  },
+
+  // Mail
+  mail: {
+    mailManagement: '收件人管理',
+    addRecipient: '新增收件人',
+    editRecipient: '編輯收件人',
+    recipientName: '收件人名稱',
+    emailAddress: '信箱位址',
+    deleteConfirm: '確定要刪除這個收件人嗎？',
+    pleaseEnterValidEmail: '請輸入有效的信箱位址'
+  },
+
+  // Token
+  token: {
+    tokenManagement: 'API 權杖管理',
+    generateToken: '產生權杖',
+    editToken: '編輯權杖',
+    tokenName: '權杖名稱',
+    tokenValue: '權杖',
+    subject: '主題',
+    associatedSMTP: 'SMTP 伺服器',
+    allowedRecipients: '允許的收件人',
+    status: '狀態',
+    enabled: '啟用',
+    disabled: '停用',
+    copyToken: '複製權杖',
+    sendTestMail: '發送測試郵件',
+    deleteConfirm: '確定要刪除這個權杖嗎？',
+    pleaseSelectSMTP: '請選擇 SMTP 伺服器',
+    pleaseSelectRecipients: '請至少選擇一個收件人',
+    tokenGenerated: '權杖已產生，請立即複製儲存：{token}'
+  },
+
+  // Schedule
+  schedule: {
+    scheduleManagement: '排程任務管理',
+    addSchedule: '新增排程任務',
+    editSchedule: '編輯排程任務',
+    taskName: '任務名稱',
+    associatedToken: 'API 權杖',
+    cronExpression: 'Cron 表示式',
+    requestUrl: '請求 URL',
+    requestMethod: '請求方法',
+    requestHeaders: '請求標頭 (JSON 格式)',
+    requestBody: '請求內容',
+    useTemplate: '使用範本',
+    status: '狀態',
+    enabled: '啟用',
+    disabled: '停用',
+    triggerNow: '立即觸發',
+    deleteConfirm: '確定要刪除這個排程任務嗎？',
+    triggered: '任務觸發成功',
+    cronHelp: 'Cron 表示式格式：分 時 日 月 週',
+    exampleCron: '0 9 * * * = 每天早上 9 點'
+  },
+
+  // Log
+  log: {
+    systemLogs: '系統日誌',
+    searchKeyword: '搜尋關鍵字...',
+    token: '權杖',
+    subject: '主題',
+    content: '內容',
+    result: '結果',
+    logDetail: '日誌詳情',
+    status: '狀態',
+    createTime: '建立時間',
+    smtpServer: 'SMTP 伺服器',
+    recipients: '收件人',
+    attachments: '附件',
+    download: '下載',
+    noResults: '未找到日誌',
+    clear: '清除',
+    success: '成功',
+    error: '錯誤',
+    warning: '警告'
+  },
+
+  // Settings
+  settings: {
+    systemSettings: '系統設定',
+    generalSettings: '通用設定',
+    databaseConfig: '資料庫設定',
+    adminAccount: '管理員帳號',
+    managementPort: '管理連接埠',
+    apiPort: 'API 連接埠',
+    databaseType: '資料庫類型',
+    sqlite: 'SQLite',
+    mysql: 'MySQL',
+    sqliteFile: '資料庫檔案',
+    mysqlHost: 'MySQL 主機',
+    mysqlPort: 'MySQL 連接埠',
+    mysqlDatabase: '資料庫名稱',
+    mysqlUser: 'MySQL 使用者名稱',
+    mysqlPassword: 'MySQL 密碼',
+    mysqlCharset: 'MySQL 字元集',
+    adminUsername: '管理員使用者名稱',
+    newPassword: '新密碼',
+    confirmPassword: '確認密碼',
+    passwordsNotMatch: '兩次密碼輸入不一致',
+    saveSettings: '儲存設定',
+    restartSystem: '重啟系統',
+    restartConfirm: '確定要重啟系統嗎？這將中斷所有目前連線。',
+    restarting: '重啟中...',
+    settingsSaved: '設定儲存成功',
+    systemRestarted: '系統重啟成功',
+    pleaseWait: '請等待系統重啟...'
+  },
+
+  // Layout
+  layout: {
+    sidebar: {
+      dashboard: '儀表板',
+      smtp: 'SMTP',
+      mail: '收件人',
+      tokens: 'API 權杖',
+      schedule: '排程任務',
+      logs: '日誌',
+      settings: '設定'
+    },
+    tabs: {
+      closeOthers: '關閉其他',
+      closeAll: '關閉全部'
+    },
+    logoutConfirm: '確定要登出嗎？'
+  }
+}

@@ -58,8 +58,8 @@
       <el-form-item :label="t('schedule.useTemplate')" prop="useTemplate">
         <el-switch v-model="form.useTemplate" />
       </el-form-item>
-      <el-form-item :label="t('common.status')" prop="enable">
-        <el-switch v-model="form.enable" />
+      <el-form-item :label="t('common.status')" prop="isUse">
+        <el-switch v-model="form.isUse" />
       </el-form-item>
     </el-form>
 
@@ -108,7 +108,7 @@ const defaultForm: Partial<ScheduleConfig> = {
   headers: '',
   body: '',
   useTemplate: false,
-  enable: true
+  isUse: true
 }
 
 const form = ref<Partial<ScheduleConfig>>({ ...defaultForm })
@@ -123,7 +123,7 @@ const rules = computed<FormRules<Partial<ScheduleConfig>>>(() => ({
 const loadOptions = async () => {
   const tokenRes = await getTokens(1, 1000)
   if (tokenRes.code === 0 || tokenRes.code === 200) {
-    tokenList.value = tokenRes.data.list.filter(t => t.enable)
+    tokenList.value = tokenRes.data.list.filter(t => t.isUse)
   }
 }
 

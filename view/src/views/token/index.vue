@@ -26,10 +26,10 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="enable" :label="t('common.status')" width="80" align="center">
+        <el-table-column prop="isUse" :label="t('common.status')" width="80" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.enable ? 'success' : 'danger'">
-              {{ row.enable ? t('token.enabled') : t('token.disabled') }}
+            <el-tag :type="row.isUse ? 'success' : 'danger'">
+              {{ row.isUse ? t('token.enabled') : t('token.disabled') }}
             </el-tag>
           </template>
         </el-table-column>

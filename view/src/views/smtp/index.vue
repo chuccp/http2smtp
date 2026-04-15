@@ -17,15 +17,8 @@
         <el-table-column prop="name" :label="t('smtp.smtpName')" />
         <el-table-column prop="host" :label="t('smtp.host')" />
         <el-table-column prop="port" :label="t('smtp.port')" width="80" />
-        <el-table-column prop="from" :label="t('smtp.fromAddress')" />
+        <el-table-column prop="mail" :label="t('smtp.fromAddress')" />
         <el-table-column prop="username" :label="t('smtp.username')" />
-        <el-table-column prop="ssl" label="SSL" width="60" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.ssl ? 'success' : 'info'">
-              {{ row.ssl ? t('common.yes') : t('common.no') }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
@@ -33,9 +26,6 @@
         </el-table-column>
         <el-table-column :label="t('common.operations')" width="260" class="full-width-on-mobile">
           <template #default="{ row }">
-            <el-button size="small" @click="handleTestConnection(row)">
-              {{ t('smtp.testConnection') }}
-            </el-button>
             <el-button size="small" @click="handleSendTest(row)">
               {{ t('smtp.sendTestMail') }}
             </el-button>
@@ -83,7 +73,7 @@ import { useI18n } from 'vue-i18n'
 import { formatTime } from '@/utils/time'
 
 const { t } = useI18n()
-import { getSMTPServers, createSMTP, updateSMTP, deleteSMTP, testSMTPConnection } from '@/api/smtp'
+import { getSMTPServers, createSMTP, updateSMTP, deleteSMTP } from '@/api/smtp'
 import SMTPFormDialog from '@/components/SMTPFormDialog.vue'
 import SendMailDialog from '@/components/SendMailDialog.vue'
 
@@ -139,15 +129,6 @@ const handleDelete = (row: SMTPConfig) => {
     ElMessage.success(t('common.success'))
     loadData()
   }).catch(() => {})
-}
-
-const handleTestConnection = async (row: SMTPConfig) => {
-  try {
-    await testSMTPConnection(row)
-    ElMessage.success(t('smtp.connectionSuccess'))
-  } catch (e) {
-    ElMessage.error(t('smtp.connectionFailed'))
-  }
 }
 
 const handleSendTest = (row: SMTPConfig) => {
