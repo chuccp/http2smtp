@@ -129,6 +129,31 @@ func (schedule *Schedule) scheduleTestApi(req *web.Request) (any, error) {
 	return params, nil
 }
 
+func (schedule *Schedule) triggerById(req *web.Request) (any, error) {
+	id := req.Param("id")
+	atoi, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	st, err := schedule.scheduleService.GetOne(atoi)
+	if err != nil {
+		return nil, err
+	}
+	if st == nil {
+		return nil, errors.New("schedule not found")
+	}
+	st.IsOnlySendByError = false
+	err = schedule.validate(st)
+	if err != nil {
+		return nil, err
+	}
+	err = schedule.tokenService.SendApiCallMail(st)
+	if err != nil {
+		return nil, err
+	}
+	return web.Ok("ok"), nil
+}
+
 func (schedule *Schedule) Init(context *core.Context) error {
 	schedule.context = context
 	context.Get("/schedule/:id", schedule.getOne).WithMeta(auth2.WithLogin())
@@ -136,6 +161,7 @@ func (schedule *Schedule) Init(context *core.Context) error {
 	context.Get("/schedule", schedule.getPage).WithMeta(auth2.WithLogin())
 	context.Post("/schedule", schedule.postOne).WithMeta(auth2.WithLogin())
 	context.Put("/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
+	context.Post("/schedule/trigger/:id", schedule.triggerById).WithMeta(auth2.WithLogin())
 	context.Post("/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
 	context.Any("/scheduleTestApi", schedule.scheduleTestApi)
 	schedule.scheduleService = wf.GetService[*service.ScheduleService](schedule.context)

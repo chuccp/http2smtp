@@ -28,7 +28,7 @@
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.operations')" width="200" class="full-width-on-mobile">
+        <el-table-column :label="t('common.operations')" width="280" class="full-width-on-mobile">
           <template #default="{ row }">
             <el-button size="small" @click="handleTrigger(row)">
               {{ t('schedule.triggerNow') }}
