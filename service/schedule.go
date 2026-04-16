@@ -26,7 +26,10 @@ func (l *ScheduleService) Init(context *core.Context) error {
 	return nil
 }
 
-func (l *ScheduleService) GetPage(page *web.Page) (any, error) {
+func (l *ScheduleService) GetPage(page *web.Page, userId uint) (any, error) {
+	if userId > 0 {
+		return l.scheduleModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)
+	}
 	return l.scheduleModel.PageForWeb(page)
 }
 func (l *ScheduleService) Edit(sd *model.Schedule) error {
@@ -59,14 +62,13 @@ func (l *ScheduleService) Save(sd *model.Schedule) error {
 
 }
 
-func (l *ScheduleService) GetOne(id int) (*model.Schedule, error) {
-
-	one, err := l.scheduleModel.FindById(uint(id))
+func (l *ScheduleService) GetOne(id int, userId uint) (*model.Schedule, error) {
+	one, err := l.scheduleModel.Query().Where("id = ? AND user_id = ?", uint(id), userId).One()
 	if err != nil {
 		return nil, err
 	}
 	if one == nil {
-		return nil, errors.New("token not found")
+		return nil, errors.New("schedule not found")
 	}
 	headerStr := one.HeaderStr
 	if util.IsNotBlank(headerStr) {

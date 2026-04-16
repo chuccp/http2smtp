@@ -23,14 +23,7 @@
         </el-input>
       </el-form-item>
       <el-form-item :label="t('token.associatedSMTP')" prop="SMTPId">
-        <el-select v-model="form.SMTPId" :placeholder="t('token.pleaseSelectSMTP')" filterable clearable>
-          <el-option
-            v-for="item in smtpList"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
+        <SmtpSelector v-model="form.SMTPId" />
       </el-form-item>
       <el-form-item :label="t('token.allowedRecipients')" prop="receiveEmailIds">
         <el-select v-model="selectedRecipientIds" multiple :placeholder="t('token.pleaseSelectRecipients')" filterable clearable>
@@ -65,10 +58,10 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 import { createToken, updateToken } from '@/api/token'
-import { getSMTPServers } from '@/api/smtp'
 import { getMails } from '@/api/mail'
 import { ElMessage } from 'element-plus'
 import { generateRandomString } from '@/utils/crypto'
+import SmtpSelector from '@/components/SmtpSelector.vue'
 
 interface Props {
   open: boolean
@@ -83,7 +76,6 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
-const smtpList = ref<SMTPConfig[]>([])
 const mailList = ref<MailConfig[]>([])
 const selectedRecipientIds = ref<number[]>([])
 
@@ -104,11 +96,6 @@ const rules = computed<FormRules<Partial<TokenConfig>>>(() => ({
 }))
 
 const loadOptions = async () => {
-  const smtpRes = await getSMTPServers(1, 1000)
-  if (smtpRes.code === 0 || smtpRes.code === 200) {
-    smtpList.value = smtpRes.data.list
-  }
-
   const mailRes = await getMails(1, 1000)
   if (mailRes.code === 0 || mailRes.code === 200) {
     mailList.value = mailRes.data.list

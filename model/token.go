@@ -10,6 +10,7 @@ import (
 
 type Token struct {
 	Id               uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	UserId           uint      `gorm:"column:user_id" json:"userId"`
 	Token            string    `gorm:"unique;column:token" json:"token"`
 	Name             string    `gorm:"name" json:"name"`
 	Subject          string    `gorm:"column:subject" json:"subject"`

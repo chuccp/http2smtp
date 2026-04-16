@@ -10,6 +10,7 @@ import (
 
 type Mail struct {
 	Id         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	UserId     uint      `gorm:"column:user_id" json:"userId"`
 	Name       string    `gorm:"column:name" json:"name"`
 	Mail       string    `gorm:"column:mail" json:"mail"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`

@@ -50,6 +50,7 @@ declare module 'vue' {
     SendMailByTokenDialog: typeof import('./src/components/SendMailByTokenDialog.vue')['default']
     SendMailDialog: typeof import('./src/components/SendMailDialog.vue')['default']
     SMTPFormDialog: typeof import('./src/components/SMTPFormDialog.vue')['default']
+    SmtpSelector: typeof import('./src/components/SmtpSelector.vue')['default']
     TokenFormDialog: typeof import('./src/components/TokenFormDialog.vue')['default']
   }
   export interface GlobalDirectives {

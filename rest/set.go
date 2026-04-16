@@ -2,6 +2,7 @@ package rest
 
 import (
 	"errors"
+	"time"
 
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
@@ -12,6 +13,7 @@ import (
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/model"
+	localutil "github.com/chuccp/http2smtp/util"
 	"go.uber.org/zap"
 )
 
@@ -38,8 +40,6 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	if len(setInfo.Manage.Username) == 0 || len(setInfo.Manage.Password) == 0 {
 		return nil, errors.New("username or password is blank")
 	}
-
-	// Save original password (not encrypted)
 
 	log.Debug("putSet", zap.Any("setInfo", &setInfo))
 
@@ -78,12 +78,6 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 		if setInfo.Manage.Port > 0 {
 			set.context.GetConfig().Put("manage.port", setInfo.Manage.Port)
 		}
-		if setInfo.Manage.Username != "" {
-			set.context.GetConfig().Put("manage.username", setInfo.Manage.Username)
-		}
-		if setInfo.Manage.Password != "" {
-			set.context.GetConfig().Put("manage.password", setInfo.Manage.Password)
-		}
 		if setInfo.Manage.WebPath != "" {
 			set.context.GetConfig().Put("manage.webPath", setInfo.Manage.WebPath)
 		}
@@ -110,6 +104,28 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// 添加管理员用户到数据库
+	userModel := core.GetModel[*model.UserModel](set.context)
+	if userModel != nil {
+		existUser, _ := userModel.FindOneByName(setInfo.Manage.Username)
+		if existUser == nil {
+			hashedPassword, err := localutil.HashPassword(setInfo.Manage.Password)
+			if err != nil {
+				return nil, err
+			}
+			adminUser := &model.User{
+				Name:       setInfo.Manage.Username,
+				Password:   hashedPassword,
+				IsUse:      true,
+				IsAdmin:    true,
+				CreateTime: time.Now(),
+				UpdateTime: time.Now(),
+			}
+			_ = userModel.Save(adminUser)
+		}
+	}
+
 	return web.Ok("ok"), nil
 }
 
@@ -120,14 +136,10 @@ func (set *Set) getSet(req *web.Request) (any, error) {
 		hasLogin = true
 	}
 
-	// Check if core.init exists and is true
-	// First check if the key exists at all
 	initStr := set.context.GetConfig().GetStringOrDefault("core.init", "")
-	// If the value is empty, it means it hasn't been set yet - return false
 	if initStr == "" {
 		return &config.System{HasInit: false, HasLogin: hasLogin, IsDocker: set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)}, nil
 	}
-	// Otherwise parse the boolean value
 	init := set.context.GetConfig().GetBoolOrDefault("core.init", false)
 	isDocker := set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)
 	return &config.System{HasInit: init, HasLogin: hasLogin, IsDocker: isDocker}, nil
@@ -155,9 +167,7 @@ func (set *Set) testConnection(req *web.Request) (any, error) {
 		return nil, err
 	}
 
-	// Test database connection
 	if setInfo.DbType == "mysql" && setInfo.Mysql != nil {
-		// Implement MySQL connection test
 		return "mysql connection test not implemented", nil
 	}
 
@@ -169,13 +179,11 @@ func (set *Set) readSet(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Don't return password
 	cfg.Manage.Password = ""
 	return cfg, nil
 }
 
 func (set *Set) reStart(req *web.Request) (any, error) {
-	// Restart functionality will be implemented in the framework
 	return "ok", nil
 }
 func (set *Set) Init(context *core.Context) error {

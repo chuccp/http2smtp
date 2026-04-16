@@ -79,6 +79,7 @@ func createAPP() (*wf.WebFrame, error) {
 		&model.TokenModel{},
 		&model.ScheduleModel{},
 		&model.LogModel{},
+		&model.UserModel{},
 	)
 
 	if init {
@@ -88,7 +89,7 @@ func createAPP() (*wf.WebFrame, error) {
 		}
 		manageModelGroupBuilder.DB(connection)
 	}
-	builder.Service(&service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{})
+	builder.Service(&service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{})
 	builder.ModelGroup(manageModelGroupBuilder.Build())
 	return builder.Build(), nil
 }

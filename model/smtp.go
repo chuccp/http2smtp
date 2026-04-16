@@ -10,6 +10,7 @@ import (
 
 type SMTP struct {
 	Id         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	UserId     uint      `gorm:"column:user_id" json:"userId"`
 	Host       string    `gorm:"column:host" json:"host"`
 	Port       int       `gorm:"column:port" json:"port"`
 	Mail       string    `gorm:"column:mail" json:"mail"`

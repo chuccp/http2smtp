@@ -18,17 +18,12 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   async function loginAction(user: string, pass: string, remember: boolean): Promise<boolean> {
-    const nonce = generateRandomString(16)
-    const passwordHash = md5(pass)
-    const key = md5(passwordHash + user)
-    const response = md5(key + nonce)
-
     try {
-      const res = await login(user, nonce, response)
+      const res = await login(user, pass)
       if (res.code === 0 || res.code === 200) {
-        token.value = key
+        token.value = user
         username.value = user
-        localStorage.setItem('http2smtp-token', key)
+        localStorage.setItem('http2smtp-token', user)
         localStorage.setItem('http2smtp-username', user)
         localStorage.setItem('http2smtp-remember', String(remember))
         rememberUsername.value = remember

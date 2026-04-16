@@ -14,11 +14,10 @@ export function getSystemInfo(): Promise<ApiResponse<any>> {
   })
 }
 
-export function login(username: string, nonce: string, response: string): Promise<ApiResponse<any>> {
+export function login(username: string, password: string): Promise<ApiResponse<any>> {
   return request.post('/signIn', {
     username,
-    nonce,
-    response
+    password
   })
 }
 

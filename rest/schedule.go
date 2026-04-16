@@ -10,6 +10,7 @@ import (
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
 	"github.com/chuccp/http2smtp/util"
@@ -23,19 +24,36 @@ type Schedule struct {
 	scheduleModel   *model.ScheduleModel
 }
 
+func (schedule *Schedule) getUserId(req *web.Request) uint {
+	user, err := auth.User(req, schedule.context)
+	if err != nil || user == nil {
+		return 0
+	}
+	return user.Id
+}
+
 func (schedule *Schedule) getOne(req *web.Request) (any, error) {
 	id := req.Param("id")
 	atoi, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
-	return schedule.scheduleService.GetOne(atoi)
+	userId := schedule.getUserId(req)
+	return schedule.scheduleService.GetOne(atoi, userId)
 }
 func (schedule *Schedule) deleteOne(req *web.Request) (any, error) {
 	id := req.Param("id")
 	atoi, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
+	}
+	userId := schedule.getUserId(req)
+	exist, err := schedule.scheduleModel.Query().Where("id = ? AND user_id = ?", uint(atoi), userId).One()
+	if err != nil {
+		return nil, err
+	}
+	if exist == nil {
+		return nil, errors.New("schedule not found")
 	}
 	err = schedule.scheduleModel.DeleteById(uint(atoi))
 	if err != nil {
@@ -48,7 +66,8 @@ func (schedule *Schedule) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return schedule.scheduleService.GetPage(page)
+	userId := schedule.getUserId(req)
+	return schedule.scheduleService.GetPage(page, userId)
 }
 func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	var st model.Schedule
@@ -56,6 +75,7 @@ func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	st.UserId = schedule.getUserId(req)
 	err = schedule.validate(&st)
 	if err != nil {
 		return nil, err
@@ -72,6 +92,7 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	st.UserId = schedule.getUserId(req)
 	err = schedule.validate(&st)
 	if err != nil {
 		return nil, err
@@ -135,7 +156,8 @@ func (schedule *Schedule) triggerById(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	st, err := schedule.scheduleService.GetOne(atoi)
+	userId := schedule.getUserId(req)
+	st, err := schedule.scheduleService.GetOne(atoi, userId)
 	if err != nil {
 		return nil, err
 	}

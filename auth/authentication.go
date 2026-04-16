@@ -5,6 +5,7 @@ import (
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/entity"
+	"github.com/chuccp/http2smtp/model"
 )
 
 type Authentication struct {
@@ -54,6 +55,15 @@ func User(request *web.Request, ctx *core.Context) (*entity.LoginUser, error) {
 	err := Decrypt(token, user)
 	if err != nil {
 		return nil, err
+	}
+	// 根据用户名获取用户ID
+	if user.Id == 0 && user.Username != "" {
+		userModel := core.GetModel[*model.UserModel](ctx)
+		dbUser, dbErr := userModel.Query().Where("name = ?", user.Username).One()
+		if dbErr == nil && dbUser != nil {
+			user.Id = dbUser.Id
+			user.IsAdmin = dbUser.IsAdmin
+		}
 	}
 	return user, nil
 }
