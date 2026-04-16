@@ -13,8 +13,8 @@ type Token struct {
 	Code  string `json:"code"`
 }
 
-var aes_key = util.GenerateRandomStringByAlphanumeric(32)
-var aes_iv = util.GenerateRandomStringByAlphanumeric(16)
+var aesKey = util.GenerateRandomStringByAlphanumeric(32)
+var aesIv = util.GenerateRandomStringByAlphanumeric(16)
 
 func GenerateToken(value string, code string, type_ string) (string, error) {
 	token := &Token{
@@ -24,15 +24,15 @@ func GenerateToken(value string, code string, type_ string) (string, error) {
 		Code:  code,
 	}
 	v, _ := json.Marshal(token)
-	return util.EncryptByCBC(string(v), aes_key, aes_iv)
+	return util.EncryptByCBC(string(v), aesKey, aesIv)
 }
 func Encrypt(value any) (string, error) {
 	v, _ := json.Marshal(value)
-	return util.EncryptByCBC(string(v), aes_key, aes_iv)
+	return util.EncryptByCBC(string(v), aesKey, aesIv)
 }
 
 func Decrypt(token string, v any) error {
-	str, err := util.DecryptByCBC(token, aes_key, aes_iv)
+	str, err := util.DecryptByCBC(token, aesKey, aesIv)
 	if err != nil {
 		return err
 	}
