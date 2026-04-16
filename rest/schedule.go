@@ -41,7 +41,7 @@ func (schedule *Schedule) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) getPage(req *web.Request) (any, error) {
 	page, err := req.Page()
@@ -64,7 +64,7 @@ func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	var st model.Schedule
@@ -80,11 +80,14 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) sendMail(req *web.Request) (any, error) {
 	var st model.Schedule
 	err := req.BindJSON(&st)
+	if err != nil {
+		return nil, err
+	}
 	err = schedule.validate(&st)
 	if err != nil {
 		return nil, err
@@ -95,7 +98,7 @@ func (schedule *Schedule) sendMail(req *web.Request) (any, error) {
 		return nil, err
 	}
 
-	return "ok", nil
+	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) validate(st *model.Schedule) error {
 	err := util.ValidateURL(st.Url)
@@ -131,7 +134,7 @@ func (schedule *Schedule) Init(context *core.Context) error {
 	context.Post("/schedule", schedule.postOne).WithMeta(auth2.WithLogin())
 	context.Put("/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
 	context.Post("/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
-	context.Any("/scheduleTestApi", schedule.scheduleTestApi).WithMeta(auth2.WithLogin())
+	context.Any("/scheduleTestApi", schedule.scheduleTestApi)
 	schedule.scheduleService = wf.GetService[*service.ScheduleService](schedule.context)
 	schedule.tokenService = wf.GetService[*service.TokenService](schedule.context)
 	schedule.scheduleModel = wf.GetModel[*model.ScheduleModel](schedule.context)

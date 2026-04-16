@@ -157,17 +157,20 @@ export default {
     cronExpression: 'Cron Expression',
     requestUrl: 'Request URL',
     requestMethod: 'Request Method',
-    requestHeaders: 'Request Headers (JSON format)',
+    requestHeaders: 'Request Headers',
     requestBody: 'Request Body',
     useTemplate: 'Use Template',
+    template: 'Template Content',
     status: 'Status',
     enabled: 'Enabled',
     disabled: 'Disabled',
     triggerNow: 'Trigger Now',
     deleteConfirm: 'Are you sure you want to delete this scheduled task?',
     triggered: 'Task triggered successfully',
-    cronHelp: 'Cron expression: * * * * * = minute hour day month weekday',
-    exampleCron: '0 9 * * * = 9 AM every day'
+    testSchedule: 'Test',
+    testSuccess: 'Test email sent successfully',
+    cronHelp: 'Cron expression: * * * * * * = second minute hour day month weekday',
+    exampleCron: '0 0 9 * * * = 9 AM every day'
   },
 
   // Log

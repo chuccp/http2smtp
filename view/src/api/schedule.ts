@@ -28,3 +28,7 @@ export function deleteSchedule(id: number): Promise<ApiResponse<any>> {
 export function triggerSendMail(id: number): Promise<ApiResponse<any>> {
   return request.post(`/schedule/trigger/${id}`)
 }
+
+export function testSchedule(schedule: Partial<ScheduleConfig>): Promise<ApiResponse<any>> {
+  return request.post('/sendMailBySchedule', schedule)
+}

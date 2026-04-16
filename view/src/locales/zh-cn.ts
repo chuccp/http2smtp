@@ -157,17 +157,20 @@ export default {
     cronExpression: 'Cron 表达式',
     requestUrl: '请求 URL',
     requestMethod: '请求方法',
-    requestHeaders: '请求头 (JSON 格式)',
+    requestHeaders: '请求头',
     requestBody: '请求体',
     useTemplate: '使用模板',
+    template: '模板内容',
     status: '状态',
     enabled: '启用',
     disabled: '禁用',
     triggerNow: '立即触发',
     deleteConfirm: '确定要删除这个定时任务吗？',
     triggered: '任务触发成功',
-    cronHelp: 'Cron 表达式格式：分 时 日 月 周',
-    exampleCron: '0 9 * * * = 每天早上 9 点'
+    testSchedule: '测试',
+    testSuccess: '测试邮件发送成功',
+    cronHelp: 'Cron 表达式格式：秒 分 时 日 月 周',
+    exampleCron: '0 0 9 * * * = 每天早上 9 点'
   },
 
   // Log

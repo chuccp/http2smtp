@@ -157,17 +157,20 @@ export default {
     cronExpression: 'Cron 式',
     requestUrl: 'リクエスト URL',
     requestMethod: 'リクエストメソッド',
-    requestHeaders: 'リクエストヘッダー (JSON 形式)',
+    requestHeaders: 'リクエストヘッダー',
     requestBody: 'リクエストボディ',
     useTemplate: 'テンプレートを使用',
+    template: 'テンプレート内容',
     status: 'ステータス',
     enabled: '有効',
     disabled: '無効',
     triggerNow: '今すぐ実行',
     deleteConfirm: 'このスケジュールを削除してもよろしいですか？',
     triggered: 'タスクの実行に成功しました',
-    cronHelp: 'Cron 式の形式: 分 時 日 月 週',
-    exampleCron: '0 9 * * * = 毎日午前 9 時'
+    testSchedule: 'テスト',
+    testSuccess: 'テストメールの送信に成功しました',
+    cronHelp: 'Cron 式の形式: 秒 分 時 日 月 週',
+    exampleCron: '0 0 9 * * * = 毎日午前 9 時'
   },
 
   // Log

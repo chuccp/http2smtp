@@ -157,17 +157,20 @@ export default {
     cronExpression: 'Cron 表示式',
     requestUrl: '請求 URL',
     requestMethod: '請求方法',
-    requestHeaders: '請求標頭 (JSON 格式)',
+    requestHeaders: '請求標頭',
     requestBody: '請求內容',
     useTemplate: '使用範本',
+    template: '範本內容',
     status: '狀態',
     enabled: '啟用',
     disabled: '停用',
     triggerNow: '立即觸發',
     deleteConfirm: '確定要刪除這個排程任務嗎？',
     triggered: '任務觸發成功',
-    cronHelp: 'Cron 表示式格式：分 時 日 月 週',
-    exampleCron: '0 9 * * * = 每天早上 9 點'
+    testSchedule: '測試',
+    testSuccess: '測試郵件發送成功',
+    cronHelp: 'Cron 表示式格式：秒 分 時 日 月 週',
+    exampleCron: '0 0 9 * * * = 每天早上 9 點'
   },
 
   // Log

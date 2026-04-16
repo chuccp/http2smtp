@@ -62,7 +62,7 @@ interface ScheduleConfig {
   url: string
   method: string
   headerStr: string
-  headers: string
+  headers: Array<{name: string; value: string}>
   body: string
   useTemplate: boolean
   template: string

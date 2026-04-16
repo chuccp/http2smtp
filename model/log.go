@@ -70,5 +70,5 @@ func (t *LogModel) PageBySearch(page *web.Page, key string) (*web.PageAble[*Log]
 }
 
 func (t *LogModel) GetTableName() string {
-	return "t_mail"
+	return "t_log"
 }

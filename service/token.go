@@ -55,6 +55,7 @@ func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 		return errors.New("token not found")
 	}
 	if byToken.IsUse {
+		l.supplementToken(byToken)
 		body, err := smtp.SendAPIMail2(schedule, byToken.SMTP, byToken.ReceiveEmails)
 		if err != nil {
 			log.Error("SendAPIMail log error", zap.Error(err))
