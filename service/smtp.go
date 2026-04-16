@@ -12,15 +12,11 @@ type SmtpService struct {
 	smtpModel *model.SMTPModel
 }
 
-func (s *SmtpService) PageForWeb(page *web.Page) (*web.PageAble[*model.SMTP], error) {
-	result, err := s.smtpModel.PageForWeb(page)
+func (s *SmtpService) PageForWeb(page *web.Page, userId uint) (*web.PageAble[*model.SMTP], error) {
+	result, err := s.smtpModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)
 	if err != nil {
 		return nil, err
 	}
-	// 将 Username 的值赋给 Name
-	//for _, item := range result.List {
-	//	item.Name = item.Username
-	//}
 	return result, nil
 }
 

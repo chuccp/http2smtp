@@ -8,6 +8,7 @@ import (
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
@@ -28,7 +29,11 @@ func (smtp *Smtp) getOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	one, err := smtp.smtpModel.FindById(uint(atoi))
+	user, err := auth.User(req, smtp.context)
+	if user == nil {
+		return nil, err
+	}
+	one, err := smtp.smtpModel.Query().Where("id = ? AND user_id = ?", uint(atoi), user.Id).One()
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +45,17 @@ func (smtp *Smtp) deleteOne(req *web.Request) (any, error) {
 	atoi, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
+	}
+	user, err := auth.User(req, smtp.context)
+	if user == nil {
+		return nil, err
+	}
+	exist, err := smtp.smtpModel.Query().Where("id = ? AND user_id = ?", uint(atoi), user.Id).One()
+	if err != nil {
+		return nil, err
+	}
+	if exist == nil {
+		return nil, errors.New("smtp not found")
 	}
 	err = smtp.smtpModel.DeleteById(uint(atoi))
 	if err != nil {
@@ -58,6 +74,11 @@ func (smtp *Smtp) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	user, err := auth.User(req, smtp.context)
+	if user == nil {
+		return nil, err
+	}
+	st.UserId = user.Id
 
 	err = smtp.smtpModel.Save(&st)
 	if err != nil {
@@ -76,6 +97,11 @@ func (smtp *Smtp) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	user, err := auth.User(req, smtp.context)
+	if user == nil {
+		return nil, err
+	}
+	st.UserId = user.Id
 	err = smtp.smtpModel.UpdateById(&st)
 	if err != nil {
 		return nil, err
@@ -107,7 +133,11 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	smtpServer, err := smtp.smtpModel.FindById(sendMail.SMTPId)
+	user, err := auth.User(req, smtp.context)
+	if user == nil {
+		return nil, err
+	}
+	smtpServer, err := smtp.smtpModel.Query().Where("id = ? AND user_id = ?", sendMail.SMTPId, user.Id).One()
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +167,11 @@ func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := smtp.smtpService.PageForWeb(page)
+	user, err := auth.User(req, smtp.context)
+	if user == nil {
+		return nil, err
+	}
+	p, err := smtp.smtpService.PageForWeb(page, user.Id)
 	if err != nil {
 		return nil, err
 	}

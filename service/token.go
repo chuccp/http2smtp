@@ -26,17 +26,17 @@ type TokenService struct {
 	cachePath  string
 }
 
-func (l *TokenService) GetOne(id uint) (*model.Token, error) {
+func (l *TokenService) GetOne(id uint, userId uint) (*model.Token, error) {
 	tokenModel := core.GetModel[*model.TokenModel](l.context)
-	token, err := tokenModel.FindById(id)
+	token, err := tokenModel.Query().Where("id = ? AND user_id = ?", id, userId).One()
 	if err != nil {
 		return nil, err
 	}
 	return token, nil
 }
-func (l *TokenService) GetPage(page *web.Page) (any, error) {
+func (l *TokenService) GetPage(page *web.Page, userId uint) (any, error) {
 
-	tokens, i, err := l.tokenModel.Page(page)
+	tokens, i, err := l.tokenModel.Query().Where("user_id = ?", userId).Page(page)
 	if err != nil {
 		return nil, err
 	}

@@ -1,12 +1,14 @@
 package rest
 
 import (
+	"errors"
 	"net/mail"
 	"strconv"
 
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 )
 
@@ -21,7 +23,11 @@ func (m *Mail) getOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	one, err := m.mailModel.FindById(uint(atoi))
+	user, err := auth.User(req, m.context)
+	if user == nil {
+		return nil, err
+	}
+	one, err := m.mailModel.Query().Where("id = ? AND user_id = ?", uint(atoi), user.Id).One()
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +40,17 @@ func (m *Mail) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	user, err := auth.User(req, m.context)
+	if user == nil {
+		return nil, err
+	}
+	exist, err := m.mailModel.Query().Where("id = ? AND user_id = ?", uint(atoi), user.Id).One()
+	if err != nil {
+		return nil, err
+	}
+	if exist == nil {
+		return nil, errors.New("mail not found")
+	}
 	err = m.mailModel.DeleteById(uint(atoi))
 	if err != nil {
 		return nil, err
@@ -45,7 +62,11 @@ func (m *Mail) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return m.mailModel.PageForWeb(page)
+	user, err := auth.User(req, m.context)
+	if user == nil {
+		return nil, err
+	}
+	return m.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").PageForWeb(page)
 }
 func (m *Mail) postOne(req *web.Request) (any, error) {
 	var st model.Mail
@@ -57,6 +78,11 @@ func (m *Mail) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	user, err := auth.User(req, m.context)
+	if user == nil {
+		return nil, err
+	}
+	st.UserId = user.Id
 	err = m.mailModel.Save(&st)
 	if err != nil {
 		return nil, err
@@ -74,6 +100,11 @@ func (m *Mail) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	user, err := auth.User(req, m.context)
+	if user == nil {
+		return nil, err
+	}
+	st.UserId = user.Id
 
 	err = m.mailModel.UpdateById(&st)
 	if err != nil {
