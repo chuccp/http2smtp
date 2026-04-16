@@ -13,9 +13,7 @@ import (
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/entity"
-	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
-	localutil "github.com/chuccp/http2smtp/util"
 	"go.uber.org/zap"
 )
 
@@ -32,22 +30,17 @@ func (l *User) signIn(request *web.Request) (any, error) {
 		return nil, err
 	}
 
-	// First try database authentication
-	userModel := core.GetModel[*model.UserModel](l.context)
-	if userModel != nil {
-		dbUser, err := userModel.FindOneByName(u.Username)
-		if err == nil && dbUser != nil && dbUser.IsUse {
-			// Verify password using bcrypt
-			if localutil.CheckPasswordHash(u.Password, dbUser.Password) {
-				// Set user ID and admin status before signing in
-				u.Id = dbUser.Id
-				u.IsAdmin = dbUser.IsAdmin
-				log.Debug("signIn via database",
-					zap.String("username", u.Username),
-					zap.Uint("userId", dbUser.Id),
-				)
-				return l.authenticationFilter.SignIn(&u, request)
-			}
+	// First try database authentication via UserService
+	if l.userService != nil {
+		dbUser, err := l.userService.ValidateLogin(u.Username, u.Password)
+		if err == nil && dbUser != nil {
+			u.Id = dbUser.Id
+			u.IsAdmin = dbUser.IsAdmin
+			log.Debug("signIn via database",
+				zap.String("username", u.Username),
+				zap.Uint("userId", dbUser.Id),
+			)
+			return l.authenticationFilter.SignIn(&u, request)
 		}
 	}
 
