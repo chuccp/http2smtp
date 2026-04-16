@@ -17,9 +17,10 @@ type LogService struct {
 	logModel *model.LogModel
 }
 
-func (l *LogService) log(st *model.SMTP, mails []*model.Mail, token string, subject, bodyString string, files []*smtp.File, err error) error {
+func (l *LogService) log(st *model.SMTP, mails []*model.Mail, tokenName string, token string, subject, bodyString string, files []*smtp.File, err error) error {
 	var lg model.Log
 	lg.Token = token
+	lg.Name = tokenName
 	lg.SMTP = util.FormatMail(st.Username, st.Mail)
 	b := new(buffer.Buffer)
 	for _, mail := range mails {
@@ -58,8 +59,8 @@ func (l *LogService) log(st *model.SMTP, mails []*model.Mail, token string, subj
 
 	return l.logModel.Save(&lg)
 }
-func (l *LogService) Log(smtp *model.SMTP, mails []*model.Mail, files []*smtp.File, token string, subject, bodyString string, err error) error {
-	return l.log(smtp, mails, token, subject, bodyString, files, err)
+func (l *LogService) Log(smtp *model.SMTP, mails []*model.Mail, files []*smtp.File, tokenName string, token string, subject, bodyString string, err error) error {
+	return l.log(smtp, mails, tokenName, token, subject, bodyString, files, err)
 }
 
 func (l *LogService) Name() string {

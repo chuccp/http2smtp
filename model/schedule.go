@@ -18,8 +18,7 @@ type Header struct {
 type Schedule struct {
 	Id                uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	Name              string    `gorm:"column:name" json:"name"`
-	Token             string    `gorm:"column:token" json:"token"`
-	TokenId           uint      `gorm:"-" json:"tokenId"`
+	TokenId           uint      `gorm:"token_id" json:"tokenId"`
 	Cron              string    `gorm:"column:cron" json:"cron"`
 	Url               string    `gorm:"column:url" json:"url"`
 	Method            string    `gorm:"column:method" json:"method"`
@@ -36,9 +35,9 @@ type Schedule struct {
 
 func (schedule *Schedule) Key() string {
 
-	value := fmt.Sprintf("%s#%s#%s#%s#%s#%s#%s#%s#%t#%t#%t",
+	value := fmt.Sprintf("%s#%d#%s#%s#%s#%s#%s#%s#%t#%t#%t",
 		schedule.Name,
-		schedule.Token,
+		schedule.TokenId,
 		schedule.Cron,
 		schedule.Url,
 		schedule.Method,

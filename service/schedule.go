@@ -38,7 +38,7 @@ func (l *ScheduleService) Edit(sd *model.Schedule) error {
 		sd.HeaderStr = string(jsonData)
 	}
 
-	v, err := l.tokenModel.GetOneByToken(sd.Token)
+	v, err := l.tokenModel.FindById(sd.TokenId)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (l *ScheduleService) Edit(sd *model.Schedule) error {
 	return l.scheduleModel.UpdateById(sd)
 }
 func (l *ScheduleService) Save(sd *model.Schedule) error {
-	v, err := l.tokenModel.GetOneByToken(sd.Token)
+	v, err := l.tokenModel.FindById(sd.TokenId)
 	if err != nil {
 		return err
 	}
@@ -78,8 +78,7 @@ func (l *ScheduleService) GetOne(id int) (*model.Schedule, error) {
 		one.Headers = []*model.Header{}
 	}
 
-	token := one.Token
-	byToken, err := l.tokenModel.GetOneByToken(token)
+	byToken, err := l.tokenModel.FindById(one.TokenId)
 	if err != nil {
 		return nil, err
 	}

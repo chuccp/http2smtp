@@ -56,7 +56,6 @@ interface TokenConfig {
 interface ScheduleConfig {
   id: number
   name: string
-  token: string
   tokenId: number
   cron: string
   url: string

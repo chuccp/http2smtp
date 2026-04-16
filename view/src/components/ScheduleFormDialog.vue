@@ -239,7 +239,6 @@ const handleTest = async () => {
   syncHeadersToForm()
   testing.value = true
   try {
-    const selectedToken = tokenList.value.find(t => t.id === form.value.tokenId)
     const headersArr = headerList.value
       .filter(h => h.key || h.value)
       .map(h => ({ name: h.key, value: h.value }))
@@ -251,7 +250,7 @@ const handleTest = async () => {
       headers: headersArr,
       body: form.value.body,
       useTemplate: form.value.useTemplate,
-      token: selectedToken?.token || ''
+      tokenId: form.value.tokenId
     }
     await testSchedule(payload)
     ElMessage.success(t('schedule.testSuccess'))

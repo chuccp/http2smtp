@@ -47,7 +47,7 @@ func (l *TokenService) GetPage(page *web.Page) (any, error) {
 func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 	l.lock.Lock()
 	defer l.lock.Unlock()
-	byToken, err := l.tokenModel.Query().Where("token=?", schedule.Token).One()
+	byToken, err := l.tokenModel.FindById(schedule.TokenId)
 	if err != nil {
 		return err
 	}
@@ -56,11 +56,11 @@ func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 	}
 	if byToken.IsUse {
 		l.supplementToken(byToken)
-		body, err := smtp.SendAPIMail2(schedule, byToken.SMTP, byToken.ReceiveEmails)
-		if err != nil {
-			log.Error("SendAPIMail log error", zap.Error(err))
+		body, err0 := smtp.SendAPIMail2(schedule, byToken.SMTP, byToken.ReceiveEmails)
+		if err0 != nil {
+			log.Error("SendAPIMail log error", zap.Error(err0))
 		}
-		err2 := l.logService.Log(byToken.SMTP, byToken.ReceiveEmails, nil, schedule.Token, schedule.Name, body, err)
+		err2 := l.logService.Log(byToken.SMTP, byToken.ReceiveEmails, nil, byToken.Name, byToken.Token, schedule.Name, body, err0)
 		if err2 != nil {
 			log.Error("SendAPIMail log error", zap.Error(err2))
 		}
@@ -165,7 +165,7 @@ func (l *TokenService) SendMailByToken(req *web.Request) (any, error) {
 	if err2 == nil {
 		err2 = smtp.SendAllMsg2(byToken.SMTP, byToken.ReceiveEmails, files, sendMailApi.Subject, sendMailApi.Content)
 	}
-	err := l.logService.Log(byToken.SMTP, byToken.ReceiveEmails, files, sendMailApi.Token, sendMailApi.Subject, sendMailApi.Content, err2)
+	err := l.logService.Log(byToken.SMTP, byToken.ReceiveEmails, files, byToken.Name, sendMailApi.Token, sendMailApi.Subject, sendMailApi.Content, err2)
 	if err != nil {
 		log.Error("SendMailByToken log error", zap.Error(err))
 	}

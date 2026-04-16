@@ -88,6 +88,9 @@ func (schedule *Schedule) sendMail(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	if st.TokenId == 0 {
+		return nil, errors.New("tokenId is required")
+	}
 	err = schedule.validate(&st)
 	if err != nil {
 		return nil, err
@@ -109,8 +112,8 @@ func (schedule *Schedule) validate(st *model.Schedule) error {
 	if err != nil {
 		return err
 	}
-	if len(st.Token) == 0 {
-		return errors.New(" token  cannot be empty")
+	if st.TokenId == 0 {
+		return errors.New("tokenId cannot be empty")
 	}
 	return nil
 }
