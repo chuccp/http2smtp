@@ -8,6 +8,7 @@ import (
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 	"go.uber.org/zap"
 )
@@ -23,7 +24,11 @@ func (l *Log) getOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	one, err := l.logModel.FindById(uint(atoi))
+	user, err := auth.User(req, l.context)
+	if user == nil {
+		return nil, err
+	}
+	one, err := l.logModel.Query().Where("id = ? AND user_id = ?", uint(atoi), user.Id).One()
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +40,16 @@ func (l *Log) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	user, err := auth.User(req, l.context)
+	if user == nil {
+		return nil, err
+	}
 	searchKey := req.GetFormParam("searchKey")
-	return l.logModel.PageBySearch(page, searchKey)
+	query := l.logModel.Query().Where("user_id = ?", user.Id)
+	if searchKey != "" {
+		query = query.Where("(name LIKE ? OR mail LIKE ? OR subject LIKE ?)", "%"+searchKey+"%", "%"+searchKey+"%", "%"+searchKey+"%")
+	}
+	return query.Order("id desc").PageForWeb(page)
 }
 func (l *Log) downLoad(req *web.Request) (any, error) {
 	rFilePath := req.GetFormParam("file")
@@ -45,6 +58,7 @@ func (l *Log) downLoad(req *web.Request) (any, error) {
 }
 
 func (l *Log) Init(context *core.Context) error {
+	l.context = context
 	l.logModel = wf.GetModel[*model.LogModel](context)
 	context.Get("/log/:id", l.getOne).WithMeta(auth2.WithLogin())
 	context.Get("/log", l.getPage).WithMeta(auth2.WithLogin())
