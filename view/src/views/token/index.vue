@@ -26,11 +26,11 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="isUse" :label="t('common.status')" width="80" align="center">
+        <el-table-column prop="state" :label="t('common.status')" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.isUse ? 'success' : 'danger'">
-              {{ row.isUse ? t('token.enabled') : t('token.disabled') }}
-            </el-tag>
+            <el-tag v-if="row.state === 0" type="success">{{ t('token.inUse') }}</el-tag>
+            <el-tag v-else-if="row.state === 1" type="warning">{{ t('token.userDisabled') }}</el-tag>
+            <el-tag v-else-if="row.state === 2" type="danger">{{ t('token.adminDisabled') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" :label="t('common.createTime')" width="180">

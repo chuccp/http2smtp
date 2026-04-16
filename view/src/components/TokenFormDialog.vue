@@ -35,8 +35,12 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="t('common.status')" prop="isUse">
-        <el-switch v-model="form.isUse" />
+      <el-form-item :label="t('common.status')" prop="state">
+        <el-select v-model="form.state" :placeholder="t('common.status')">
+          <el-option :label="t('token.inUse')" :value="0" />
+          <el-option :label="t('token.userDisabled')" :value="1" />
+          <el-option :label="t('token.adminDisabled')" :value="2" />
+        </el-select>
       </el-form-item>
     </el-form>
 
@@ -84,7 +88,7 @@ const defaultForm: Partial<TokenConfig> = {
   token: generateRandomString(32),
   SMTPId: 0,
   receiveEmailIds: '',
-  isUse: true
+  state: 0
 }
 
 const form = ref<Partial<TokenConfig>>({ ...defaultForm })

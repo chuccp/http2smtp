@@ -20,7 +20,7 @@ type Token struct {
 	SMTPId           uint      `gorm:"column:SMTP_Id" json:"SMTPId"`
 	SMTP             *SMTP     `gorm:"-" json:"SMTP"`
 	SMTPStr          string    `gorm:"-" json:"SMTPStr"`
-	IsUse            bool      `gorm:"column:is_use" json:"isUse"`
+	State            uint8     `gorm:"column:state" json:"state"` // 0:使用中  1:用户禁用 2:管理员禁用
 	CreateTime       time.Time `gorm:"column:create_time" json:"createTime"`
 	UpdateTime       time.Time `gorm:"column:update_time" json:"updateTime"`
 }

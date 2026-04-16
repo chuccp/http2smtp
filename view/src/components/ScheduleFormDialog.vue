@@ -150,7 +150,7 @@ const rules = computed<FormRules<Partial<ScheduleConfig>>>(() => ({
 const loadOptions = async () => {
   const tokenRes = await getTokens(1, 1000)
   if (tokenRes.code === 0 || tokenRes.code === 200) {
-    tokenList.value = tokenRes.data.list.filter(t => t.isUse)
+    tokenList.value = tokenRes.data.list.filter(t => t.state === 0)
   }
 }
 
