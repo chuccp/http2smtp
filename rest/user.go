@@ -3,18 +3,13 @@ package rest
 import (
 	"errors"
 	"strconv"
-	"strings"
 
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
-	"github.com/chuccp/go-web-frame/log"
-	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
-	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/service"
-	"go.uber.org/zap"
 )
 
 type User struct {
@@ -30,50 +25,14 @@ func (l *User) signIn(request *web.Request) (any, error) {
 		return nil, err
 	}
 
-	// First try database authentication via UserService
-	if l.userService != nil {
-		dbUser, err := l.userService.ValidateLogin(u.Username, u.Password)
-		if err == nil && dbUser != nil {
-			u.Id = dbUser.Id
-			u.IsAdmin = dbUser.IsAdmin
-			log.Debug("signIn via database",
-				zap.String("username", u.Username),
-				zap.Uint("userId", dbUser.Id),
-			)
-			return l.authenticationFilter.SignIn(&u, request)
-		}
-	}
-
-	// Fallback to config file authentication (legacy challenge-response)
-	manage, err := wf.UnmarshalKeyConfig[*config.Manage]("manage", l.context)
+	dbUser, err := l.userService.ValidateLogin(u.Username, u.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debug("signIn",
-		zap.String("username_from_request", u.Username),
-		zap.String("username_from_config", manage.Username),
-		zap.String("nonce", u.Nonce),
-		zap.String("response_from_client", u.Response),
-		zap.String("password_from_config", manage.Password),
-	)
-
-	// The password in config is stored as plain text
-	// Calculate: key = MD5(MD5(password) + username)
-	key := util.MD5Str(util.MD5Str(manage.Password) + manage.Username)
-	sign := util.MD5Str(key + u.Nonce)
-
-	log.Debug("signIn calculation",
-		zap.String("calculated_key", key),
-		zap.String("calculated_sign", sign),
-	)
-
-	if strings.EqualFold(sign, u.Response) {
-		log.Debug("signIn success")
-		return l.authenticationFilter.SignIn(&u, request)
-	}
-	log.Debug("signIn failed - invalid credentials")
-	return nil, errors.New("invalid credentials")
+	u.Id = dbUser.Id
+	u.IsAdmin = dbUser.IsAdmin
+	return l.authenticationFilter.SignIn(&u, request)
 }
 
 func (l *User) logout(request *web.Request) (any, error) {
@@ -134,7 +93,6 @@ func (l *User) deleteUser(request *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Soft delete: set is_use = false instead of hard delete
 	return web.Ok("ok"), l.userService.DeleteUser(uint(id))
 }
 
