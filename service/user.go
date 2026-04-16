@@ -119,6 +119,30 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 	return s.userModel.UpdateById(user)
 }
 
+// CreateAdminUser creates an admin user during system initialization.
+func (s *UserService) CreateAdminUser(name, password string) error {
+	existing, err := s.userModel.FindOneByName(name)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		return nil // already exists, skip
+	}
+	hashedPassword, err := localutil.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	user := &model.User{
+		Name:       name,
+		Password:   hashedPassword,
+		IsAdmin:    true,
+		IsUse:      true,
+		CreateTime: time.Now(),
+		UpdateTime: time.Now(),
+	}
+	return s.userModel.Save(user)
+}
+
 // DeleteUser soft-deletes a user by setting is_use = false.
 func (s *UserService) DeleteUser(id uint) error {
 	user, err := s.userModel.FindById(id)

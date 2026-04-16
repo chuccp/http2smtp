@@ -2,10 +2,10 @@ package rest
 
 import (
 	"errors"
-	"time"
 
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
+	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/http2smtp/db"
 
 	"github.com/chuccp/go-web-frame/log"
@@ -13,7 +13,7 @@ import (
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/model"
-	localutil "github.com/chuccp/http2smtp/util"
+	"github.com/chuccp/http2smtp/service"
 	"go.uber.org/zap"
 )
 
@@ -106,23 +106,10 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	}
 
 	// 添加管理员用户到数据库
-	userModel := core.GetModel[*model.UserModel](set.context)
-	if userModel != nil {
-		existUser, _ := userModel.FindOneByName(setInfo.Manage.Username)
-		if existUser == nil {
-			hashedPassword, err := localutil.HashPassword(setInfo.Manage.Password)
-			if err != nil {
-				return nil, err
-			}
-			adminUser := &model.User{
-				Name:       setInfo.Manage.Username,
-				Password:   hashedPassword,
-				IsUse:      true,
-				IsAdmin:    true,
-				CreateTime: time.Now(),
-				UpdateTime: time.Now(),
-			}
-			_ = userModel.Save(adminUser)
+	if setInfo.Manage != nil {
+		userService := wf.GetService[*service.UserService](set.context)
+		if err := userService.CreateAdminUser(setInfo.Manage.Username, setInfo.Manage.Password); err != nil {
+			return nil, err
 		}
 	}
 
