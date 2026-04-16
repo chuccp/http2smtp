@@ -165,7 +165,7 @@ func (l *TokenService) SendMailByToken(req *web.Request) (any, error) {
 	if err2 == nil {
 		err2 = smtp.SendAllMsg2(byToken.SMTP, byToken.ReceiveEmails, files, sendMailApi.Subject, sendMailApi.Content)
 	}
-	err := l.logService.Log(byToken.SMTP, byToken.ReceiveEmails, files, byToken.Name, sendMailApi.Token, sendMailApi.Subject, sendMailApi.Content, err2)
+	err := l.logService.Log(byToken.SMTP, byToken.ReceiveEmails, files, byToken.Name, byToken.Token, sendMailApi.Subject, sendMailApi.Content, err2)
 	if err != nil {
 		log.Error("SendMailByToken log error", zap.Error(err))
 	}
