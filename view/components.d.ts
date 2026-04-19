@@ -44,6 +44,7 @@ declare module 'vue' {
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
     MailFormDialog: typeof import('./src/components/MailFormDialog.vue')['default']
+    RecipientSelector: typeof import('./src/components/RecipientSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScheduleFormDialog: typeof import('./src/components/ScheduleFormDialog.vue')['default']

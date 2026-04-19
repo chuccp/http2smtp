@@ -7,6 +7,7 @@ import router from '@/router'
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string>(localStorage.getItem('http2smtp-token') || '')
   const username = ref<string>(localStorage.getItem('http2smtp-username') || '')
+  const isAdmin = ref<boolean>(localStorage.getItem('http2smtp-isAdmin') === 'true')
   const rememberUsername = ref<boolean>(localStorage.getItem('http2smtp-remember') === 'true')
 
   const isLoggedIn = computed(() => {
@@ -17,14 +18,20 @@ export const useAuthStore = defineStore('auth', () => {
     return username.value
   })
 
+  const getIsAdmin = computed(() => {
+    return isAdmin.value
+  })
+
   async function loginAction(user: string, pass: string, remember: boolean): Promise<boolean> {
     try {
       const res = await login(user, pass)
       if (res.code === 0 || res.code === 200) {
         token.value = user
         username.value = user
+        isAdmin.value = res.data?.isAdmin ?? false
         localStorage.setItem('http2smtp-token', user)
         localStorage.setItem('http2smtp-username', user)
+        localStorage.setItem('http2smtp-isAdmin', String(isAdmin.value))
         localStorage.setItem('http2smtp-remember', String(remember))
         rememberUsername.value = remember
         return true
@@ -39,8 +46,10 @@ export const useAuthStore = defineStore('auth', () => {
   function logoutAction() {
     token.value = ''
     username.value = ''
+    isAdmin.value = false
     localStorage.removeItem('http2smtp-token')
     localStorage.removeItem('http2smtp-username')
+    localStorage.removeItem('http2smtp-isAdmin')
     router.push('/')
   }
 
@@ -60,9 +69,11 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token,
     username,
+    isAdmin,
     rememberUsername,
     isLoggedIn,
     getUsername,
+    getIsAdmin,
     loginAction,
     logoutAction,
     checkSystemInit

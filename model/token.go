@@ -38,6 +38,10 @@ func (token *Token) SetId(id uint) {
 	token.Id = id
 }
 
+func (token *Token) IsUse() bool {
+	return token.State == 0
+}
+
 type TokenModel struct {
 	*model.EntryModel[*Token]
 	db      *db.DB

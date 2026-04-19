@@ -22,3 +22,10 @@ const (
 	WARM
 	ERROR
 )
+
+// Token state constants
+const (
+	TokenStateInUse       uint8 = 0 // 使用中
+	TokenStateUserDisabled  uint8 = 1 // 用户禁用
+	TokenStateAdminDisabled uint8 = 2 // 管理员禁用
+)

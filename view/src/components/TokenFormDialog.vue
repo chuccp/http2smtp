@@ -25,22 +25,18 @@
       <el-form-item :label="t('token.associatedSMTP')" prop="SMTPId">
         <SmtpSelector v-model="form.SMTPId" />
       </el-form-item>
+
       <el-form-item :label="t('token.allowedRecipients')" prop="receiveEmailIds">
-        <el-select v-model="selectedRecipientIds" multiple :placeholder="t('token.pleaseSelectRecipients')" filterable clearable>
-          <el-option
-            v-for="item in mailList"
-            :key="item.id"
-            :label="`${item.name} (${item.mail})`"
-            :value="item.id"
-          />
-        </el-select>
+        <RecipientSelector v-model="selectedRecipientIds" />
       </el-form-item>
       <el-form-item :label="t('common.status')" prop="state">
-        <el-select v-model="form.state" :placeholder="t('common.status')">
-          <el-option :label="t('token.inUse')" :value="0" />
-          <el-option :label="t('token.userDisabled')" :value="1" />
-          <el-option :label="t('token.adminDisabled')" :value="2" />
-        </el-select>
+        <el-switch
+          v-model="form.state"
+          :active-value="0"
+          :inactive-value="1"
+          :active-text="t('token.inUse')"
+          :inactive-text="t('schedule.disabled')"
+        />
       </el-form-item>
     </el-form>
 
@@ -56,16 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 import { createToken, updateToken } from '@/api/token'
-import { getMails } from '@/api/mail'
 import { ElMessage } from 'element-plus'
 import { generateRandomString } from '@/utils/crypto'
-import SmtpSelector from '@/components/SmtpSelector.vue'
+import SmtpSelector from './SmtpSelector.vue'
+import RecipientSelector from './RecipientSelector.vue'
 
 interface Props {
   open: boolean
@@ -80,7 +76,6 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
-const mailList = ref<MailConfig[]>([])
 const selectedRecipientIds = ref<number[]>([])
 
 const defaultForm: Partial<TokenConfig> = {
@@ -99,23 +94,9 @@ const rules = computed<FormRules<Partial<TokenConfig>>>(() => ({
   SMTPId: [{ required: true, message: t('token.pleaseSelectSMTP'), trigger: 'change' }]
 }))
 
-const loadOptions = async () => {
-  const mailRes = await getMails(1, 1000)
-  if (mailRes.code === 0 || mailRes.code === 200) {
-    mailList.value = mailRes.data.list
-  }
-}
-
-onMounted(() => {
-  if (props.open) {
-    loadOptions()
-  }
-})
-
 watch(() => props.editing, () => {
   if (props.editing) {
     form.value = { ...props.editing }
-    // Parse receiveEmailIds from comma-separated string
     if (props.editing.receiveEmailIds) {
       selectedRecipientIds.value = props.editing.receiveEmailIds
         .split(',')
@@ -131,12 +112,9 @@ watch(() => props.editing, () => {
 }, { immediate: true })
 
 watch(() => props.open, (newVal) => {
-  if (newVal) {
-    loadOptions()
-    if (!props.editing) {
-      form.value = { ...defaultForm, token: generateRandomString(32) }
-      selectedRecipientIds.value = []
-    }
+  if (newVal && !props.editing) {
+    form.value = { ...defaultForm, token: generateRandomString(32) }
+    selectedRecipientIds.value = []
   }
 })
 
@@ -171,3 +149,6 @@ const open = computed({
   set: (val) => emit('update:open', val)
 })
 </script>
+
+<style scoped>
+</style>

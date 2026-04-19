@@ -32,7 +32,13 @@ func (l *User) signIn(request *web.Request) (any, error) {
 
 	u.Id = dbUser.Id
 	u.IsAdmin = dbUser.IsAdmin
-	return l.authenticationFilter.SignIn(&u, request)
+	_, err = l.authenticationFilter.SignIn(&u, request)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"isAdmin": dbUser.IsAdmin,
+	}, nil
 }
 
 func (l *User) logout(request *web.Request) (any, error) {

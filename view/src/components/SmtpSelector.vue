@@ -1,16 +1,17 @@
 <template>
-  <div>
-    <el-input
-      :model-value="selectedName"
-      :placeholder="placeholder"
-      readonly
-      @click="dialogVisible = true"
-      class="smtp-selector-input"
-    >
-      <template #suffix>
-        <el-icon class="el-icon--right"><Search /></el-icon>
+  <div class="smtp-selector">
+    <div class="selector-trigger" @click="dialogVisible = true">
+      <template v-if="selectedSmtp">
+        <el-tag size="small" closable @close.stop="handleClear" type="success" class="selector-tag">
+          {{ selectedSmtp.name }} ({{ selectedSmtp.mail }})
+        </el-tag>
       </template>
-    </el-input>
+      <span v-else class="selector-placeholder">{{ placeholder }}</span>
+      <el-button size="small" class="add-btn">
+        <el-icon><Plus /></el-icon>
+        {{ selectedSmtp ? '更换' : '选择' }}
+      </el-button>
+    </div>
 
     <el-dialog
       v-model="dialogVisible"
@@ -18,16 +19,17 @@
       width="600px"
     >
       <el-table
-        :data="smtpList"
+        :data="paginatedList"
         border
         stripe
         v-loading="loading"
         highlight-current-row
-        @current-change="handleSelect"
+        :row-key="row => row.id"
+        max-height="400"
       >
         <el-table-column label="" width="50" align="center">
           <template #default="{ row }">
-            <el-radio :model-value="selectedId" :value="row.id" @change="handleSelect(row)">
+            <el-radio v-model="tempSelectedId" :value="row.id">
               &nbsp;
             </el-radio>
           </template>
@@ -37,11 +39,24 @@
         <el-table-column prop="mail" :label="t('smtp.fromAddress')" width="160" />
       </el-table>
 
+      <div class="pagination-wrapper">
+        <div class="page-info">
+          {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, smtpList.length) }} / 共 {{ smtpList.length }} 条
+        </div>
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="smtpList.length"
+          layout="prev, pager, next"
+          @current-change="handlePageChange"
+        />
+      </div>
+
       <template #footer>
         <el-button @click="dialogVisible = false">
           {{ t('common.cancel') }}
         </el-button>
-        <el-button type="primary" @click="handleConfirm" :disabled="!selectedId">
+        <el-button type="primary" @click="handleConfirm" :disabled="!tempSelectedId">
           {{ t('common.confirm') }}
         </el-button>
       </template>
@@ -51,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getSMTPServers } from '@/api/smtp'
 
@@ -77,10 +92,16 @@ const loading = ref(false)
 const smtpList = ref<SMTPConfig[]>([])
 const selectedId = ref<number>(0)
 const tempSelectedId = ref<number>(0)
+const currentPage = ref(1)
+const pageSize = 10
 
-const selectedName = computed(() => {
-  const item = smtpList.value.find(s => s.id === selectedId.value)
-  return item ? item.name : ''
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return smtpList.value.slice(start, start + pageSize)
+})
+
+const selectedSmtp = computed(() => {
+  return smtpList.value.find(s => s.id === selectedId.value) || null
 })
 
 const loadSmtpList = async () => {
@@ -95,13 +116,19 @@ const loadSmtpList = async () => {
   }
 }
 
-const handleSelect = (row: SMTPConfig) => {
-  tempSelectedId.value = row.id
+const handleClear = () => {
+  emit('update:modelValue', 0)
 }
 
 const handleConfirm = () => {
-  emit('update:modelValue', tempSelectedId.value)
-  dialogVisible.value = false
+  if (tempSelectedId.value) {
+    emit('update:modelValue', tempSelectedId.value)
+    dialogVisible.value = false
+  }
+}
+
+const handlePageChange = () => {
+  // Radio selection works across pages, no special handling needed
 }
 
 watch(() => props.modelValue, (val) => {
@@ -111,6 +138,7 @@ watch(() => props.modelValue, (val) => {
 
 watch(dialogVisible, (val) => {
   if (val) {
+    currentPage.value = 1
     loadSmtpList()
   }
 })
@@ -122,7 +150,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.smtp-selector-input {
+.smtp-selector {
+  width: 100%;
+}
+.selector-trigger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 8px;
   cursor: pointer;
+  background-color: var(--el-bg-color);
+}
+.selector-placeholder {
+  color: var(--el-text-color-placeholder);
+  font-size: 14px;
+}
+.selector-tag {
+  margin: 0;
+}
+.add-btn {
+  flex-shrink: 0;
+}
+.pagination-wrapper {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.page-info {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
 }
 </style>

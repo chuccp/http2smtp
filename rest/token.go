@@ -7,6 +7,7 @@ import (
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
 	"github.com/chuccp/http2smtp/util"
@@ -70,6 +71,7 @@ func (token *Token) postOne(req *web.Request) (any, error) {
 		return nil, err
 	}
 	st.UserId = user.Id
+	st.State = token.resolveState(st.State, user.IsAdmin)
 	err = token.tokenModel.Save(&st)
 	if err != nil {
 		return nil, err
@@ -93,11 +95,23 @@ func (token *Token) putOne(req *web.Request) (any, error) {
 	if exist != nil && exist.Token != "" {
 		st.Token = exist.Token
 	}
+	st.State = token.resolveState(st.State, user.IsAdmin)
 	err = token.tokenModel.UpdateById(&st)
 	if err != nil {
 		return nil, err
 	}
 	return web.Ok("ok"), nil
+}
+
+func (token *Token) resolveState(state uint8, isAdmin bool) uint8 {
+	if state == entity.TokenStateInUse {
+		return entity.TokenStateInUse
+	}
+	// 前端传来非 0 值，后端根据角色决定具体状态
+	if isAdmin {
+		return entity.TokenStateAdminDisabled
+	}
+	return entity.TokenStateUserDisabled
 }
 
 func (token *Token) sendMail(req *web.Request) (any, error) {

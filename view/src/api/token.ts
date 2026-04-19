@@ -25,6 +25,6 @@ export function deleteToken(id: number): Promise<ApiResponse<any>> {
   return request.delete(`/token/${id}`)
 }
 
-export function sendMailByToken(data: { tokenId: number; toEmail: string; subject: string; content: string }): Promise<ApiResponse<any>> {
+export function sendMailByToken(data: { tokenId: number; recipients: string[]; subject: string; content: string }): Promise<ApiResponse<any>> {
   return request.post('/sendMailByTokenId', data)
 }

@@ -54,7 +54,7 @@ func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 	if byToken == nil {
 		return errors.New("token not found")
 	}
-	if byToken.IsUse {
+	if byToken.IsUse() {
 		l.supplementToken(byToken)
 		body, err0 := smtp.SendAPIMail2(schedule, byToken.SMTP, byToken.ReceiveEmails)
 		if err0 != nil {
@@ -93,7 +93,7 @@ func (l *TokenService) SendMailByToken(req *web.Request) (any, error) {
 			log.Error("SendMailByToken log error", zap.Error(err))
 			return err
 		}
-		if !byToken.IsUse {
+		if !byToken.IsUse() {
 			return errors.New("token is not use")
 		}
 
