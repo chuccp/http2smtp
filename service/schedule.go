@@ -26,6 +26,10 @@ func (l *ScheduleService) Init(context *core.Context) error {
 	return nil
 }
 
+func (l *ScheduleService) FindAll() ([]*model.Schedule, error) {
+	return l.scheduleModel.FindAll()
+}
+
 func (l *ScheduleService) GetPage(page *web.Page, userId uint) (any, error) {
 	if userId > 0 {
 		return l.scheduleModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)

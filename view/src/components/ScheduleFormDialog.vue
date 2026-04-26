@@ -14,14 +14,7 @@
         <el-input v-model="form.name" :placeholder="t('schedule.taskName')" />
       </el-form-item>
       <el-form-item :label="t('schedule.associatedToken')" prop="tokenId">
-        <el-select v-model="form.tokenId" :placeholder="t('schedule.associatedToken')" filterable clearable>
-          <el-option
-            v-for="item in tokenList"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
+        <TokenSelector v-model="form.tokenId" @update:model-value="formRef?.validateField('tokenId')" />
       </el-form-item>
       <el-form-item :label="t('schedule.cronExpression')" prop="cron">
         <el-input v-model="form.cron" placeholder="* * * * * *" />
@@ -55,7 +48,7 @@
         <el-input
           v-model="form.body"
           type="textarea"
-          rows="4"
+          :rows="4"
           placeholder="{}"
         />
       </el-form-item>
@@ -66,7 +59,7 @@
         <el-input
           v-model="form.template"
           type="textarea"
-          rows="6"
+          :rows="6"
           placeholder="{{.Subject}}..."
         />
         <div class="help-text">
@@ -93,15 +86,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { Plus, Delete } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
 import { createSchedule, updateSchedule, testSchedule } from '@/api/schedule'
-import { getTokens } from '@/api/token'
 import { ElMessage } from 'element-plus'
+import TokenSelector from '@/components/TokenSelector.vue'
 
 interface HeaderItem {
   key: string
@@ -122,7 +115,6 @@ const emit = defineEmits<{
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const testing = ref(false)
-const tokenList = ref<TokenConfig[]>([])
 const headerList = ref<HeaderItem[]>([])
 
 const defaultForm: Partial<ScheduleConfig> = {
@@ -146,13 +138,6 @@ const rules = computed<FormRules<Partial<ScheduleConfig>>>(() => ({
   cron: [{ required: true, message: t('schedule.cronExpression'), trigger: 'blur' }],
   url: [{ required: true, message: t('schedule.requestUrl'), trigger: 'blur' }]
 }))
-
-const loadOptions = async () => {
-  const tokenRes = await getTokens(1, 1000)
-  if (tokenRes.code === 0 || tokenRes.code === 200) {
-    tokenList.value = tokenRes.data.list.filter(t => t.state === 0)
-  }
-}
 
 const syncHeadersToForm = () => {
   const filtered = headerList.value.filter(h => h.key || h.value)
@@ -188,12 +173,6 @@ const syncHeaderList = () => {
   }
 }
 
-onMounted(() => {
-  if (props.open) {
-    loadOptions()
-  }
-})
-
 watch(() => props.editing, () => {
   if (props.editing) {
     form.value = { ...props.editing }
@@ -206,7 +185,6 @@ watch(() => props.editing, () => {
 
 watch(() => props.open, (newVal) => {
   if (newVal) {
-    loadOptions()
     if (!props.editing) {
       form.value = { ...defaultForm }
     }

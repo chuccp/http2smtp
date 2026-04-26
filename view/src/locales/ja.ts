@@ -236,12 +236,26 @@ export default {
       tokens: 'API トークン',
       schedule: 'スケジュール',
       logs: 'ログ',
-      settings: '設定'
+      settings: '設定',
+      users: 'ユーザー管理'
     },
     tabs: {
       closeOthers: '他を閉じる',
       closeAll: 'すべて閉じる'
     },
     logoutConfirm: 'ログアウトしてもよろしいですか？'
+  },
+
+  // User
+  user: {
+    userManagement: 'ユーザー管理',
+    addUser: 'ユーザーを追加',
+    editUser: 'ユーザーを編集',
+    username: 'ユーザー名',
+    isAdmin: '管理者',
+    admin: '管理者',
+    normalUser: '一般ユーザー',
+    passwordPlaceholder: '変更しない場合は空欄',
+    deleteConfirm: 'このユーザーを削除してもよろしいですか？'
   }
 }

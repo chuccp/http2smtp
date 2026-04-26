@@ -4,15 +4,16 @@ go 1.25.5
 
 require (
 	emperror.dev/errors v0.8.1
-	github.com/chuccp/go-web-frame v0.6.1
+	github.com/chuccp/go-web-frame v0.8.1
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/wneessen/go-mail v0.7.2
+	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.49.0
 )
 
-replace github.com/chuccp/go-web-frame v0.6.1 => ../go-web-frame
+replace github.com/chuccp/go-web-frame v0.8.1 => ../go-web-frame
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
@@ -24,7 +25,6 @@ require (
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
-	github.com/gin-contrib/cors v1.7.7 // indirect
 	github.com/gin-contrib/sse v1.1.1 // indirect
 	github.com/gin-gonic/gin v1.12.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

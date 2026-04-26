@@ -236,12 +236,26 @@ export default {
       tokens: 'API Tokens',
       schedule: 'Schedule',
       logs: 'Logs',
-      settings: 'Settings'
+      settings: 'Settings',
+      users: 'Users'
     },
     tabs: {
       closeOthers: 'Close Others',
       closeAll: 'Close All'
     },
     logoutConfirm: 'Are you sure you want to logout?'
+  },
+
+  // User
+  user: {
+    userManagement: 'User Management',
+    addUser: 'Add User',
+    editUser: 'Edit User',
+    username: 'Username',
+    isAdmin: 'Admin',
+    admin: 'Admin',
+    normalUser: 'User',
+    passwordPlaceholder: 'Leave empty to keep unchanged',
+    deleteConfirm: 'Are you sure you want to delete this user?'
   }
 }

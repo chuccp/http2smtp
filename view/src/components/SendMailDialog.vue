@@ -27,7 +27,7 @@
         <el-input
           v-model="form.content"
           type="textarea"
-          rows="4"
+          :rows="4"
           :placeholder="t('smtp.testEmailContent')"
         />
       </el-form-item>

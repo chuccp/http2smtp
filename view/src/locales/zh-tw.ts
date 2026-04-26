@@ -236,12 +236,26 @@ export default {
       tokens: 'API 權杖',
       schedule: '排程任務',
       logs: '日誌',
-      settings: '設定'
+      settings: '設定',
+      users: '使用者管理'
     },
     tabs: {
       closeOthers: '關閉其他',
       closeAll: '關閉全部'
     },
     logoutConfirm: '確定要登出嗎？'
+  },
+
+  // User
+  user: {
+    userManagement: '使用者管理',
+    addUser: '新增使用者',
+    editUser: '編輯使用者',
+    username: '使用者名稱',
+    isAdmin: '管理員',
+    admin: '管理員',
+    normalUser: '一般使用者',
+    passwordPlaceholder: '不修改請留空',
+    deleteConfirm: '確定要刪除這個使用者嗎？'
   }
 }

@@ -82,6 +82,16 @@ interface LogEntry {
   createTime: string
 }
 
+interface UserConfig {
+  id: number
+  name: string
+  password: string
+  isAdmin: boolean
+  isUse: boolean
+  createTime: string
+  updateTime: string
+}
+
 interface SetInfo {
   webPort: number
   apiPort: number

@@ -1,4 +1,17 @@
-import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
+
+// Override the AxiosInstance type to reflect that our response interceptor
+// unwraps response.data, so callers receive the raw API payload, not AxiosResponse
+declare module 'axios' {
+  interface AxiosInstance {
+    request<T = any>(config: AxiosRequestConfig): Promise<T>
+    get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
+    delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
+    post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+    put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+    patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  }
+}
 import { ElMessage } from 'element-plus'
 
 const request = axios.create({

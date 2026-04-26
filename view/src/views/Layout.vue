@@ -61,6 +61,11 @@
           <el-icon><Tools /></el-icon>
           <span>{{ t('layout.sidebar.settings') }}</span>
         </el-menu-item>
+
+        <el-menu-item v-if="authStore.getIsAdmin" index="/users">
+          <el-icon><User /></el-icon>
+          <span>{{ t('layout.sidebar.users') }}</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer" @click="logout">
@@ -179,6 +184,7 @@ import {
   Clock,
   Document,
   Tools,
+  User,
   Fold,
   Expand,
   Close,

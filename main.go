@@ -5,9 +5,11 @@ import (
 
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
+	"github.com/chuccp/go-web-frame/component/schedule"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/runner"
 
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
@@ -90,6 +92,9 @@ func createAPP() (*wf.WebFrame, error) {
 		manageModelGroupBuilder.DB(connection)
 	}
 	builder.Service(&service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{})
+
+	builder.Runner(schedule.NewScheduleWithSeconds(), &runner.ScheduleRunner{})
+
 	builder.ModelGroup(manageModelGroupBuilder.Build())
 	return builder.Build(), nil
 }

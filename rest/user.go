@@ -8,6 +8,7 @@ import (
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/service"
 )
@@ -46,6 +47,13 @@ func (l *User) logout(request *web.Request) (any, error) {
 }
 
 func (l *User) getUserPage(request *web.Request) (any, error) {
+	user, err := auth.User(request, l.context)
+	if user == nil {
+		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
+	}
 	page, err := request.Page()
 	if err != nil {
 		return nil, err
@@ -54,6 +62,13 @@ func (l *User) getUserPage(request *web.Request) (any, error) {
 }
 
 func (l *User) getUserOne(request *web.Request) (any, error) {
+	user, err := auth.User(request, l.context)
+	if user == nil {
+		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
+	}
 	id, err := strconv.Atoi(request.Param("id"))
 	if err != nil {
 		return nil, err
@@ -62,6 +77,13 @@ func (l *User) getUserOne(request *web.Request) (any, error) {
 }
 
 func (l *User) createUser(request *web.Request) (any, error) {
+	user, err := auth.User(request, l.context)
+	if user == nil {
+		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
+	}
 	var req struct {
 		Name     string `json:"name"`
 		Password string `json:"password"`
@@ -78,6 +100,13 @@ func (l *User) createUser(request *web.Request) (any, error) {
 }
 
 func (l *User) updateUser(request *web.Request) (any, error) {
+	user, err := auth.User(request, l.context)
+	if user == nil {
+		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
+	}
 	var req struct {
 		Id       uint   `json:"id"`
 		Name     string `json:"name"`
@@ -95,6 +124,13 @@ func (l *User) updateUser(request *web.Request) (any, error) {
 }
 
 func (l *User) deleteUser(request *web.Request) (any, error) {
+	user, err := auth.User(request, l.context)
+	if user == nil {
+		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
+	}
 	id, err := strconv.Atoi(request.Param("id"))
 	if err != nil {
 		return nil, err

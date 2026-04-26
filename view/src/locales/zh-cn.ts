@@ -236,12 +236,26 @@ export default {
       tokens: 'API 令牌',
       schedule: '定时任务',
       logs: '日志',
-      settings: '设置'
+      settings: '设置',
+      users: '用户管理'
     },
     tabs: {
       closeOthers: '关闭其他',
       closeAll: '关闭全部'
     },
     logoutConfirm: '确定要退出登录吗？'
+  },
+
+  // User
+  user: {
+    userManagement: '用户管理',
+    addUser: '添加用户',
+    editUser: '编辑用户',
+    username: '用户名',
+    isAdmin: '管理员',
+    admin: '管理员',
+    normalUser: '普通用户',
+    passwordPlaceholder: '不修改请留空',
+    deleteConfirm: '确定要删除这个用户吗？'
   }
 }

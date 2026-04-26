@@ -11,7 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
     ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']
     ElButton: typeof import('element-plus/es')['ElButton']
@@ -53,6 +52,8 @@ declare module 'vue' {
     SMTPFormDialog: typeof import('./src/components/SMTPFormDialog.vue')['default']
     SmtpSelector: typeof import('./src/components/SmtpSelector.vue')['default']
     TokenFormDialog: typeof import('./src/components/TokenFormDialog.vue')['default']
+    TokenSelector: typeof import('./src/components/TokenSelector.vue')['default']
+    UserFormDialog: typeof import('./src/components/UserFormDialog.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']
