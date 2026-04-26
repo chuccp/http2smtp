@@ -32,38 +32,28 @@ func (authentication *Authentication) NewUser() any {
 	return &entity.LoginUser{}
 }
 
-func User(request *web.Request, ctx *core.Context) (*entity.LoginUser, error) {
-	// 检查是否处于 debug 模式
-	var isDebug bool
-	if ctx.GetConfig() != nil {
-		isDebug = ctx.GetConfig().GetBoolOrDefault("core.debug", false)
-	}
-
-	if isDebug {
-		// debug 模式下返回虚拟用户
-		return &entity.LoginUser{
-			Username: "debug_user",
-		}, nil
-	}
-
-	// 非 debug 模式下执行正常的认证逻辑
+func User(request *web.Request, ctx *core.Context) (*model.User, error) {
 	token := request.Cookie().Get(entity.UserToken)
 	if token == "" {
 		return nil, auth2.NoLogin
 	}
-	user := &entity.LoginUser{}
-	err := Decrypt(token, user)
+	loginUser := &entity.LoginUser{}
+	err := Decrypt(token, loginUser)
 	if err != nil {
 		return nil, err
 	}
-	// 根据用户名获取用户ID
-	if user.Id == 0 && user.Username != "" {
-		userModel := core.GetModel[*model.UserModel](ctx)
-		dbUser, dbErr := userModel.Query().Where("name = ?", user.Username).One()
-		if dbErr == nil && dbUser != nil {
-			user.Id = dbUser.Id
-			user.IsAdmin = dbUser.IsAdmin
+	userModel := core.GetModel[*model.UserModel](ctx)
+	var dbUser *model.User
+	var dbErr error
+	if loginUser.Id != 0 {
+		dbUser, dbErr = userModel.FindById(loginUser.Id)
+	} else if loginUser.Username != "" {
+		dbUser, dbErr = userModel.FindOneByName(loginUser.Username)
+	}
+	if dbUser != nil && dbErr == nil {
+		if dbUser.Salt == loginUser.Salt {
+			return dbUser, nil
 		}
 	}
-	return user, nil
+	return nil, auth2.NoLogin
 }
