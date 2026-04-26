@@ -57,14 +57,14 @@
           <span>{{ t('layout.sidebar.logs') }}</span>
         </el-menu-item>
 
-        <el-menu-item index="/settings">
-          <el-icon><Tools /></el-icon>
-          <span>{{ t('layout.sidebar.settings') }}</span>
-        </el-menu-item>
-
         <el-menu-item v-if="authStore.getIsAdmin" index="/users">
           <el-icon><User /></el-icon>
           <span>{{ t('layout.sidebar.users') }}</span>
+        </el-menu-item>
+
+        <el-menu-item index="/settings">
+          <el-icon><Tools /></el-icon>
+          <span>{{ t('layout.sidebar.settings') }}</span>
         </el-menu-item>
       </el-menu>
 

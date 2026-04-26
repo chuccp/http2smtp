@@ -13,19 +13,16 @@
       <el-form-item :label="t('user.username')" prop="name">
         <el-input v-model="form.name" :placeholder="t('user.username')" />
       </el-form-item>
-      <el-form-item :label="t('auth.password')" prop="password">
+      <el-form-item v-if="!editing" :label="t('auth.password')" prop="password">
         <el-input
           v-model="form.password"
           type="password"
           show-password
-          :placeholder="editing ? t('user.passwordPlaceholder') : t('auth.password')"
+          :placeholder="t('auth.password')"
         />
       </el-form-item>
-      <el-form-item :label="t('user.isAdmin')" prop="isAdmin">
-        <el-switch v-model="form.isAdmin" />
-      </el-form-item>
       <el-form-item :label="t('common.status')" prop="isUse">
-        <el-switch v-model="form.isUse" />
+        <el-switch v-model="form.isUse" :disabled="editing && editing.isAdmin" />
       </el-form-item>
     </el-form>
 
@@ -66,7 +63,6 @@ const submitting = ref(false)
 const defaultForm = {
   name: '',
   password: '',
-  isAdmin: false,
   isUse: true
 }
 
@@ -86,7 +82,6 @@ watch(() => props.editing, () => {
     form.value = {
       name: props.editing.name,
       password: '',
-      isAdmin: props.editing.isAdmin,
       isUse: props.editing.isUse
     }
   } else {
@@ -110,15 +105,17 @@ const handleSubmit = async () => {
           const payload: any = {
             id: props.editing.id,
             name: form.value.name,
-            isAdmin: form.value.isAdmin,
+            isAdmin: props.editing.isAdmin,
             isUse: form.value.isUse
-          }
-          if (form.value.password) {
-            payload.password = form.value.password
           }
           await updateUser(payload)
         } else {
-          await createUser(form.value)
+          await createUser({
+            name: form.value.name,
+            password: form.value.password,
+            isAdmin: false,
+            isUse: form.value.isUse
+          })
         }
         ElMessage.success(t('common.success'))
         emit('success')

@@ -14,6 +14,7 @@ type User struct {
 	Password   string    `gorm:"column:password" json:"-"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
 	UpdateTime time.Time `gorm:"column:update_time" json:"updateTime"`
+	Salt       string    `gorm:"column:salt" json:"salt"`
 	IsUse      bool      `gorm:"column:is_use" json:"isUse"`
 	IsAdmin    bool      `gorm:"column:is_admin" json:"isAdmin"`
 }

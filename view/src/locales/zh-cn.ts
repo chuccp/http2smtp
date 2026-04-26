@@ -256,6 +256,8 @@ export default {
     admin: '管理员',
     normalUser: '普通用户',
     passwordPlaceholder: '不修改请留空',
+    changePassword: '修改密码',
+    newPassword: '新密码',
     deleteConfirm: '确定要删除这个用户吗？'
   }
 }

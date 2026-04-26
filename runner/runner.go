@@ -16,17 +16,17 @@ type ScheduleRunner struct {
 	scheduleService *service.ScheduleService
 	tokenService    *service.TokenService
 	schedule        *schedule.Schedule
-	knownIds        map[uint]bool
 	mu              sync.Mutex
 	isRun           *atomic2.Bool
+	ctx             *core.Context
 }
 
 func (r *ScheduleRunner) Init(c *core.Context) error {
 	r.scheduleService = core.GetService[*service.ScheduleService](c)
 	r.tokenService = core.GetService[*service.TokenService](c)
 	r.schedule = core.GetRunner[*schedule.Schedule](c)
-	r.knownIds = make(map[uint]bool)
 	r.isRun = atomic2.NewBool(false)
+	r.ctx = c
 	return nil
 }
 
@@ -42,7 +42,13 @@ func (r *ScheduleRunner) Run() error {
 }
 
 func (r *ScheduleRunner) loadAndSyncSchedules() {
-
+	config, err := model.GetConfig(r.ctx.GetConfig())
+	if err != nil {
+		return
+	}
+	if !config.Core.Init {
+		return
+	}
 	if !r.isRun.CompareAndSwap(false, true) {
 		return
 	}
@@ -56,6 +62,7 @@ func (r *ScheduleRunner) loadAndSyncSchedules() {
 		log.Error("load schedules from database failed", zap.Error(err))
 		return
 	}
+	knownIds := r.schedule.GetIds()
 	activeIds := make(map[uint]bool)
 	for _, sd := range schedules {
 		activeIds[sd.Id] = true
@@ -74,12 +81,11 @@ func (r *ScheduleRunner) loadAndSyncSchedules() {
 	}
 
 	// Stop tasks that no longer exist in database
-	for id := range r.knownIds {
+	for _, id := range knownIds {
 		if !activeIds[id] {
 			r.schedule.StopIdFunc(id)
 		}
 	}
-	r.knownIds = activeIds
 }
 
 func (r *ScheduleRunner) executeSchedule(sd *model.Schedule) {

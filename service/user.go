@@ -9,10 +9,11 @@ import (
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/model"
 	localutil "github.com/chuccp/http2smtp/util"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
-	context *core.Context
+	context   *core.Context
 	userModel *model.UserModel
 }
 
@@ -122,25 +123,24 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 // CreateAdminUser creates an admin user during system initialization.
 func (s *UserService) CreateAdminUser(name, password string) error {
 	existing, err := s.userModel.FindOneByName(name)
-	if err != nil {
-		return err
+
+	if errors.Is(err, gorm.ErrRecordNotFound) || existing == nil {
+		hashedPassword, err := localutil.HashPassword(password)
+		if err != nil {
+			return err
+		}
+		user := &model.User{
+			Name:       name,
+			Password:   hashedPassword,
+			IsAdmin:    true,
+			IsUse:      true,
+			CreateTime: time.Now(),
+			UpdateTime: time.Now(),
+		}
+		return s.userModel.Save(user)
 	}
-	if existing != nil {
-		return nil // already exists, skip
-	}
-	hashedPassword, err := localutil.HashPassword(password)
-	if err != nil {
-		return err
-	}
-	user := &model.User{
-		Name:       name,
-		Password:   hashedPassword,
-		IsAdmin:    true,
-		IsUse:      true,
-		CreateTime: time.Now(),
-		UpdateTime: time.Now(),
-	}
-	return s.userModel.Save(user)
+	return errors.New("admin is exist")
+
 }
 
 // DeleteUser soft-deletes a user by setting is_use = false.

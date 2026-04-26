@@ -3,15 +3,14 @@ package rest
 import (
 	"errors"
 
+	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
-	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/http2smtp/db"
 
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
-	"github.com/chuccp/http2smtp/config"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
 	"go.uber.org/zap"
@@ -30,8 +29,8 @@ func (set *Set) putSet(req *web.Request) (any, error) {
 	return set.putReSet(req)
 }
 func (set *Set) putReSet(req *web.Request) (any, error) {
-	var setInfo config.SetInfo
-	setInfo.HasInit = true
+	setInfo := model.DefaultConfig()
+	setInfo.Core.Init = true
 	err := req.BindJSON(&setInfo)
 	if err != nil {
 		return nil, err
@@ -44,8 +43,8 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	log.Debug("putSet", zap.Any("setInfo", &setInfo))
 
 	// Update database configuration
-	if setInfo.DbType != "" {
-		set.context.GetConfig().Put("core.dbtype", setInfo.DbType)
+	if setInfo.Core.DbType != "" {
+		set.context.GetConfig().Put("core.dbtype", setInfo.Core.DbType)
 	}
 	if setInfo.Sqlite != nil {
 		if setInfo.Sqlite.Filename != "" {
@@ -90,12 +89,6 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 
 	set.context.GetConfig().Put("core.init", "true")
 
-	// Save the config to file
-	err = set.context.GetConfig().WriteConfig()
-	if err != nil {
-		return nil, err
-	}
-
 	createDB, err := db.GetDb(set.context.GetConfig())
 	if err != nil {
 		return nil, err
@@ -112,24 +105,33 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 			return nil, err
 		}
 	}
-
+	// Save the config to file
+	err = set.context.GetConfig().WriteConfig()
+	if err != nil {
+		return nil, err
+	}
 	return web.Ok("ok"), nil
 }
 
 func (set *Set) getSet(req *web.Request) (any, error) {
-	var hasLogin bool
-	_, err := auth.User(req, set.context)
-	if err == nil {
+	v, err := auth.User(req, set.context)
+	hasLogin := false
+	if err == nil && v != nil {
 		hasLogin = true
 	}
-
-	initStr := set.context.GetConfig().GetStringOrDefault("core.init", "")
-	if initStr == "" {
-		return &config.System{HasInit: false, HasLogin: hasLogin, IsDocker: set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)}, nil
+	cfg, err := model.GetConfig(set.context.GetConfig())
+	if err != nil {
+		return nil, err
 	}
-	init := set.context.GetConfig().GetBoolOrDefault("core.init", false)
-	isDocker := set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)
-	return &config.System{HasInit: init, HasLogin: hasLogin, IsDocker: isDocker}, nil
+	//return cfg, nil
+
+	//initStr := set.context.GetConfig().GetStringOrDefault("core.init", "")
+	//if initStr == "" {
+	//	return &config.System{HasInit: false, HasLogin: hasLogin, IsDocker: set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)}, nil
+	//}
+	//init := set.context.GetConfig().GetBoolOrDefault("core.init", false)
+	//isDocker := set.context.GetConfig().GetBoolOrDefault("core.isDocker", false)
+	return &model.System{HasInit: cfg.Core.Init, HasLogin: hasLogin, IsDocker: cfg.Core.IsDocker}, nil
 
 }
 func (set *Set) defaultSet(req *web.Request) (any, error) {
@@ -147,26 +149,20 @@ func (set *Set) testConnection(req *web.Request) (any, error) {
 		req.Response().WriteStatus(405)
 		return nil, errors.New("has init")
 	}
-
-	var setInfo config.SetInfo
-	err := req.BindJSON(&setInfo)
+	db, err := db.GetDb(set.context.GetConfig())
 	if err != nil {
 		return nil, err
 	}
-
-	if setInfo.DbType == "mysql" && setInfo.Mysql != nil {
-		return "mysql connection test not implemented", nil
+	if db == nil {
+		return nil, errors.New("db is nil")
 	}
-
 	return "ok", nil
 }
 func (set *Set) readSet(req *web.Request) (any, error) {
-	cfg := config.DefaultSetInfo
-	err := set.context.GetConfig().Unmarshal(cfg)
+	cfg, err := model.GetConfig(set.context.GetConfig())
 	if err != nil {
 		return nil, err
 	}
-	cfg.Manage.Password = ""
 	return cfg, nil
 }
 

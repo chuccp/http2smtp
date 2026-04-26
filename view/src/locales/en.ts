@@ -256,6 +256,8 @@ export default {
     admin: 'Admin',
     normalUser: 'User',
     passwordPlaceholder: 'Leave empty to keep unchanged',
+    changePassword: 'Change Password',
+    newPassword: 'New Password',
     deleteConfirm: 'Are you sure you want to delete this user?'
   }
 }

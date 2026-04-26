@@ -107,7 +107,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { getSettings, updateSettings, restartSystem } from '@/api/settings'
+import request from '@/api/request'
 
 const { t } = useI18n()
 
@@ -136,10 +136,23 @@ const adminForm = reactive({
 })
 
 const loadData = async () => {
-  const res = await getSettings()
-  if (res.code === 0 || res.code === 200) {
-    Object.assign(settingsForm, res.data)
-    adminForm.username = res.data.adminUser || ''
+  try {
+    const res: any = await request.get('/readSet')
+    const d = res.data || res
+    settingsForm.webPort = d?.manage?.port ?? 12566
+    settingsForm.apiPort = d?.api?.port ?? 12567
+    settingsForm.dbType = d?.dbType ?? 'sqlite'
+    settingsForm.dbHost = d?.mysql?.host ?? '127.0.0.1'
+    settingsForm.dbPort = d?.mysql?.port ?? 3306
+    settingsForm.dbName = d?.mysql?.dbname ?? ''
+    settingsForm.dbUser = d?.mysql?.username ?? ''
+    settingsForm.dbPass = d?.mysql?.password ?? ''
+    settingsForm.dbCharset = d?.mysql?.charset ?? 'utf8mb4'
+    settingsForm.dbFile = d?.sqlite?.filename ?? 'data.db'
+    settingsForm.adminUser = d?.manage?.username ?? ''
+    adminForm.username = settingsForm.adminUser
+  } catch {
+    // ignore
   }
 }
 
@@ -149,13 +162,28 @@ const handleSave = async () => {
     return
   }
 
-  if (adminForm.password) {
-    settingsForm.adminPass = adminForm.password
+  const payload: any = {
+    dbType: settingsForm.dbType,
+    sqlite: { filename: settingsForm.dbFile },
+    mysql: {
+      host: settingsForm.dbHost,
+      port: settingsForm.dbPort,
+      dbname: settingsForm.dbName,
+      username: settingsForm.dbUser,
+      password: settingsForm.dbPass,
+      charset: settingsForm.dbCharset
+    },
+    manage: {
+      port: settingsForm.webPort,
+      username: adminForm.username || settingsForm.adminUser,
+      password: adminForm.password || settingsForm.adminPass
+    },
+    api: { port: settingsForm.apiPort }
   }
 
   saving.value = true
   try {
-    await updateSettings(settingsForm)
+    await request.put('/reSet', payload)
     ElMessage.success(t('settings.settingsSaved'))
   } finally {
     saving.value = false
@@ -174,7 +202,7 @@ const handleRestart = () => {
   ).then(async () => {
     restarting.value = true
     try {
-      await restartSystem()
+      await request.post('/reStart')
       ElMessage.success(t('settings.systemRestarted'))
       ElMessage.info(t('settings.pleaseWait'))
     } finally {

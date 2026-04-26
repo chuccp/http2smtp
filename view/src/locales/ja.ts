@@ -256,6 +256,8 @@ export default {
     admin: '管理者',
     normalUser: '一般ユーザー',
     passwordPlaceholder: '変更しない場合は空欄',
+    changePassword: 'パスワード変更',
+    newPassword: '新しいパスワード',
     deleteConfirm: 'このユーザーを削除してもよろしいですか？'
   }
 }

@@ -6,5 +6,6 @@ type LoginUser struct {
 	Password string
 	Response string
 	Nonce    string
+	Salt     string
 	IsAdmin  bool
 }

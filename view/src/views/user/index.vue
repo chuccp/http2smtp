@@ -34,12 +34,15 @@
             {{ formatTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('common.operations')" width="200">
+        <el-table-column :label="t('common.operations')" width="240">
           <template #default="{ row }">
-            <el-button size="small" @click="handleEdit(row)">
+            <el-button size="small" @click="handleChangePassword(row)">
+              {{ t('user.changePassword') }}
+            </el-button>
+            <el-button size="small" @click="handleEdit(row)" :disabled="row.isAdmin">
               {{ t('common.edit') }}
             </el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">
+            <el-button size="small" type="danger" @click="handleDelete(row)" :disabled="row.isAdmin">
               {{ t('common.delete') }}
             </el-button>
           </template>
@@ -62,6 +65,13 @@
       :editing="editingItem"
       @success="handleDialogSuccess"
     />
+
+    <!-- Change Password Dialog -->
+    <ChangePasswordDialog
+      v-model:open="passwordDialogVisible"
+      :user="passwordUser"
+      @success="handlePasswordSuccess"
+    />
   </div>
 </template>
 
@@ -75,6 +85,7 @@ import { formatTime } from '@/utils/time'
 const { t } = useI18n()
 import { getUsers, deleteUser } from '@/api/user'
 import UserFormDialog from '@/components/UserFormDialog.vue'
+import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 
 const loading = ref(false)
 const tableData = ref<UserConfig[]>([])
@@ -82,7 +93,9 @@ const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const formDialogVisible = ref(false)
+const passwordDialogVisible = ref(false)
 const editingItem = ref<UserConfig | null>(null)
+const passwordUser = ref<UserConfig | null>(null)
 
 const loadData = async () => {
   loading.value = true
@@ -103,6 +116,7 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row: UserConfig) => {
+  if (row.isAdmin) return
   editingItem.value = row
   formDialogVisible.value = true
 }
@@ -112,7 +126,17 @@ const handleDialogSuccess = () => {
   loadData()
 }
 
+const handleChangePassword = (row: UserConfig) => {
+  passwordUser.value = row
+  passwordDialogVisible.value = true
+}
+
+const handlePasswordSuccess = () => {
+  passwordDialogVisible.value = false
+}
+
 const handleDelete = (row: UserConfig) => {
+  if (row.isAdmin) return
   ElMessageBox.confirm(
     t('user.deleteConfirm'),
     t('common.confirm'),

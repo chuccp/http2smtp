@@ -1,5 +1,7 @@
 package model
 
+import "github.com/chuccp/go-web-frame/config"
+
 type Config struct {
 	Core   *CoreConfig   `json:"core"`
 	Manage *ManageConfig `json:"manage"`
@@ -18,22 +20,32 @@ func DefaultConfig() *Config {
 	}
 }
 
+func GetConfig(config config.IConfig) (*Config, error) {
+	var cfg = DefaultConfig()
+	err := config.Unmarshal(&cfg)
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+
+}
+
 type CoreConfig struct {
-	Init      string `json:"init"`
+	Init      bool   `json:"init"`
 	CachePath string `json:"cachePath"`
 	DbType    string `json:"dbType"`
 	LogLevel  string `json:"logLevel"`
-	IsDocker  string `json:"isDocker"`
+	IsDocker  bool   `json:"isDocker"`
 	Debug     bool   `json:"debug"`
 }
 
 func DefaultCoreConfig() *CoreConfig {
 	return &CoreConfig{
-		Init:      "",
+		Init:      false,
 		CachePath: ".cache",
 		DbType:    "sqlite",
 		LogLevel:  "info",
-		IsDocker:  "false",
+		IsDocker:  false,
 		Debug:     false,
 	}
 }
@@ -44,6 +56,9 @@ type ManageConfig struct {
 	Password string `json:"password"`
 	WebPath  string `json:"webPath"`
 }
+
+var ManagePort = 12566
+var ApiPort = 12567
 
 func DefaultManageConfig() *ManageConfig {
 	return &ManageConfig{
@@ -92,4 +107,10 @@ func DefaultMysqlConfig() *MysqlConfig {
 		Password: "",
 		Charset:  "utf8",
 	}
+}
+
+type System struct {
+	HasInit  bool
+	HasLogin bool
+	IsDocker bool
 }
