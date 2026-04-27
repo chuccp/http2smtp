@@ -171,7 +171,7 @@ func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
-	p, err := smtp.smtpService.PageForWeb(page, user.Id)
+	p, err := smtp.smtpService.PageForWeb(page, user.Id, user.IsAdmin)
 	if err != nil {
 		return nil, err
 	}

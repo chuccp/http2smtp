@@ -5,16 +5,19 @@ import (
 	"net/mail"
 	"strconv"
 
+	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
+	"github.com/chuccp/http2smtp/service"
 )
 
 type Mail struct {
-	context   *core.Context
-	mailModel *model.MailModel
+	context     *core.Context
+	mailModel   *model.MailModel
+	userService *service.UserService
 }
 
 func (m *Mail) getOne(req *web.Request) (any, error) {
@@ -66,7 +69,31 @@ func (m *Mail) getPage(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
-	return m.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").PageForWeb(page)
+	var result *web.PageAble[*model.Mail]
+	if user.IsAdmin {
+		result, err = m.mailModel.Query().Order("id desc").PageForWeb(page)
+	} else {
+		result, err = m.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").PageForWeb(page)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if user.IsAdmin {
+		userIds := make([]uint, 0)
+		for _, item := range result.List {
+			if item.UserId > 0 {
+				userIds = append(userIds, item.UserId)
+			}
+		}
+		m.userService.FillUserNames(userIds, func(uid uint, name string) {
+			for _, item := range result.List {
+				if item.UserId == uid {
+					item.UserName = name
+				}
+			}
+		})
+	}
+	return result, nil
 }
 func (m *Mail) postOne(req *web.Request) (any, error) {
 	var st model.Mail
@@ -120,5 +147,6 @@ func (m *Mail) Init(context *core.Context) error {
 	context.Post("/mail", m.postOne).WithMeta(auth2.WithLogin())
 	context.Put("/mail", m.putOne).WithMeta(auth2.WithLogin())
 	m.mailModel = core.GetModel[*model.MailModel](context)
+	m.userService = wf.GetService[*service.UserService](context)
 	return nil
 }

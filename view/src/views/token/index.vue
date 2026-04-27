@@ -33,6 +33,7 @@
             <el-tag v-else-if="row.state === 2" type="danger">{{ t('token.adminDisabled') }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column v-if="authStore.getIsAdmin" prop="userName" :label="t('common.creator')" width="120" />
         <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
@@ -85,8 +86,10 @@ import { Plus, CopyDocument } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { formatTime } from '@/utils/time'
+import { useAuthStore } from '@/store/auth'
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 import { getTokens, createToken, updateToken, deleteToken } from '@/api/token'
 import TokenFormDialog from '@/components/TokenFormDialog.vue'
 import SendMailByTokenDialog from '@/components/SendMailByTokenDialog.vue'

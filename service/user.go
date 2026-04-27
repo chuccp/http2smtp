@@ -190,3 +190,19 @@ func (s *UserService) DeleteUser(id uint) error {
 	user.UpdateTime = time.Now()
 	return s.userModel.UpdateById(user)
 }
+
+// FillUserNames fills the UserName field for a list of records that have UserId.
+func (s *UserService) FillUserNames(userIds []uint, setUserName func(userId uint, userName string)) {
+	if len(userIds) == 0 {
+		return
+	}
+	nameMap, err := s.userModel.FindNameMapByIds(userIds)
+	if err != nil {
+		return
+	}
+	for _, uid := range userIds {
+		if name, ok := nameMap[uid]; ok {
+			setUserName(uid, name)
+		}
+	}
+}

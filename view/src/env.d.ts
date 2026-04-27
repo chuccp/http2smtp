@@ -23,6 +23,8 @@ interface PageResponse<T> {
 // Entity types
 interface SMTPConfig {
   id: number
+  userId: number
+  userName: string
   name: string
   host: string
   port: number
@@ -35,6 +37,8 @@ interface SMTPConfig {
 
 interface MailConfig {
   id: number
+  userId: number
+  userName: string
   name: string
   mail: string
   createTime: string
@@ -43,6 +47,8 @@ interface MailConfig {
 
 interface TokenConfig {
   id: number
+  userId: number
+  userName: string
   token: string
   name: string
   SMTPId: number
@@ -55,6 +61,8 @@ interface TokenConfig {
 
 interface ScheduleConfig {
   id: number
+  userId: number
+  userName: string
   name: string
   tokenId: number
   cron: string

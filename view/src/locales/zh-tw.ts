@@ -25,7 +25,8 @@ export default {
     status: '狀態',
     name: '名稱',
     createTime: '建立時間',
-    description: '描述'
+    description: '描述',
+    creator: '建立者'
   },
 
   // Auth

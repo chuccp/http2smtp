@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
@@ -34,13 +35,35 @@ func (l *TokenService) GetOne(id uint, userId uint) (*model.Token, error) {
 	}
 	return token, nil
 }
-func (l *TokenService) GetPage(page *web.Page, userId uint) (any, error) {
-
-	tokens, i, err := l.tokenModel.Query().Where("user_id = ?", userId).Page(page)
+func (l *TokenService) GetPage(page *web.Page, userId uint, isAdmin bool) (any, error) {
+	var tokens []*model.Token
+	var i int
+	var err error
+	if isAdmin {
+		tokens, i, err = l.tokenModel.Query().Page(page)
+	} else {
+		tokens, i, err = l.tokenModel.Query().Where("user_id = ?", userId).Page(page)
+	}
 	if err != nil {
 		return nil, err
 	}
 	l.supplementToken(tokens...)
+	if isAdmin {
+		userIds := make([]uint, 0)
+		for _, t := range tokens {
+			if t.UserId > 0 {
+				userIds = append(userIds, t.UserId)
+			}
+		}
+		userService := wf.GetService[*UserService](l.context)
+		userService.FillUserNames(userIds, func(uid uint, name string) {
+			for _, t := range tokens {
+				if t.UserId == uid {
+					t.UserName = name
+				}
+			}
+		})
+	}
 	return web.ToPage[*model.Token](int64(i), tokens), nil
 }
 

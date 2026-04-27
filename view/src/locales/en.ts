@@ -25,7 +25,8 @@ export default {
     status: 'Status',
     name: 'Name',
     createTime: 'Create Time',
-    description: 'Description'
+    description: 'Description',
+    creator: 'Creator'
   },
 
   // Auth

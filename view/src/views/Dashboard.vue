@@ -1,23 +1,7 @@
 <template>
   <div class="dashboard-container app-container">
     <div class="row">
-      <el-col :xs="24" :sm="24" :md="12" :lg="8">
-        <el-card class="stat-card gradient-1">
-          <div class="stat-content">
-            <div class="stat-title">{{ t('dashboard.systemInfo') }}</div>
-            <div class="stat-item">
-              <span class="label">{{ t('dashboard.version') }}:</span>
-              <span class="value">HTTP2SMTP</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ t('dashboard.initialized') }}:</span>
-              <span class="value">{{ systemInfo.initialized ? t('common.yes') : t('common.no') }}</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-
-      <el-col :xs="24" :sm="12" :md="12" :lg="8">
+      <el-col :xs="24" :sm="12" :md="12" :lg="12">
         <el-card class="stat-card gradient-2">
           <div class="stat-content">
             <div class="stat-title">{{ t('dashboard.quickActions') }}</div>
@@ -39,7 +23,7 @@
         </el-card>
       </el-col>
 
-      <el-col :xs="24" :sm="12" :md="24" :lg="8">
+      <el-col :xs="24" :sm="12" :md="24" :lg="12">
         <el-card class="stat-card gradient-3">
           <div class="stat-content">
             <div class="stat-title">{{ t('dashboard.statistics') }}</div>
@@ -80,9 +64,6 @@ import { getTokens } from '@/api/token'
 import { getSchedules } from '@/api/schedule'
 
 const router = useRouter()
-const systemInfo = ref({
-  initialized: true
-})
 
 const counts = ref({
   smtp: 0,
@@ -137,10 +118,6 @@ onMounted(async () => {
 
   :deep(.el-card__body) {
     padding: 20px;
-  }
-
-  &.gradient-1 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   }
 
   &.gradient-2 {

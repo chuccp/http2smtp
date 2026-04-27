@@ -48,6 +48,21 @@ func (t *UserModel) FindOneByName(name string) (*User, error) {
 	return t.FindOne("name = ?", name)
 }
 
+func (t *UserModel) FindNameMapByIds(ids []uint) (map[uint]string, error) {
+	if len(ids) == 0 {
+		return make(map[uint]string), nil
+	}
+	users, err := t.FindAllByIds(ids...)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[uint]string)
+	for _, u := range users {
+		m[u.Id] = u.Name
+	}
+	return m, nil
+}
+
 func (t *UserModel) FindOneByToken(token string) (*User, error) {
 	return nil, nil
 }

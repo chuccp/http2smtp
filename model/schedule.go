@@ -18,6 +18,7 @@ type Header struct {
 type Schedule struct {
 	Id                uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
 	UserId            uint      `gorm:"column:user_id" json:"userId"`
+	UserName          string    `gorm:"-" json:"userName"`
 	Name              string    `gorm:"column:name" json:"name"`
 	TokenId           uint      `gorm:"token_id" json:"tokenId"`
 	Token             string    `gorm:"-" json:"token"`

@@ -7,6 +7,7 @@ import (
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/entity"
 
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
@@ -124,15 +125,14 @@ func (set *Set) putAdminInit(req *web.Request) (any, error) {
 		req.Response().WriteStatus(400)
 		return nil, errors.New("database not initialized, please complete step 1 first")
 	}
-	username, err := req.GetJsonStringValue("username")
+
+	var u entity.LoginUser
+	err := req.BindJSON(&u)
 	if err != nil {
 		return nil, err
 	}
-	password, err := req.GetJsonStringValue("password")
-	if err != nil {
-		return nil, err
-	}
-	if len(username) == 0 || len(password) == 0 {
+
+	if len(u.Username) == 0 || len(u.Password) == 0 {
 		return nil, errors.New("username or password is blank")
 	}
 
@@ -141,11 +141,11 @@ func (set *Set) putAdminInit(req *web.Request) (any, error) {
 	// If admin already exists, reset password; otherwise create new
 	hasAdmin, _ := userService.HasAdminUser()
 	if hasAdmin {
-		if err := userService.ResetAdminPassword(username, password); err != nil {
+		if err := userService.ResetAdminPassword(u.Username, u.Password); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := userService.CreateAdminUser(username, password); err != nil {
+		if err := userService.CreateAdminUser(u.Username, u.Password); err != nil {
 			return nil, err
 		}
 	}

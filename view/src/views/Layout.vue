@@ -63,9 +63,15 @@
         </el-menu-item>
       </el-menu>
 
-      <div class="sidebar-footer" @click="logout">
-        <el-icon><SwitchButton /></el-icon>
-        <span v-show="!isCollapse">{{ t('auth.logout') }}</span>
+      <div class="sidebar-footer">
+        <div class="sidebar-user" v-show="!isCollapse">
+          <el-icon><User /></el-icon>
+          <span class="username">{{ authStore.getUsername }}</span>
+        </div>
+        <div class="sidebar-logout" @click="logout">
+          <el-icon><SwitchButton /></el-icon>
+          <span v-show="!isCollapse">{{ t('auth.logout') }}</span>
+        </div>
       </div>
     </div>
 
@@ -416,21 +422,37 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar-footer {
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 16px;
-  color: #bfcbd9;
   background-color: #263445;
-  cursor: pointer;
-  transition: all 0.3s;
+  color: #bfcbd9;
   font-size: 14px;
   white-space: nowrap;
 }
 
-.sidebar-footer:hover {
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+  .username {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.sidebar-logout:hover {
   background-color: #1b2530;
   color: #409EFF;
 }

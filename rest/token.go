@@ -57,7 +57,7 @@ func (token *Token) getPage(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
-	return token.tokenService.GetPage(page, user.Id)
+	return token.tokenService.GetPage(page, user.Id, user.IsAdmin)
 }
 
 func (token *Token) postOne(req *web.Request) (any, error) {

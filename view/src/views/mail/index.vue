@@ -16,6 +16,7 @@
       >
         <el-table-column prop="name" :label="t('mail.recipientName')" />
         <el-table-column prop="mail" :label="t('mail.emailAddress')" />
+        <el-table-column v-if="authStore.getIsAdmin" prop="userName" :label="t('common.creator')" width="120" />
         <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
@@ -58,8 +59,10 @@ import { Plus } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { formatTime } from '@/utils/time'
+import { useAuthStore } from '@/store/auth'
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 import { getMails, createMail, updateMail, deleteMail } from '@/api/mail'
 import MailFormDialog from '@/components/MailFormDialog.vue'
 

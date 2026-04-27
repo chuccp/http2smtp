@@ -30,11 +30,34 @@ func (l *ScheduleService) FindAll() ([]*model.Schedule, error) {
 	return l.scheduleModel.FindAll()
 }
 
-func (l *ScheduleService) GetPage(page *web.Page, userId uint) (any, error) {
-	if userId > 0 {
-		return l.scheduleModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)
+func (l *ScheduleService) GetPage(page *web.Page, userId uint, isAdmin bool) (any, error) {
+	var result *web.PageAble[*model.Schedule]
+	var err error
+	if isAdmin {
+		result, err = l.scheduleModel.Query().Order("id desc").PageForWeb(page)
+	} else {
+		result, err = l.scheduleModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)
 	}
-	return l.scheduleModel.PageForWeb(page)
+	if err != nil {
+		return nil, err
+	}
+	if isAdmin {
+		userIds := make([]uint, 0)
+		for _, item := range result.List {
+			if item.UserId > 0 {
+				userIds = append(userIds, item.UserId)
+			}
+		}
+		userService := wf.GetService[*UserService](l.context)
+		userService.FillUserNames(userIds, func(uid uint, name string) {
+			for _, item := range result.List {
+				if item.UserId == uid {
+					item.UserName = name
+				}
+			}
+		})
+	}
+	return result, nil
 }
 func (l *ScheduleService) Edit(sd *model.Schedule) error {
 	if sd.Headers != nil && len(sd.Headers) > 0 {

@@ -23,6 +23,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column v-if="authStore.getIsAdmin" prop="userName" :label="t('common.creator')" width="120" />
         <el-table-column prop="createTime" :label="t('common.createTime')" width="180">
           <template #default="{ row }">
             {{ formatTime(row.createTime) }}
@@ -68,8 +69,10 @@ import { Plus } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { formatTime } from '@/utils/time'
+import { useAuthStore } from '@/store/auth'
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 import { getSchedules, createSchedule, updateSchedule, deleteSchedule, triggerSendMail } from '@/api/schedule'
 import ScheduleFormDialog from '@/components/ScheduleFormDialog.vue'
 

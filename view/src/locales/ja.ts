@@ -25,7 +25,8 @@ export default {
     status: 'ステータス',
     name: '名前',
     createTime: '作成日時',
-    description: '説明'
+    description: '説明',
+    creator: '作成者'
   },
 
   // Auth
