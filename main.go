@@ -83,7 +83,7 @@ func createAPP() (*wf.WebFrame, error) {
 		&model.UserModel{},
 	)
 
-	if init {
+	if init || fileConfig.GetBoolOrDefault("core.dbinit", false) {
 		connection, err := db.GetDb(fileConfig)
 		if err != nil {
 			return nil, err

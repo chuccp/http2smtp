@@ -70,7 +70,20 @@ export default {
     initialize: '初始化系统',
     initializing: '初始化中...',
     initializationSuccess: '系统初始化成功',
-    alreadyInitialized: '系统已初始化，正在跳转...'
+    alreadyInitialized: '系统已初始化，正在跳转...',
+    step1Database: '数据库设置',
+    step2Admin: '管理员设置',
+    nextStep: '下一步',
+    prevStep: '上一步',
+    dbInitSuccess: '数据库初始化成功',
+    adminAlreadyExists: '数据库中已存在管理员账号，您可以选择重新设置或跳过此步骤',
+    resetAdmin: '重新设置管理员',
+    skipAdmin: '跳过，使用现有管理员',
+    resetAdminConfirm: '确认重置',
+    skipFailed: '跳过失败',
+    adminUsernameRequired: '请输入管理员用户名',
+    adminPasswordRequired: '请输入管理员密码',
+    confirmPasswordRequired: '请确认密码'
   },
 
   // Dashboard
@@ -176,7 +189,7 @@ export default {
 
   // Log
   log: {
-    systemLogs: '系统日志',
+    systemLogs: '邮件日志',
     searchKeyword: '搜索关键词...',
     token: '令牌',
     subject: '主题',
@@ -235,7 +248,7 @@ export default {
       mail: '收件人',
       tokens: 'API 令牌',
       schedule: '定时任务',
-      logs: '日志',
+      logs: '邮件日志',
       settings: '设置',
       users: '用户管理'
     },

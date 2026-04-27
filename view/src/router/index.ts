@@ -72,12 +72,6 @@ const routes: RouteRecordRaw[] = [
         name: 'UserManagement',
         component: () => import('@/views/user/index.vue'),
         meta: { titleKey: 'user.userManagement', requiresAuth: true }
-      },
-      {
-        path: 'settings',
-        name: 'Settings',
-        component: () => import('@/views/settings/index.vue'),
-        meta: { titleKey: 'settings.systemSettings', requiresAuth: true }
       }
     ]
   }

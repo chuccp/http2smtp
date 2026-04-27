@@ -109,5 +109,8 @@ interface SetInfo {
 
 interface SystemInfo {
   initialized: boolean
+  dbInitialized: boolean
+  hasAdmin: boolean
+  isDocker: boolean
   version: string
 }

@@ -7,6 +7,8 @@ export function getSystemInfo(): Promise<ApiResponse<any>> {
       msg: res.msg,
       data: {
         initialized: res.data?.hasInit ?? false,
+        dbInitialized: res.data?.hasDbInit ?? false,
+        hasAdmin: res.data?.hasAdmin ?? false,
         hasLogin: res.data?.hasLogin,
         isDocker: res.data?.isDocker
       }

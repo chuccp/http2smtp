@@ -7,6 +7,9 @@ export function checkInitStatus(): Promise<ApiResponse<SystemInfo>> {
       msg: res.msg,
       data: {
         initialized: res.data?.hasInit ?? false,
+        dbInitialized: res.data?.hasDbInit ?? false,
+        hasAdmin: res.data?.hasAdmin ?? false,
+        isDocker: res.data?.isDocker ?? false,
         version: ''
       }
     }
@@ -58,8 +61,9 @@ export function testConnection(settings: SetInfo): Promise<ApiResponse<any>> {
   })
 }
 
-export function initializeSystem(settings: SetInfo): Promise<ApiResponse<any>> {
-  return request.put('/set', {
+// Step 1: Initialize database connection
+export function initDatabase(settings: SetInfo): Promise<ApiResponse<any>> {
+  return request.put('/dbInit', {
     dbType: settings.dbType,
     sqlite: { filename: settings.dbFile },
     mysql: {
@@ -71,10 +75,28 @@ export function initializeSystem(settings: SetInfo): Promise<ApiResponse<any>> {
       charset: settings.dbCharset
     },
     manage: {
-      port: settings.webPort,
-      username: settings.adminUser,
-      password: settings.adminPass
+      port: settings.webPort
     },
     api: { port: settings.apiPort }
   })
+}
+
+// Step 2: Initialize admin account
+export function initAdmin(username: string, password: string): Promise<ApiResponse<any>> {
+  return request.put('/adminInit', {
+    manage: {
+      username,
+      password
+    }
+  })
+}
+
+// Step 2 alternative: Skip admin creation (admin already exists)
+export function skipAdmin(): Promise<ApiResponse<any>> {
+  return request.put('/adminSkip', {})
+}
+
+// Check if an admin user already exists
+export function checkAdminExists(): Promise<ApiResponse<{ hasAdmin: boolean }>> {
+  return request.get('/adminExists')
 }

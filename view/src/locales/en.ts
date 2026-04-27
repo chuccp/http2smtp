@@ -70,7 +70,20 @@ export default {
     initialize: 'Initialize System',
     initializing: 'Initializing...',
     initializationSuccess: 'System initialized successfully',
-    alreadyInitialized: 'System is already initialized, redirecting...'
+    alreadyInitialized: 'System is already initialized, redirecting...',
+    step1Database: 'Database Setup',
+    step2Admin: 'Admin Setup',
+    nextStep: 'Next',
+    prevStep: 'Previous',
+    dbInitSuccess: 'Database initialized successfully',
+    adminAlreadyExists: 'An admin account already exists in the database. You can reset it or skip this step.',
+    resetAdmin: 'Reset Admin Account',
+    skipAdmin: 'Skip, use existing admin',
+    resetAdminConfirm: 'Confirm Reset',
+    skipFailed: 'Skip failed',
+    adminUsernameRequired: 'Please enter admin username',
+    adminPasswordRequired: 'Please enter admin password',
+    confirmPasswordRequired: 'Please confirm password'
   },
 
   // Dashboard
@@ -176,7 +189,7 @@ export default {
 
   // Log
   log: {
-    systemLogs: 'System Logs',
+    systemLogs: 'Mail Logs',
     searchKeyword: 'Search keyword...',
     token: 'Token',
     subject: 'Subject',
@@ -235,7 +248,7 @@ export default {
       mail: 'Recipients',
       tokens: 'API Tokens',
       schedule: 'Schedule',
-      logs: 'Logs',
+      logs: 'Mail Logs',
       settings: 'Settings',
       users: 'Users'
     },

@@ -70,7 +70,20 @@ export default {
     initialize: 'システムを初期化',
     initializing: '初期化中...',
     initializationSuccess: 'システムの初期化に成功しました',
-    alreadyInitialized: 'システムは既に初期化されています。リダイレクト中...'
+    alreadyInitialized: 'システムは既に初期化されています。リダイレクト中...',
+    step1Database: 'データベース設定',
+    step2Admin: '管理者設定',
+    nextStep: '次へ',
+    prevStep: '前へ',
+    dbInitSuccess: 'データベースの初期化に成功しました',
+    adminAlreadyExists: 'データベースに管理者アカウントが既に存在します。再設定するか、この手順をスキップできます。',
+    resetAdmin: '管理者アカウントを再設定',
+    skipAdmin: 'スキップ、既存の管理者を使用',
+    resetAdminConfirm: '再設定を確認',
+    skipFailed: 'スキップに失敗しました',
+    adminUsernameRequired: '管理者ユーザー名を入力してください',
+    adminPasswordRequired: '管理者パスワードを入力してください',
+    confirmPasswordRequired: 'パスワードを確認してください'
   },
 
   // Dashboard
@@ -176,7 +189,7 @@ export default {
 
   // Log
   log: {
-    systemLogs: 'システムログ',
+    systemLogs: 'メールログ',
     searchKeyword: 'キーワードで検索...',
     token: 'トークン',
     subject: '件名',
@@ -235,7 +248,7 @@ export default {
       mail: '受信者',
       tokens: 'API トークン',
       schedule: 'スケジュール',
-      logs: 'ログ',
+      logs: 'メールログ',
       settings: '設定',
       users: 'ユーザー管理'
     },

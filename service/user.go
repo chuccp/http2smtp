@@ -120,6 +120,15 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 	return s.userModel.UpdateById(user)
 }
 
+// HasAdminUser checks if any admin user exists in the database.
+func (s *UserService) HasAdminUser() (bool, error) {
+	count, err := s.userModel.Query().Where("is_admin = ?", true).Count()
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // CreateAdminUser creates an admin user during system initialization.
 func (s *UserService) CreateAdminUser(name, password string) error {
 	existing, err := s.userModel.FindOneByName(name)

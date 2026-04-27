@@ -70,7 +70,20 @@ export default {
     initialize: '初始化系統',
     initializing: '初始化中...',
     initializationSuccess: '系統初始化成功',
-    alreadyInitialized: '系統已初始化，正在跳轉...'
+    alreadyInitialized: '系統已初始化，正在跳轉...',
+    step1Database: '資料庫設定',
+    step2Admin: '管理員設定',
+    nextStep: '下一步',
+    prevStep: '上一步',
+    dbInitSuccess: '資料庫初始化成功',
+    adminAlreadyExists: '資料庫中已存在管理員帳號，您可以選擇重新設定或跳過此步驟',
+    resetAdmin: '重新設定管理員',
+    skipAdmin: '跳過，使用現有管理員',
+    resetAdminConfirm: '確認重設',
+    skipFailed: '跳過失敗',
+    adminUsernameRequired: '請輸入管理員使用者名稱',
+    adminPasswordRequired: '請輸入管理員密碼',
+    confirmPasswordRequired: '請確認密碼'
   },
 
   // Dashboard
@@ -176,7 +189,7 @@ export default {
 
   // Log
   log: {
-    systemLogs: '系統日誌',
+    systemLogs: '郵件日誌',
     searchKeyword: '搜尋關鍵字...',
     token: '權杖',
     subject: '主題',
@@ -235,7 +248,7 @@ export default {
       mail: '收件人',
       tokens: 'API 權杖',
       schedule: '排程任務',
-      logs: '日誌',
+      logs: '郵件日誌',
       settings: '設定',
       users: '使用者管理'
     },

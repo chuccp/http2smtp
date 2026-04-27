@@ -32,6 +32,7 @@ func GetConfig(config config.IConfig) (*Config, error) {
 
 type CoreConfig struct {
 	Init      bool   `json:"init"`
+	DbInit    bool   `json:"dbInit"`
 	CachePath string `json:"cachePath"`
 	DbType    string `json:"dbType"`
 	LogLevel  string `json:"logLevel"`
@@ -42,6 +43,7 @@ type CoreConfig struct {
 func DefaultCoreConfig() *CoreConfig {
 	return &CoreConfig{
 		Init:      false,
+		DbInit:    false,
 		CachePath: ".cache",
 		DbType:    "sqlite",
 		LogLevel:  "info",
@@ -110,7 +112,9 @@ func DefaultMysqlConfig() *MysqlConfig {
 }
 
 type System struct {
-	HasInit  bool
-	HasLogin bool
-	IsDocker bool
+	HasInit   bool `json:"hasInit"`
+	HasDbInit bool `json:"hasDbInit"`
+	HasAdmin  bool `json:"hasAdmin"`
+	HasLogin  bool `json:"hasLogin"`
+	IsDocker  bool `json:"isDocker"`
 }
