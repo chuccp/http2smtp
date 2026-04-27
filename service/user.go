@@ -96,7 +96,7 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 	// Check if new name conflicts with existing users (excluding self)
 	if name != user.Name {
 		existing, err := s.userModel.FindOneByName(name)
-		if err != nil {
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
 		if existing != nil {
@@ -107,7 +107,7 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 
 	if password != "" {
 		hashedPassword, err := localutil.HashPassword(password)
-		if err != nil {
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
 		user.Password = hashedPassword
