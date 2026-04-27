@@ -107,7 +107,7 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 
 	if password != "" {
 		hashedPassword, err := localutil.HashPassword(password)
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		if err != nil {
 			return err
 		}
 		user.Password = hashedPassword
