@@ -62,7 +62,7 @@ func (s *UserService) GetOne(id uint) (*model.User, error) {
 // CreateUser creates a new user with a hashed password.
 func (s *UserService) CreateUser(name, password string, isAdmin, isUse bool) error {
 	existing, err := s.userModel.FindOneByName(name)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 	if existing != nil {
