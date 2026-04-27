@@ -21,124 +21,114 @@
       <h1 class="title">{{ t('setup.systemSetup') }}</h1>
       <p class="subtitle">{{ t('setup.setupWizard') }}</p>
 
-      <!-- Steps indicator -->
-      <el-steps :active="currentStep" finish-status="success" simple class="setup-steps">
-        <el-step :title="t('setup.step1Database')" />
-        <el-step :title="t('setup.step2Admin')" />
-      </el-steps>
+      <div v-if="pageLoading" class="page-loading">
+        <el-icon class="loading-icon" :size="32"><Loading /></el-icon>
+      </div>
 
-      <!-- Step 1: Database Configuration -->
-      <el-form
-        v-show="currentStep === 0"
-        ref="dbFormRef"
-        :model="setupForm"
-        :rules="dbRules"
-        label-width="140px"
-      >
-        <el-divider content-position="left">{{ t('setup.databaseConfig') }}</el-divider>
+      <template v-else>
+        <!-- Steps indicator -->
+        <el-steps :active="currentStep" finish-status="success" simple class="setup-steps">
+          <el-step :title="t('setup.step1Database')" />
+          <el-step :title="t('setup.step2Admin')" />
+        </el-steps>
 
-        <el-form-item :label="t('setup.databaseType')" prop="dbType">
-          <el-radio-group v-model="setupForm.dbType">
-            <el-radio value="sqlite">{{ t('setup.sqlite') }}</el-radio>
-            <el-radio value="mysql">{{ t('setup.mysql') }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <!-- Step 1: Database Configuration -->
+        <el-form
+          v-show="currentStep === 0"
+          ref="dbFormRef"
+          :model="setupForm"
+          :rules="dbRules"
+          label-width="140px"
+        >
+          <el-divider content-position="left">{{ t('setup.databaseConfig') }}</el-divider>
 
-        <el-form-item v-if="setupForm.dbType === 'sqlite'" :label="t('setup.sqliteFile')" prop="dbFile">
-          <el-input v-model="setupForm.dbFile" :placeholder="'data.db'" />
-        </el-form-item>
+          <el-form-item :label="t('setup.databaseType')" prop="dbType">
+            <el-radio-group v-model="setupForm.dbType">
+              <el-radio value="sqlite">{{ t('setup.sqlite') }}</el-radio>
+              <el-radio value="mysql">{{ t('setup.mysql') }}</el-radio>
+            </el-radio-group>
+          </el-form-item>
 
-        <template v-if="setupForm.dbType === 'mysql'">
-          <el-form-item :label="t('setup.mysqlHost')" prop="dbHost">
-            <el-input v-model="setupForm.dbHost" placeholder="127.0.0.1" />
+          <el-form-item v-if="setupForm.dbType === 'sqlite'" :label="t('setup.sqliteFile')" prop="dbFile">
+            <el-input v-model="setupForm.dbFile" :placeholder="'data.db'" />
           </el-form-item>
-          <el-form-item :label="t('setup.mysqlPort')" prop="dbPort">
-            <el-input-number v-model="setupForm.dbPort" :min="1" :max="65535" />
-          </el-form-item>
-          <el-form-item :label="t('setup.mysqlDatabase')" prop="dbName">
-            <el-input v-model="setupForm.dbName" />
-          </el-form-item>
-          <el-form-item :label="t('setup.mysqlUser')" prop="dbUser">
-            <el-input v-model="setupForm.dbUser" />
-          </el-form-item>
-          <el-form-item :label="t('setup.mysqlPassword')" prop="dbPass">
-            <el-input v-model="setupForm.dbPass" type="password" show-password />
-          </el-form-item>
-          <el-form-item :label="t('setup.mysqlCharset')" prop="dbCharset">
-            <el-input v-model="setupForm.dbCharset" placeholder="utf8mb4" />
-          </el-form-item>
+
+          <template v-if="setupForm.dbType === 'mysql'">
+            <el-form-item :label="t('setup.mysqlHost')" prop="dbHost">
+              <el-input v-model="setupForm.dbHost" placeholder="127.0.0.1" />
+            </el-form-item>
+            <el-form-item :label="t('setup.mysqlPort')" prop="dbPort">
+              <el-input-number v-model="setupForm.dbPort" :min="1" :max="65535" />
+            </el-form-item>
+            <el-form-item :label="t('setup.mysqlDatabase')" prop="dbName">
+              <el-input v-model="setupForm.dbName" />
+            </el-form-item>
+            <el-form-item :label="t('setup.mysqlUser')" prop="dbUser">
+              <el-input v-model="setupForm.dbUser" />
+            </el-form-item>
+            <el-form-item :label="t('setup.mysqlPassword')" prop="dbPass">
+              <el-input v-model="setupForm.dbPass" type="password" show-password />
+            </el-form-item>
+            <el-form-item :label="t('setup.mysqlCharset')" prop="dbCharset">
+              <el-input v-model="setupForm.dbCharset" placeholder="utf8mb4" />
+            </el-form-item>
+            <el-form-item>
+              <el-button @click="handleTestConnection" :loading="testing">
+                {{ t('setup.testConnection') }}
+              </el-button>
+            </el-form-item>
+          </template>
+
+          <template v-if="!isDocker">
+            <el-divider content-position="left">{{ t('setup.portConfig') }}</el-divider>
+
+            <el-form-item :label="t('setup.webPort')" prop="webPort">
+              <el-input-number v-model="setupForm.webPort" :min="1" :max="65535" />
+            </el-form-item>
+
+            <el-form-item :label="t('setup.apiPort')" prop="apiPort">
+              <el-input-number v-model="setupForm.apiPort" :min="1" :max="65535" />
+            </el-form-item>
+          </template>
+
           <el-form-item>
-            <el-button @click="handleTestConnection" :loading="testing">
-              {{ t('setup.testConnection') }}
-            </el-button>
-          </el-form-item>
-        </template>
-
-        <template v-if="!isDocker">
-          <el-divider content-position="left">{{ t('setup.portConfig') }}</el-divider>
-
-          <el-form-item :label="t('setup.webPort')" prop="webPort">
-            <el-input-number v-model="setupForm.webPort" :min="1" :max="65535" />
-          </el-form-item>
-
-          <el-form-item :label="t('setup.apiPort')" prop="apiPort">
-            <el-input-number v-model="setupForm.apiPort" :min="1" :max="65535" />
-          </el-form-item>
-        </template>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            :loading="dbInitializing"
-            @click="handleDbInit"
-          >
-            {{ t('setup.nextStep') }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-
-      <!-- Step 2: Admin Account -->
-      <el-form
-        v-show="currentStep === 1"
-        ref="adminFormRef"
-        :model="adminForm"
-        :rules="adminRules"
-        label-width="140px"
-      >
-        <el-divider content-position="left">{{ t('setup.adminAccount') }}</el-divider>
-
-        <!-- Show when admin already exists -->
-        <template v-if="adminExists">
-          <el-alert
-            :title="t('setup.adminAlreadyExists')"
-            type="warning"
-            :closable="false"
-            show-icon
-            class="admin-exists-alert"
-          />
-
-          <el-form-item class="admin-choice-buttons">
             <el-button
               type="primary"
-              @click="handleResetAdmin"
+              :loading="dbInitializing"
+              @click="handleDbInit"
             >
-              {{ t('setup.resetAdmin') }}
-            </el-button>
-            <el-button
-              @click="handleSkipAdmin"
-            >
-              {{ t('setup.skipAdmin') }}
+              {{ t('setup.nextStep') }}
             </el-button>
           </el-form-item>
+        </el-form>
 
-          <!-- Admin form shown when user chooses to reset -->
-          <template v-if="showResetForm">
-            <el-form-item :label="t('setup.adminUsername')" prop="adminUser">
-              <el-input v-model="adminForm.adminUser" />
+        <!-- Step 2: Admin Account -->
+        <el-form
+          v-show="currentStep === 1"
+          ref="adminFormRef"
+          :model="adminForm"
+          :rules="adminRules"
+          label-width="140px"
+        >
+          <el-divider content-position="left">{{ t('setup.adminAccount') }}</el-divider>
+
+          <!-- Show when admin already exists -->
+          <template v-if="adminExists">
+            <el-alert
+              :title="t('setup.adminAlreadyExists')"
+              type="warning"
+              :closable="false"
+              show-icon
+              class="admin-exists-alert"
+            />
+
+            <!-- Show current admin username -->
+            <el-form-item :label="t('setup.currentAdmin')">
+              <span class="admin-name-display">{{ existingAdminName }}</span>
             </el-form-item>
 
             <el-form-item :label="t('setup.adminPassword')" prop="adminPass">
-              <el-input v-model="adminForm.adminPass" type="password" show-password />
+              <el-input v-model="adminForm.adminPass" type="password" show-password :placeholder="t('setup.newPasswordPlaceholder')" />
             </el-form-item>
 
             <el-form-item :label="t('setup.confirmPassword')" prop="confirmPassword">
@@ -153,41 +143,41 @@
               >
                 {{ t('setup.resetAdminConfirm') }}
               </el-button>
-              <el-button @click="showResetForm = false">
-                {{ t('common.cancel') }}
+              <el-button @click="handleSkipAdmin" :loading="skipLoading">
+                {{ t('setup.skipAdmin') }}
               </el-button>
             </el-form-item>
           </template>
-        </template>
 
-        <!-- Normal admin creation form (no existing admin) -->
-        <template v-else>
-          <el-form-item :label="t('setup.adminUsername')" prop="adminUser">
-            <el-input v-model="adminForm.adminUser" />
-          </el-form-item>
+          <!-- Normal admin creation form (no existing admin) -->
+          <template v-else>
+            <el-form-item :label="t('setup.adminUsername')" prop="adminUser">
+              <el-input v-model="adminForm.adminUser" />
+            </el-form-item>
 
-          <el-form-item :label="t('setup.adminPassword')" prop="adminPass">
-            <el-input v-model="adminForm.adminPass" type="password" show-password />
-          </el-form-item>
+            <el-form-item :label="t('setup.adminPassword')" prop="adminPass">
+              <el-input v-model="adminForm.adminPass" type="password" show-password />
+            </el-form-item>
 
-          <el-form-item :label="t('setup.confirmPassword')" prop="confirmPassword">
-            <el-input v-model="adminForm.confirmPassword" type="password" show-password />
-          </el-form-item>
+            <el-form-item :label="t('setup.confirmPassword')" prop="confirmPassword">
+              <el-input v-model="adminForm.confirmPassword" type="password" show-password />
+            </el-form-item>
 
-          <el-form-item>
-            <el-button @click="currentStep = 0">
-              {{ t('setup.prevStep') }}
-            </el-button>
-            <el-button
-              type="primary"
-              :loading="adminInitializing"
-              @click="handleAdminInit"
-            >
-              {{ t('setup.initialize') }}
-            </el-button>
-          </el-form-item>
-        </template>
-      </el-form>
+            <el-form-item>
+              <el-button @click="currentStep = 0">
+                {{ t('setup.prevStep') }}
+              </el-button>
+              <el-button
+                type="primary"
+                :loading="adminInitializing"
+                @click="handleAdminInit"
+              >
+                {{ t('setup.initialize') }}
+              </el-button>
+            </el-form-item>
+          </template>
+        </el-form>
+      </template>
     </el-card>
   </div>
 </template>
@@ -199,7 +189,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { checkInitStatus, getDefaultSettings, testConnection, initDatabase, initAdmin, skipAdmin, checkAdminExists } from '@/api/setup'
 import { useI18n } from 'vue-i18n'
-import { ChatDotRound } from '@element-plus/icons-vue'
+import { ChatDotRound, Loading } from '@element-plus/icons-vue'
 
 const { t, locale } = useI18n()
 
@@ -227,6 +217,8 @@ const currentStep = ref(0)
 const adminExists = ref(false)
 const showResetForm = ref(false)
 const isDocker = ref(false)
+const pageLoading = ref(true)
+const existingAdminName = ref('')
 
 const setupForm = reactive<SetInfo>({
   dbType: 'sqlite',
@@ -266,8 +258,8 @@ const dbRules = reactive<FormRules<SetInfo>>({
   ]
 })
 
-const adminRules = reactive<FormRules>({
-  adminUser: [{ required: true, message: () => t('setup.adminUsernameRequired'), trigger: 'blur' }],
+const adminRules = computed<FormRules>(() => ({
+  adminUser: adminExists.value ? [] : [{ required: true, message: () => t('setup.adminUsernameRequired'), trigger: 'blur' }],
   adminPass: [{ required: true, message: () => t('setup.adminPasswordRequired'), trigger: 'blur' }],
   confirmPassword: [
     { required: true, message: () => t('setup.confirmPasswordRequired'), trigger: 'blur' },
@@ -282,7 +274,7 @@ const adminRules = reactive<FormRules>({
       trigger: 'blur'
     }
   ]
-})
+}))
 
 onMounted(async () => {
   try {
@@ -311,6 +303,8 @@ onMounted(async () => {
   } catch (e) {
     console.error(e)
   }
+
+  pageLoading.value = false
 })
 
 const checkExistingAdmin = async () => {
@@ -318,6 +312,8 @@ const checkExistingAdmin = async () => {
     const res = await checkAdminExists()
     if (res.code === 0 || res.code === 200) {
       adminExists.value = res.data?.hasAdmin ?? false
+      existingAdminName.value = res.data?.adminName ?? ''
+      adminForm.adminUser = existingAdminName.value
     }
   } catch (e) {
     console.error(e)
@@ -376,10 +372,6 @@ const handleAdminInit = async () => {
   }
 }
 
-const handleResetAdmin = () => {
-  showResetForm.value = true
-}
-
 const handleSkipAdmin = async () => {
   skipLoading.value = true
   try {
@@ -435,6 +427,22 @@ const handleSkipAdmin = async () => {
   font-weight: 500;
 }
 
+.page-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+
+  .loading-icon {
+    animation: spin 1.5s linear infinite;
+    color: #909399;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+}
+
 .setup-steps {
   margin-bottom: 24px;
 }
@@ -443,8 +451,10 @@ const handleSkipAdmin = async () => {
   margin-bottom: 20px;
 }
 
-.admin-choice-buttons {
-  margin-bottom: 20px;
+.admin-name-display {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .setup-card {

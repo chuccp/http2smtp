@@ -84,10 +84,8 @@ export function initDatabase(settings: SetInfo): Promise<ApiResponse<any>> {
 // Step 2: Initialize admin account
 export function initAdmin(username: string, password: string): Promise<ApiResponse<any>> {
   return request.put('/adminInit', {
-    manage: {
-      username,
-      password
-    }
+    username,
+    password
   })
 }
 
@@ -97,6 +95,6 @@ export function skipAdmin(): Promise<ApiResponse<any>> {
 }
 
 // Check if an admin user already exists
-export function checkAdminExists(): Promise<ApiResponse<{ hasAdmin: boolean }>> {
+export function checkAdminExists(): Promise<ApiResponse<{ hasAdmin: boolean; adminName: string }>> {
   return request.get('/adminExists')
 }

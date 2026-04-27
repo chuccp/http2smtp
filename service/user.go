@@ -129,6 +129,15 @@ func (s *UserService) HasAdminUser() (bool, error) {
 	return count > 0, nil
 }
 
+// GetAdminUsername returns the username of the first admin user.
+func (s *UserService) GetAdminUsername() (string, error) {
+	user, err := s.userModel.Query().Where("is_admin = ?", true).One()
+	if err != nil || user == nil {
+		return "", err
+	}
+	return user.Name, nil
+}
+
 // CreateAdminUser creates an admin user during system initialization.
 func (s *UserService) CreateAdminUser(name, password string) error {
 	existing, err := s.userModel.FindOneByName(name)
@@ -150,6 +159,22 @@ func (s *UserService) CreateAdminUser(name, password string) error {
 	}
 	return errors.New("admin is exist")
 
+}
+
+// ResetAdminPassword resets the password of the existing admin user during setup.
+func (s *UserService) ResetAdminPassword(username, password string) error {
+	user, err := s.userModel.Query().Where("is_admin = ?", true).One()
+	if err != nil || user == nil {
+		return errors.New("admin user not found")
+	}
+	hashedPassword, err := localutil.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	user.Name = username
+	user.Password = hashedPassword
+	user.UpdateTime = time.Now()
+	return s.userModel.UpdateById(user)
 }
 
 // DeleteUser soft-deletes a user by setting is_use = false.

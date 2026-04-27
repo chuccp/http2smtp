@@ -83,7 +83,9 @@ export default {
     skipFailed: '跳过失败',
     adminUsernameRequired: '请输入管理员用户名',
     adminPasswordRequired: '请输入管理员密码',
-    confirmPasswordRequired: '请确认密码'
+    confirmPasswordRequired: '请确认密码',
+    currentAdmin: '当前管理员',
+    newPasswordPlaceholder: '输入新密码'
   },
 
   // Dashboard

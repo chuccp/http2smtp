@@ -111,7 +111,7 @@ func (set *Set) putDbInit(req *web.Request) (any, error) {
 	return web.Ok("ok"), nil
 }
 
-// putAdminInit handles Step 2 of setup: create admin account.
+// putAdminInit handles Step 2 of setup: create or reset admin account.
 func (set *Set) putAdminInit(req *web.Request) (any, error) {
 	init := set.context.GetConfig().GetBoolOrDefault("core.init", false)
 	if init {
@@ -124,23 +124,30 @@ func (set *Set) putAdminInit(req *web.Request) (any, error) {
 		req.Response().WriteStatus(400)
 		return nil, errors.New("database not initialized, please complete step 1 first")
 	}
-
-	setInfo := model.DefaultConfig()
-	err := req.BindJSON(&setInfo)
+	username, err := req.GetJsonStringValue("username")
 	if err != nil {
 		return nil, err
 	}
-
-	if setInfo.Manage == nil || len(setInfo.Manage.Username) == 0 || len(setInfo.Manage.Password) == 0 {
+	password, err := req.GetJsonStringValue("password")
+	if err != nil {
+		return nil, err
+	}
+	if len(username) == 0 || len(password) == 0 {
 		return nil, errors.New("username or password is blank")
 	}
 
-	log.Debug("putAdminInit", zap.Any("setInfo", &setInfo))
-
-	// Create admin user
 	userService := wf.GetService[*service.UserService](set.context)
-	if err := userService.CreateAdminUser(setInfo.Manage.Username, setInfo.Manage.Password); err != nil {
-		return nil, err
+
+	// If admin already exists, reset password; otherwise create new
+	hasAdmin, _ := userService.HasAdminUser()
+	if hasAdmin {
+		if err := userService.ResetAdminPassword(username, password); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := userService.CreateAdminUser(username, password); err != nil {
+			return nil, err
+		}
 	}
 
 	// Mark system as fully initialized
@@ -194,7 +201,11 @@ func (set *Set) getAdminExists(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return map[string]bool{"hasAdmin": hasAdmin}, nil
+	adminName := ""
+	if hasAdmin {
+		adminName, _ = userService.GetAdminUsername()
+	}
+	return map[string]any{"hasAdmin": hasAdmin, "adminName": adminName}, nil
 }
 
 func (set *Set) getSet(req *web.Request) (any, error) {
@@ -277,10 +288,6 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 		return nil, err
 	}
 
-	if len(setInfo.Manage.Username) == 0 || len(setInfo.Manage.Password) == 0 {
-		return nil, errors.New("username or password is blank")
-	}
-
 	log.Debug("putSet", zap.Any("setInfo", &setInfo))
 
 	// Update database configuration
@@ -337,14 +344,6 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	err = set.context.DefaultModelGroup().SwitchDB(createDB, set.context)
 	if err != nil {
 		return nil, err
-	}
-
-	// 添加管理员用户到数据库
-	if setInfo.Manage != nil {
-		userService := wf.GetService[*service.UserService](set.context)
-		if err := userService.CreateAdminUser(setInfo.Manage.Username, setInfo.Manage.Password); err != nil {
-			return nil, err
-		}
 	}
 	// Save the config to file
 	err = set.context.GetConfig().WriteConfig()

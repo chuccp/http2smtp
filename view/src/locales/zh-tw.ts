@@ -83,7 +83,9 @@ export default {
     skipFailed: '跳過失敗',
     adminUsernameRequired: '請輸入管理員使用者名稱',
     adminPasswordRequired: '請輸入管理員密碼',
-    confirmPasswordRequired: '請確認密碼'
+    confirmPasswordRequired: '請確認密碼',
+    currentAdmin: '目前管理員',
+    newPasswordPlaceholder: '輸入新密碼'
   },
 
   // Dashboard

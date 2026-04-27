@@ -83,7 +83,9 @@ export default {
     skipFailed: 'Skip failed',
     adminUsernameRequired: 'Please enter admin username',
     adminPasswordRequired: 'Please enter admin password',
-    confirmPasswordRequired: 'Please confirm password'
+    confirmPasswordRequired: 'Please confirm password',
+    currentAdmin: 'Current Admin',
+    newPasswordPlaceholder: 'Enter new password'
   },
 
   // Dashboard

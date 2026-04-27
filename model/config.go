@@ -53,10 +53,8 @@ func DefaultCoreConfig() *CoreConfig {
 }
 
 type ManageConfig struct {
-	Port     int    `json:"port"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	WebPath  string `json:"webPath"`
+	Port    int    `json:"port"`
+	WebPath string `json:"webPath"`
 }
 
 var ManagePort = 12566
@@ -64,10 +62,8 @@ var ApiPort = 12567
 
 func DefaultManageConfig() *ManageConfig {
 	return &ManageConfig{
-		Port:     12566,
-		Username: "admin",
-		Password: "admin",
-		WebPath:  "web",
+		Port:    12566,
+		WebPath: "web",
 	}
 }
 

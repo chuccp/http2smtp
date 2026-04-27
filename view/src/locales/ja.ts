@@ -83,7 +83,9 @@ export default {
     skipFailed: 'スキップに失敗しました',
     adminUsernameRequired: '管理者ユーザー名を入力してください',
     adminPasswordRequired: '管理者パスワードを入力してください',
-    confirmPasswordRequired: 'パスワードを確認してください'
+    confirmPasswordRequired: 'パスワードを確認してください',
+    currentAdmin: '現在の管理者',
+    newPasswordPlaceholder: '新しいパスワードを入力'
   },
 
   // Dashboard
