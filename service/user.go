@@ -86,7 +86,7 @@ func (s *UserService) CreateUser(name, password string, isAdmin, isUse bool) err
 // UpdateUser updates an existing user. If password is non-empty, it will be hashed and updated.
 func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin, isUse bool) error {
 	user, err := s.userModel.FindById(id)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 	if user == nil {
