@@ -128,7 +128,8 @@ export default {
     pleaseSelectRecipient: '受信者を 1 人選択してください',
     testEmailSubject: 'テストメール',
     testEmailContent: 'これは HTTP2SMTP からのテストメールです。',
-    testEmailSent: 'テストメールの送信に成功しました'
+    testEmailSent: 'テストメールの送信に成功しました',
+    adminCreated: '管理者作成のみ'
   },
 
   // Mail

@@ -1,12 +1,12 @@
 import request from './request'
 
-export function getMails(page: number = 1, pageSize: number = 10): Promise<ApiResponse<PageResponse<MailConfig>>> {
-  return request.get('/mail', {
-    params: {
-      page,
-      pageSize
-    }
-  })
+export function getMails(page: number = 1, pageSize: number = 10, filters?: { name?: string; mail?: string }): Promise<ApiResponse<PageResponse<MailConfig>>> {
+  const params: Record<string, any> = { page, pageSize }
+  if (filters) {
+    if (filters.name) params.name = filters.name
+    if (filters.mail) params.mail = filters.mail
+  }
+  return request.get('/mail', { params })
 }
 
 export function getMail(id: number): Promise<ApiResponse<MailConfig>> {

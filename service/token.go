@@ -35,14 +35,22 @@ func (l *TokenService) GetOne(id uint, userId uint) (*model.Token, error) {
 	}
 	return token, nil
 }
-func (l *TokenService) GetPage(page *web.Page, userId uint, isAdmin bool) (any, error) {
+func (l *TokenService) GetPage(page *web.Page, userId uint, isAdmin bool, name string) (any, error) {
 	var tokens []*model.Token
 	var i int
 	var err error
 	if isAdmin {
-		tokens, i, err = l.tokenModel.Query().Page(page)
+		query := l.tokenModel.Query()
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		tokens, i, err = query.Page(page)
 	} else {
-		tokens, i, err = l.tokenModel.Query().Where("user_id = ?", userId).Page(page)
+		query := l.tokenModel.Query().Where("user_id = ?", userId)
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		tokens, i, err = query.Page(page)
 	}
 	if err != nil {
 		return nil, err

@@ -128,7 +128,8 @@ export default {
     pleaseSelectRecipient: '请选择一个收件人',
     testEmailSubject: '测试邮件',
     testEmailContent: '这是来自 HTTP2SMTP 的测试邮件。',
-    testEmailSent: '测试邮件发送成功'
+    testEmailSent: '测试邮件发送成功',
+    adminCreated: '仅管理员创建'
   },
 
   // Mail

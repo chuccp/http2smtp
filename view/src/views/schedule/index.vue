@@ -5,6 +5,11 @@
         <el-icon><Plus /></el-icon>
         {{ t('schedule.addSchedule') }}
       </el-button>
+      <div class="filter-bar">
+        <el-input v-model="filterName" :placeholder="t('schedule.taskName')" clearable size="default" style="width: 160px" @clear="loadData" @keyup.enter="loadData" />
+        <el-button size="default" @click="loadData">{{ t('common.search') }}</el-button>
+        <el-button size="default" @click="resetFilters">{{ t('common.reset') }}</el-button>
+      </div>
     </div>
 
     <div class="table-container table-card-responsive">
@@ -83,11 +88,14 @@ const pageSize = ref(10)
 const total = ref(0)
 const formDialogVisible = ref(false)
 const editingItem = ref<ScheduleConfig | null>(null)
+const filterName = ref('')
 
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await getSchedules(page.value, pageSize.value)
+    const res = await getSchedules(page.value, pageSize.value, {
+      name: filterName.value
+    })
     if (res.code === 0 || res.code === 200) {
       tableData.value = res.data.list
       total.value = res.data.total
@@ -95,6 +103,12 @@ const loadData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const resetFilters = () => {
+  filterName.value = ''
+  page.value = 1
+  loadData()
 }
 
 const handleAdd = () => {
@@ -145,5 +159,12 @@ onMounted(() => {
 <style scoped lang="scss">
 .schedule-container {
   background: #f0f2f5;
+}
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
 }
 </style>

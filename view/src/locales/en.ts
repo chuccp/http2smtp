@@ -128,7 +128,8 @@ export default {
     pleaseSelectRecipient: 'Please select a recipient',
     testEmailSubject: 'Test Email',
     testEmailContent: 'This is a test email from HTTP2SMTP.',
-    testEmailSent: 'Test email sent successfully'
+    testEmailSent: 'Test email sent successfully',
+    adminCreated: 'Admin created only'
   },
 
   // Mail

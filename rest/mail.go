@@ -69,11 +69,27 @@ func (m *Mail) getPage(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
+	name := req.Query("name")
+	mail := req.Query("mail")
 	var result *web.PageAble[*model.Mail]
 	if user.IsAdmin {
-		result, err = m.mailModel.Query().Order("id desc").PageForWeb(page)
+		query := m.mailModel.Query()
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		if mail != "" {
+			query = query.Where("mail LIKE ?", "%"+mail+"%")
+		}
+		result, err = query.Order("id desc").PageForWeb(page)
 	} else {
-		result, err = m.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").PageForWeb(page)
+		query := m.mailModel.Query().Where("user_id = ?", user.Id)
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		if mail != "" {
+			query = query.Where("mail LIKE ?", "%"+mail+"%")
+		}
+		result, err = query.Order("id desc").PageForWeb(page)
 	}
 	if err != nil {
 		return nil, err

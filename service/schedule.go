@@ -30,13 +30,21 @@ func (l *ScheduleService) FindAll() ([]*model.Schedule, error) {
 	return l.scheduleModel.FindAll()
 }
 
-func (l *ScheduleService) GetPage(page *web.Page, userId uint, isAdmin bool) (any, error) {
+func (l *ScheduleService) GetPage(page *web.Page, userId uint, isAdmin bool, name string) (any, error) {
 	var result *web.PageAble[*model.Schedule]
 	var err error
 	if isAdmin {
-		result, err = l.scheduleModel.Query().Order("id desc").PageForWeb(page)
+		query := l.scheduleModel.Query()
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		result, err = query.Order("id desc").PageForWeb(page)
 	} else {
-		result, err = l.scheduleModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)
+		query := l.scheduleModel.Query().Where("user_id = ?", userId)
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		result, err = query.Order("id desc").PageForWeb(page)
 	}
 	if err != nil {
 		return nil, err

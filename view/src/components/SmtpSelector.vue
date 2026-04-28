@@ -18,6 +18,10 @@
       :title="title"
       width="600px"
     >
+      <div v-if="authStore.getIsAdmin" style="margin-bottom: 12px;">
+        <el-checkbox v-model="adminOnly" :label="t('smtp.adminCreated')" @change="loadSmtpList" />
+      </div>
+
       <el-table
         :data="paginatedList"
         border
@@ -37,6 +41,7 @@
         <el-table-column prop="name" :label="t('smtp.smtpName')" />
         <el-table-column prop="host" :label="t('smtp.host')" />
         <el-table-column prop="mail" :label="t('smtp.fromAddress')" width="160" />
+        <el-table-column v-if="authStore.getIsAdmin" prop="userName" :label="t('common.creator')" width="100" />
       </el-table>
 
       <div class="pagination-wrapper">
@@ -69,8 +74,10 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getSMTPServers } from '@/api/smtp'
+import { useAuthStore } from '@/store/auth'
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 
 interface Props {
   modelValue: number
@@ -94,6 +101,7 @@ const selectedId = ref<number>(0)
 const tempSelectedId = ref<number>(0)
 const currentPage = ref(1)
 const pageSize = 10
+const adminOnly = ref(false)
 
 const paginatedList = computed(() => {
   const start = (currentPage.value - 1) * pageSize
@@ -107,7 +115,9 @@ const selectedSmtp = computed(() => {
 const loadSmtpList = async () => {
   loading.value = true
   try {
-    const res = await getSMTPServers(1, 1000)
+    const filters: { adminOnly?: boolean } = {}
+    if (adminOnly.value) filters.adminOnly = true
+    const res = await getSMTPServers(1, 1000, filters)
     if (res.code === 0 || res.code === 200) {
       smtpList.value = res.data.list
     }

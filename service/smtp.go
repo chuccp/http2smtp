@@ -13,13 +13,36 @@ type SmtpService struct {
 	userService *UserService
 }
 
-func (s *SmtpService) PageForWeb(page *web.Page, userId uint, isAdmin bool) (*web.PageAble[*model.SMTP], error) {
+func (s *SmtpService) PageForWeb(page *web.Page, userId uint, isAdmin bool, adminOnly bool, name string, host string, username string) (*web.PageAble[*model.SMTP], error) {
 	var result *web.PageAble[*model.SMTP]
 	var err error
 	if isAdmin {
-		result, err = s.smtpModel.Query().Order("id desc").PageForWeb(page)
+		query := s.smtpModel.Query()
+		if adminOnly {
+			query = query.Where("user_id IN (SELECT id FROM t_user WHERE is_admin = ?)", true)
+		}
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		if host != "" {
+			query = query.Where("host LIKE ?", "%"+host+"%")
+		}
+		if username != "" {
+			query = query.Where("username LIKE ?", "%"+username+"%")
+		}
+		result, err = query.Order("id desc").PageForWeb(page)
 	} else {
-		result, err = s.smtpModel.Query().Where("user_id = ?", userId).Order("id desc").PageForWeb(page)
+		query := s.smtpModel.Query().Where("user_id = ?", userId)
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+		if host != "" {
+			query = query.Where("host LIKE ?", "%"+host+"%")
+		}
+		if username != "" {
+			query = query.Where("username LIKE ?", "%"+username+"%")
+		}
+		result, err = query.Order("id desc").PageForWeb(page)
 	}
 	if err != nil {
 		return nil, err

@@ -1,12 +1,11 @@
 import request from './request'
 
-export function getTokens(page: number = 1, pageSize: number = 10): Promise<ApiResponse<PageResponse<TokenConfig>>> {
-  return request.get('/token', {
-    params: {
-      page,
-      pageSize
-    }
-  })
+export function getTokens(page: number = 1, pageSize: number = 10, filters?: { name?: string }): Promise<ApiResponse<PageResponse<TokenConfig>>> {
+  const params: Record<string, any> = { page, pageSize }
+  if (filters) {
+    if (filters.name) params.name = filters.name
+  }
+  return request.get('/token', { params })
 }
 
 export function getToken(id: number): Promise<ApiResponse<TokenConfig>> {

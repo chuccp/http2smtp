@@ -5,6 +5,11 @@
         <el-icon><Plus /></el-icon>
         {{ t('token.generateToken') }}
       </el-button>
+      <div class="filter-bar">
+        <el-input v-model="filterName" :placeholder="t('token.tokenName')" clearable size="default" style="width: 160px" @clear="loadData" @keyup.enter="loadData" />
+        <el-button size="default" @click="loadData">{{ t('common.search') }}</el-button>
+        <el-button size="default" @click="resetFilters">{{ t('common.reset') }}</el-button>
+      </div>
     </div>
 
     <div class="table-container table-card-responsive">
@@ -103,11 +108,14 @@ const formDialogVisible = ref(false)
 const sendDialogVisible = ref(false)
 const editingItem = ref<TokenConfig | null>(null)
 const currentTokenId = ref(0)
+const filterName = ref('')
 
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await getTokens(page.value, pageSize.value)
+    const res = await getTokens(page.value, pageSize.value, {
+      name: filterName.value
+    })
     if (res.code === 0 || res.code === 200) {
       tableData.value = res.data.list
       total.value = res.data.total
@@ -115,6 +123,12 @@ const loadData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const resetFilters = () => {
+  filterName.value = ''
+  page.value = 1
+  loadData()
 }
 
 const handleAdd = () => {
@@ -171,7 +185,13 @@ onMounted(() => {
 .token-container {
   background: #f0f2f5;
 }
-
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
 .token-cell {
   display: flex;
   align-items: center;
