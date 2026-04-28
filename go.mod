@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	emperror.dev/errors v0.8.1
-	github.com/chuccp/go-web-frame v0.8.1
+	github.com/chuccp/go-web-frame v0.8.2
 	github.com/google/uuid v1.6.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/wneessen/go-mail v0.7.2
@@ -13,7 +13,7 @@ require (
 	golang.org/x/crypto v0.49.0
 )
 
-replace github.com/chuccp/go-web-frame v0.8.1 => ../go-web-frame
+replace github.com/chuccp/go-web-frame v0.8.2 => ../go-web-frame
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
