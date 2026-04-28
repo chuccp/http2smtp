@@ -140,7 +140,8 @@ export default {
     recipientName: '收件人名稱',
     emailAddress: '信箱位址',
     deleteConfirm: '確定要刪除這個收件人嗎？',
-    pleaseEnterValidEmail: '請輸入有效的信箱位址'
+    pleaseEnterValidEmail: '請輸入有效的信箱位址',
+    adminCreated: '僅管理員建立'
   },
 
   // Token
@@ -162,7 +163,8 @@ export default {
     deleteConfirm: '確定要刪除這個權杖嗎？',
     pleaseSelectSMTP: '請選擇 SMTP 伺服器',
     pleaseSelectRecipients: '請至少選擇一個收件人',
-    tokenGenerated: '權杖已產生，請立即複製儲存：{token}'
+    tokenGenerated: '權杖已產生，請立即複製儲存：{token}',
+    adminCreated: '僅管理員建立'
   },
 
   // Schedule
@@ -188,7 +190,8 @@ export default {
     testSchedule: '測試',
     testSuccess: '測試郵件發送成功',
     cronHelp: 'Cron 表示式格式：秒 分 時 日 月 週',
-    exampleCron: '0 0 9 * * * = 每天早上 9 點'
+    exampleCron: '0 0 9 * * * = 每天早上 9 點',
+    adminCreated: '僅管理員建立'
   },
 
   // Log

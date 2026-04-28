@@ -159,6 +159,6 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .user-container {
-  background: #f0f2f5;
+  // uses global app-container styles
 }
 </style>

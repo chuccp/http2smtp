@@ -69,7 +69,8 @@ func (schedule *Schedule) getPage(req *web.Request) (any, error) {
 		return nil, err
 	}
 	name := req.Query("name")
-	return schedule.scheduleService.GetPage(page, user.Id, user.IsAdmin, name)
+	adminOnly := req.Query("adminOnly") == "true"
+	return schedule.scheduleService.GetPage(page, user.Id, user.IsAdmin, name, adminOnly)
 }
 func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	var st model.Schedule

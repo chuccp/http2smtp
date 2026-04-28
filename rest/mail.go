@@ -71,9 +71,13 @@ func (m *Mail) getPage(req *web.Request) (any, error) {
 	}
 	name := req.Query("name")
 	mail := req.Query("mail")
+	adminOnly := req.Query("adminOnly") == "true"
 	var result *web.PageAble[*model.Mail]
 	if user.IsAdmin {
 		query := m.mailModel.Query()
+		if adminOnly {
+			query = query.Where("user_id IN (SELECT id FROM t_user WHERE is_admin = ?)", true)
+		}
 		if name != "" {
 			query = query.Where("name LIKE ?", "%"+name+"%")
 		}

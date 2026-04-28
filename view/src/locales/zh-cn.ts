@@ -140,7 +140,8 @@ export default {
     recipientName: '收件人名称',
     emailAddress: '邮箱地址',
     deleteConfirm: '确定要删除这个收件人吗？',
-    pleaseEnterValidEmail: '请输入有效的邮箱地址'
+    pleaseEnterValidEmail: '请输入有效的邮箱地址',
+    adminCreated: '仅管理员创建'
   },
 
   // Token
@@ -162,7 +163,8 @@ export default {
     deleteConfirm: '确定要删除这个令牌吗？',
     pleaseSelectSMTP: '请选择 SMTP 服务器',
     pleaseSelectRecipients: '请至少选择一个收件人',
-    tokenGenerated: '令牌已生成，请立即复制保存：{token}'
+    tokenGenerated: '令牌已生成，请立即复制保存：{token}',
+    adminCreated: '仅管理员创建'
   },
 
   // Schedule
@@ -188,7 +190,8 @@ export default {
     testSchedule: '测试',
     testSuccess: '测试邮件发送成功',
     cronHelp: 'Cron 表达式格式：秒 分 时 日 月 周',
-    exampleCron: '0 0 9 * * * = 每天早上 9 点'
+    exampleCron: '0 0 9 * * * = 每天早上 9 点',
+    adminCreated: '仅管理员创建'
   },
 
   // Log

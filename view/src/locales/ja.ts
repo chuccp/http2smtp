@@ -140,7 +140,8 @@ export default {
     recipientName: '受信者名',
     emailAddress: 'メールアドレス',
     deleteConfirm: 'この受信者を削除してもよろしいですか？',
-    pleaseEnterValidEmail: '有効なメールアドレスを入力してください'
+    pleaseEnterValidEmail: '有効なメールアドレスを入力してください',
+    adminCreated: '管理者作成のみ'
   },
 
   // Token
@@ -162,7 +163,8 @@ export default {
     deleteConfirm: 'このトークンを削除してもよろしいですか？',
     pleaseSelectSMTP: 'SMTP サーバーを選択してください',
     pleaseSelectRecipients: '受信者を少なくとも 1 人選択してください',
-    tokenGenerated: 'トークンが生成されました。すぐにコピーして保存してください：{token}'
+    tokenGenerated: 'トークンが生成されました。すぐにコピーして保存してください：{token}',
+    adminCreated: '管理者作成のみ'
   },
 
   // Schedule
@@ -188,7 +190,8 @@ export default {
     testSchedule: 'テスト',
     testSuccess: 'テストメールの送信に成功しました',
     cronHelp: 'Cron 式の形式: 秒 分 時 日 月 週',
-    exampleCron: '0 0 9 * * * = 毎日午前 9 時'
+    exampleCron: '0 0 9 * * * = 毎日午前 9 時',
+    adminCreated: '管理者作成のみ'
   },
 
   // Log

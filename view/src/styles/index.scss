@@ -143,7 +143,48 @@ html, body, #app {
 
 /* 工具栏样式 */
 .toolbar {
-  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 筛选栏样式 */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  padding: 8px 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
+
+  .el-input {
+    --el-input-width: auto;
+  }
+
+  .el-checkbox {
+    margin-right: 0;
+  }
+}
+
+/* 表格容器卡片样式 */
+.table-container {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+  overflow: hidden;
+}
+
+/* 分页样式增强 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+  border-top: 1px solid #f0f2f5;
+  margin-top: 16px;
 }
 
 /* app-container */

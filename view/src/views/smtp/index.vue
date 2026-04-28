@@ -6,11 +6,11 @@
         {{ t('smtp.addSMTP') }}
       </el-button>
       <div class="filter-bar">
-        <el-input v-model="filterName" :placeholder="t('smtp.smtpName')" clearable size="default" style="width: 140px" @clear="loadData" @keyup.enter="loadData" />
-        <el-input v-model="filterHost" :placeholder="t('smtp.host')" clearable size="default" style="width: 140px" @clear="loadData" @keyup.enter="loadData" />
-        <el-input v-model="filterUsername" :placeholder="t('smtp.username')" clearable size="default" style="width: 140px" @clear="loadData" @keyup.enter="loadData" />
+        <el-input v-model="filterName" :placeholder="t('smtp.smtpName')" :prefix-icon="Search" clearable size="default" style="width: 150px" @clear="loadData" @keyup.enter="loadData" />
+        <el-input v-model="filterHost" :placeholder="t('smtp.host')" clearable size="default" style="width: 150px" @clear="loadData" @keyup.enter="loadData" />
+        <el-input v-model="filterUsername" :placeholder="t('smtp.username')" clearable size="default" style="width: 150px" @clear="loadData" @keyup.enter="loadData" />
         <el-checkbox v-if="authStore.getIsAdmin" v-model="adminOnly" :label="t('smtp.adminCreated')" @change="loadData" />
-        <el-button size="default" @click="loadData">{{ t('common.search') }}</el-button>
+        <el-button size="default" type="primary" plain @click="loadData">{{ t('common.search') }}</el-button>
         <el-button size="default" @click="resetFilters">{{ t('common.reset') }}</el-button>
       </div>
     </div>
@@ -58,6 +58,7 @@
       @current-change="loadData"
     />
 
+
     <!-- Add/Edit Dialog -->
     <SMTPFormDialog
       v-model:open="formDialogVisible"
@@ -76,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { formatTime } from '@/utils/time'
@@ -176,13 +177,6 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .smtp-container {
-  background: #f0f2f5;
-}
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-left: auto;
+  // uses global app-container styles
 }
 </style>

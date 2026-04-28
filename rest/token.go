@@ -58,7 +58,8 @@ func (token *Token) getPage(req *web.Request) (any, error) {
 		return nil, err
 	}
 	name := req.Query("name")
-	return token.tokenService.GetPage(page, user.Id, user.IsAdmin, name)
+	adminOnly := req.Query("adminOnly") == "true"
+	return token.tokenService.GetPage(page, user.Id, user.IsAdmin, name, adminOnly)
 }
 
 func (token *Token) postOne(req *web.Request) (any, error) {

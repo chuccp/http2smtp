@@ -1,53 +1,64 @@
 <template>
   <div class="dashboard-container app-container">
-    <div class="row">
-      <el-col :xs="24" :sm="12" :md="12" :lg="12">
-        <el-card class="stat-card gradient-2">
-          <div class="stat-content">
-            <div class="stat-title">{{ t('dashboard.quickActions') }}</div>
-            <div class="actions">
-              <el-button size="small" @click="goTo('/smtp')">
-                {{ t('dashboard.goToSMTP') }}
-              </el-button>
-              <el-button size="small" @click="goTo('/mail')">
-                {{ t('dashboard.goToMail') }}
-              </el-button>
-              <el-button size="small" @click="goTo('/tokens')">
-                {{ t('dashboard.goToTokens') }}
-              </el-button>
-              <el-button size="small" @click="goTo('/schedule')">
-                {{ t('dashboard.goToSchedule') }}
-              </el-button>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+    <div class="stats-row">
+      <div class="stat-card smtp-card" @click="goTo('/smtp')">
+        <div class="stat-icon">
+          <el-icon :size="28"><Setting /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ counts.smtp }}</div>
+          <div class="stat-label">{{ t('dashboard.smtpServers') }}</div>
+        </div>
+      </div>
+      <div class="stat-card mail-card" @click="goTo('/mail')">
+        <div class="stat-icon">
+          <el-icon :size="28"><Message /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ counts.mail }}</div>
+          <div class="stat-label">{{ t('dashboard.recipients') }}</div>
+        </div>
+      </div>
+      <div class="stat-card token-card" @click="goTo('/tokens')">
+        <div class="stat-icon">
+          <el-icon :size="28"><Key /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ counts.token }}</div>
+          <div class="stat-label">{{ t('dashboard.tokens') }}</div>
+        </div>
+      </div>
+      <div class="stat-card schedule-card" @click="goTo('/schedule')">
+        <div class="stat-icon">
+          <el-icon :size="28"><Clock /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ counts.schedule }}</div>
+          <div class="stat-label">{{ t('dashboard.scheduledTasks') }}</div>
+        </div>
+      </div>
+    </div>
 
-      <el-col :xs="24" :sm="12" :md="24" :lg="12">
-        <el-card class="stat-card gradient-3">
-          <div class="stat-content">
-            <div class="stat-title">{{ t('dashboard.statistics') }}</div>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-number">{{ counts.smtp }}</div>
-                <div class="stat-label">{{ t('dashboard.smtpServers') }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ counts.mail }}</div>
-                <div class="stat-label">{{ t('dashboard.recipients') }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ counts.token }}</div>
-                <div class="stat-label">{{ t('dashboard.tokens') }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ counts.schedule }}</div>
-                <div class="stat-label">{{ t('dashboard.scheduledTasks') }}</div>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+    <div class="quick-section">
+      <div class="section-title">{{ t('dashboard.quickActions') }}</div>
+      <div class="quick-grid">
+        <div class="quick-item" @click="goTo('/smtp')">
+          <el-icon :size="32" color="#409EFF"><Setting /></el-icon>
+          <span>{{ t('dashboard.goToSMTP') }}</span>
+        </div>
+        <div class="quick-item" @click="goTo('/mail')">
+          <el-icon :size="32" color="#67C23A"><Message /></el-icon>
+          <span>{{ t('dashboard.goToMail') }}</span>
+        </div>
+        <div class="quick-item" @click="goTo('/tokens')">
+          <el-icon :size="32" color="#E6A23C"><Key /></el-icon>
+          <span>{{ t('dashboard.goToTokens') }}</span>
+        </div>
+        <div class="quick-item" @click="goTo('/schedule')">
+          <el-icon :size="32" color="#F56C6C"><Clock /></el-icon>
+          <span>{{ t('dashboard.goToSchedule') }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -56,6 +67,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Setting, Message, Key, Clock } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
 import { getSMTPServers } from '@/api/smtp'
@@ -97,106 +109,136 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .dashboard-container {
-  background: #f0f2f5;
+  // uses global app-container styles
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0 -10px;
-}
-
-.el-col {
-  padding: 10px;
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
-  border: none;
-  color: white;
-  background: transparent !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.3s;
 
-  :deep(.el-card__body) {
-    padding: 20px;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.smtp-card .stat-icon {
+  background: rgba(64, 158, 255, 0.1);
+  color: #409EFF;
+}
+.mail-card .stat-icon {
+  background: rgba(103, 194, 58, 0.1);
+  color: #67C23A;
+}
+.token-card .stat-icon {
+  background: rgba(230, 162, 60, 0.1);
+  color: #E6A23C;
+}
+.schedule-card .stat-icon {
+  background: rgba(245, 108, 108, 0.1);
+  color: #F56C6C;
+}
+
+.stat-info {
+  .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #303133;
+    line-height: 1.2;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: #909399;
+    margin-top: 2px;
+  }
+}
+
+.quick-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 20px;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  border-radius: 8px;
+  background: #f5f7fa;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  span {
+    font-size: 13px;
+    color: #606266;
+    font-weight: 500;
   }
 
-  &.gradient-2 {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-  }
+  &:hover {
+    background: #ecf5ff;
+    transform: translateY(-2px);
 
-  &.gradient-3 {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-  }
-
-  .stat-content {
-    .stat-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      opacity: 0.95;
-    }
-
-    .stat-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-
-      .label {
-        opacity: 0.85;
-      }
-
-      .value {
-        font-weight: 500;
-      }
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-
-      .el-button {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.4);
-        color: white;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.3);
-          color: white;
-        }
-      }
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-
-      .stat-item {
-        text-align: center;
-        background: rgba(255, 255, 255, 0.15);
-        padding: 12px 8px;
-        border-radius: 8px;
-
-        .stat-number {
-          font-size: 28px;
-          font-weight: bold;
-          line-height: 1.2;
-        }
-
-        .stat-label {
-          font-size: 12px;
-          opacity: 0.85;
-          margin-top: 4px;
-        }
-      }
+    span {
+      color: #409EFF;
     }
   }
 }
 
-@media (max-width: 768px) {
-  .stat-card .stat-content .actions {
-    flex-direction: column;
+@media (max-width: 992px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+  .quick-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

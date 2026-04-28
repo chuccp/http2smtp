@@ -156,7 +156,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .log-container {
-  background: #f0f2f5;
+  // uses global app-container styles
 }
 
 pre {

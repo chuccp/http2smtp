@@ -6,8 +6,9 @@
         {{ t('token.generateToken') }}
       </el-button>
       <div class="filter-bar">
-        <el-input v-model="filterName" :placeholder="t('token.tokenName')" clearable size="default" style="width: 160px" @clear="loadData" @keyup.enter="loadData" />
-        <el-button size="default" @click="loadData">{{ t('common.search') }}</el-button>
+        <el-input v-model="filterName" :placeholder="t('token.tokenName')" :prefix-icon="Search" clearable size="default" style="width: 170px" @clear="loadData" @keyup.enter="loadData" />
+        <el-checkbox v-if="authStore.getIsAdmin" v-model="adminOnly" :label="t('token.adminCreated')" @change="loadData" />
+        <el-button size="default" type="primary" plain @click="loadData">{{ t('common.search') }}</el-button>
         <el-button size="default" @click="resetFilters">{{ t('common.reset') }}</el-button>
       </div>
     </div>
@@ -87,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, CopyDocument } from '@element-plus/icons-vue'
+import { Plus, CopyDocument, Search } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { formatTime } from '@/utils/time'
@@ -109,12 +110,14 @@ const sendDialogVisible = ref(false)
 const editingItem = ref<TokenConfig | null>(null)
 const currentTokenId = ref(0)
 const filterName = ref('')
+const adminOnly = ref(false)
 
 const loadData = async () => {
   loading.value = true
   try {
     const res = await getTokens(page.value, pageSize.value, {
-      name: filterName.value
+      name: filterName.value,
+      adminOnly: adminOnly.value
     })
     if (res.code === 0 || res.code === 200) {
       tableData.value = res.data.list
@@ -127,6 +130,7 @@ const loadData = async () => {
 
 const resetFilters = () => {
   filterName.value = ''
+  adminOnly.value = false
   page.value = 1
   loadData()
 }
@@ -183,14 +187,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .token-container {
-  background: #f0f2f5;
-}
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-left: auto;
+  // uses global app-container styles
 }
 .token-cell {
   display: flex;

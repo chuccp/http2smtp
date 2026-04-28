@@ -140,7 +140,8 @@ export default {
     recipientName: 'Recipient Name',
     emailAddress: 'Email Address',
     deleteConfirm: 'Are you sure you want to delete this recipient?',
-    pleaseEnterValidEmail: 'Please enter a valid email address'
+    pleaseEnterValidEmail: 'Please enter a valid email address',
+    adminCreated: 'Admin created only'
   },
 
   // Token
@@ -162,7 +163,8 @@ export default {
     deleteConfirm: 'Are you sure you want to delete this token?',
     pleaseSelectSMTP: 'Please select an SMTP server',
     pleaseSelectRecipients: 'Please select at least one recipient',
-    tokenGenerated: 'Token generated, please copy it now: {token}'
+    tokenGenerated: 'Token generated, please copy it now: {token}',
+    adminCreated: 'Admin created only'
   },
 
   // Schedule
@@ -188,7 +190,8 @@ export default {
     testSchedule: 'Test',
     testSuccess: 'Test email sent successfully',
     cronHelp: 'Cron expression: * * * * * * = second minute hour day month weekday',
-    exampleCron: '0 0 9 * * * = 9 AM every day'
+    exampleCron: '0 0 9 * * * = 9 AM every day',
+    adminCreated: 'Admin created only'
   },
 
   // Log

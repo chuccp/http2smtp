@@ -1,9 +1,10 @@
 import request from './request'
 
-export function getSchedules(page: number = 1, pageSize: number = 10, filters?: { name?: string }): Promise<ApiResponse<PageResponse<ScheduleConfig>>> {
+export function getSchedules(page: number = 1, pageSize: number = 10, filters?: { name?: string; adminOnly?: boolean }): Promise<ApiResponse<PageResponse<ScheduleConfig>>> {
   const params: Record<string, any> = { page, pageSize }
   if (filters) {
     if (filters.name) params.name = filters.name
+    if (filters.adminOnly) params.adminOnly = true
   }
   return request.get('/schedule', { params })
 }

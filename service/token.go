@@ -35,12 +35,15 @@ func (l *TokenService) GetOne(id uint, userId uint) (*model.Token, error) {
 	}
 	return token, nil
 }
-func (l *TokenService) GetPage(page *web.Page, userId uint, isAdmin bool, name string) (any, error) {
+func (l *TokenService) GetPage(page *web.Page, userId uint, isAdmin bool, name string, adminOnly bool) (any, error) {
 	var tokens []*model.Token
 	var i int
 	var err error
 	if isAdmin {
 		query := l.tokenModel.Query()
+		if adminOnly {
+			query = query.Where("user_id IN (SELECT id FROM t_user WHERE is_admin = ?)", true)
+		}
 		if name != "" {
 			query = query.Where("name LIKE ?", "%"+name+"%")
 		}
