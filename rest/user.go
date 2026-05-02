@@ -34,12 +34,13 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	u.Id = dbUser.Id
 	u.IsAdmin = dbUser.IsAdmin
 	u.Salt = dbUser.Salt
-	_, err = l.authenticationFilter.SignIn(&u, request)
+	token, err := l.authenticationFilter.SignIn(&u, request)
 	if err != nil {
 		return nil, err
 	}
 	return map[string]any{
-		"isAdmin": dbUser.IsAdmin,
+		"isAdmin":        dbUser.IsAdmin,
+		entity.UserToken: token,
 	}, nil
 }
 

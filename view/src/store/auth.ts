@@ -26,10 +26,10 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await login(user, pass)
       if (res.code === 0 || res.code === 200) {
-        token.value = user
+        token.value = res.data?.user_token ?? user
         username.value = user
         isAdmin.value = res.data?.isAdmin ?? false
-        localStorage.setItem('http2smtp-token', user)
+        localStorage.setItem('http2smtp-token', res.data?.user_token ?? user)
         localStorage.setItem('http2smtp-username', user)
         localStorage.setItem('http2smtp-isAdmin', String(isAdmin.value))
         localStorage.setItem('http2smtp-remember', String(remember))

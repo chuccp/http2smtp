@@ -16,8 +16,8 @@ func (authentication *Authentication) SignIn(user any, request *web.Request) (an
 	if err != nil {
 		return nil, err
 	}
-	request.Cookie().Set(entity.UserToken, encrypt)
-	return web.Ok("success"), nil
+	request.Cookie().Set(encrypt, encrypt)
+	return encrypt, nil
 }
 func (authentication *Authentication) SignOut(request *web.Request) (any, error) {
 	request.Cookie().Delete(entity.UserToken)
@@ -34,6 +34,9 @@ func (authentication *Authentication) NewUser() any {
 
 func User(request *web.Request, ctx *core.Context) (*model.User, error) {
 	token := request.Cookie().Get(entity.UserToken)
+	if token == "" {
+		token = request.GetHeader("Authorization")
+	}
 	if token == "" {
 		return nil, auth2.NoLogin
 	}

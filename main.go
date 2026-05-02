@@ -5,6 +5,7 @@ import (
 
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
+	"github.com/chuccp/go-web-frame/component/cors"
 	"github.com/chuccp/go-web-frame/component/schedule"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/core"
@@ -59,7 +60,7 @@ func createAPP() (*wf.WebFrame, error) {
 	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{})
 	restGroupBuilder.Port(webPort)
 	restGroupBuilder.ContextPath("/api")
-	restGroupBuilder.Filter(auth2.NewAuthenticationFilter(&auth.Authentication{}))
+	restGroupBuilder.Filter(auth2.NewAuthenticationFilter(&auth.Authentication{}), cors.NewCrosFilter())
 	restGroup := restGroupBuilder.Build()
 
 	builder.RestGroup(restGroup)

@@ -15,7 +15,7 @@ declare module 'axios' {
 import { ElMessage } from 'element-plus'
 
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://127.0.0.1:12566/api' : '/api'),
   timeout: 10000,
   withCredentials: true
 })
@@ -34,6 +34,10 @@ const handleUnauthorized = () => {
 // 请求拦截器
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem('http2smtp-token')
+    if (token) {
+      config.headers.Authorization = token
+    }
     return config
   },
   (error: any) => {

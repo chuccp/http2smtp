@@ -29,6 +29,11 @@ onMounted(async () => {
         router.push('/setup')
         return
       }
+      if (systemInfo.hasLogin === false) {
+        authStore.logoutAction()
+        router.push('/login')
+        return
+      }
       if (authStore.isLoggedIn) {
         router.push('/dashboard')
         return
