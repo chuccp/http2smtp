@@ -64,11 +64,11 @@
       </el-menu>
 
       <div class="sidebar-footer">
-        <div class="sidebar-user" v-show="!isCollapse">
-          <el-icon><User /></el-icon>
-          <span class="username">{{ authStore.getUsername }}</span>
+        <div class="sidebar-user">
+          <div class="user-avatar">{{ authStore.getUsername?.charAt(0)?.toUpperCase() }}</div>
+          <span class="username" v-show="!isCollapse">{{ authStore.getUsername }}</span>
         </div>
-        <div class="sidebar-logout" @click="logout">
+        <div class="sidebar-logout" @click="logout" :title="t('auth.logout')">
           <el-icon><SwitchButton /></el-icon>
           <span v-show="!isCollapse">{{ t('auth.logout') }}</span>
         </div>
@@ -360,11 +360,14 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar {
-  width: 160px;
-  background-color: #304156;
-  transition: all 0.3s;
-  overflow: hidden;
+  width: 200px;
+  background-color: #1d1e2c;
+  transition: width 0.3s;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar.is-collapse {
@@ -381,30 +384,52 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar.is-mobile.is-collapse {
-  width: 160px;
+  width: 200px;
   transform: translateX(0);
 }
 
 .sidebar.is-mobile.is-hidden {
   transform: translateX(-100%);
-  width: 160px;
+  width: 200px;
 }
 
 .logo {
-  height: 50px;
-  line-height: 50px;
-  text-align: center;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #263445;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  background-color: #151623;
   overflow: hidden;
   white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-menu {
   border-right: none;
-  height: calc(100% - 50px - 50px);
+  flex: 1;
+  overflow-y: auto;
+  background-color: #1d1e2c !important;
+
+  :deep(.el-menu-item) {
+    height: 44px;
+    line-height: 44px;
+    margin: 2px 8px;
+    border-radius: 6px;
+    padding-left: 16px !important;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+    &.is-active {
+      background-color: #409EFF !important;
+      color: #fff !important;
+    }
+  }
 
   :deep(.el-scrollbar) {
     height: 100%;
@@ -418,43 +443,62 @@ const handleCommand = (command: string) => {
 }
 
 .sidebar-menu:not(.el-menu--collapse) {
-  width: 210px;
+  width: 200px;
 }
 
 .sidebar-footer {
-  background-color: #263445;
-  color: #bfcbd9;
-  font-size: 14px;
+  background-color: #151623;
+  color: #8a8ea8;
+  font-size: 13px;
   white-space: nowrap;
+  flex-shrink: 0;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-user {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 10px;
+  padding: 4px 16px 12px;
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #409EFF, #53a8ff);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
 
   .username {
     font-size: 13px;
+    color: #cfd2e2;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-weight: 500;
   }
 }
 
 .sidebar-logout {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.3s;
-}
+  transition: all 0.2s;
+  border-radius: 6px;
+  margin: 0 8px;
 
-.sidebar-logout:hover {
-  background-color: #1b2530;
-  color: #409EFF;
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #f56c6c;
+  }
 }
 
 .main-container {
@@ -463,34 +507,36 @@ const handleCommand = (command: string) => {
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
+  background: #f5f7fa;
 }
 
 .header {
-  height: 50px;
+  height: 52px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+  flex-shrink: 0;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
 }
 
 .collapse-btn,
 .hamburger-btn {
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   color: #606266;
-}
+  transition: color 0.2s;
 
-.collapse-btn:hover,
-.hamburger-btn:hover {
-  color: #409EFF;
+  &:hover {
+    color: #409EFF;
+  }
 }
 
 .header-right {
@@ -503,29 +549,29 @@ const handleCommand = (command: string) => {
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  padding: 4px 12px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
   transition: all 0.2s;
-}
 
-.lang-switcher:hover {
-  background: #f0f2f5;
+  &:hover {
+    background: #f0f2f5;
+  }
 }
 
 .lang-label {
   color: #606266;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
-// Tab样式 */
+/* Tab样式 */
 .tabs-container {
   display: flex;
   align-items: center;
   background: #fff;
-  border-bottom: 1px solid #d8dce5;
-  padding: 0 10px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid #e8eaed;
+  padding: 0 12px;
+  flex-shrink: 0;
 }
 
 .tabs-wrapper {
@@ -533,88 +579,92 @@ const handleCommand = (command: string) => {
   align-items: center;
   flex: 1;
   overflow-x: auto;
-  padding: 5px 0;
-}
+  padding: 6px 0;
 
-.tabs-wrapper::-webkit-scrollbar {
-  height: 4px;
-}
+  &::-webkit-scrollbar {
+    height: 3px;
+  }
 
-.tabs-wrapper::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 2px;
+  &::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 2px;
+  }
 }
 
 .tab-item {
   display: flex;
   align-items: center;
-  height: 28px;
-  line-height: 28px;
-  padding: 0 12px;
-  margin-right: 5px;
-  border: 1px solid #d8dce5;
-  border-radius: 3px;
-  background: #fff;
+  height: 30px;
+  line-height: 30px;
+  padding: 0 14px;
+  margin-right: 6px;
+  border: 1px solid #e8eaed;
+  border-radius: 4px;
+  background: #fafafa;
   cursor: pointer;
   font-size: 12px;
-  color: #495060;
+  color: #606266;
   white-space: nowrap;
-  transition: all 0.3s;
-}
+  transition: all 0.2s;
 
-.tab-item:hover {
-  color: #409EFF;
-}
+  &:hover {
+    color: #409EFF;
+    border-color: #c6e2ff;
+    background: #ecf5ff;
+  }
 
-.tab-item.is-active {
-  background: #409EFF;
-  border-color: #409EFF;
-  color: #fff;
-}
+  &.is-active {
+    background: #409EFF;
+    border-color: #409EFF;
+    color: #fff;
+  }
 
-.tab-item.is-active .tab-close {
-  color: #fff;
+  &.is-active .tab-close {
+    color: #fff;
+  }
 }
 
 .tab-title {
-  margin-right: 5px;
+  margin-right: 6px;
 }
 
 .tab-close {
   font-size: 12px;
   border-radius: 50%;
-  transition: all 0.3s;
-}
+  transition: all 0.2s;
 
-.tab-close:hover {
-  background: rgba(0, 0, 0, 0.1);
+  &:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 
 .tab-item.is-active .tab-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .tabs-actions {
   padding: 0 10px;
-  border-left: 1px solid #d8dce5;
+  border-left: 1px solid #e8eaed;
+  margin-left: 4px;
 }
 
 .tabs-dropdown {
   display: flex;
   align-items: center;
   cursor: pointer;
-  color: #495060;
-  padding: 0 5px;
-}
+  color: #909399;
+  padding: 0 4px;
+  transition: color 0.2s;
 
-.tabs-dropdown:hover {
-  color: #409EFF;
+  &:hover {
+    color: #409EFF;
+  }
 }
 
 .content {
   flex: 1;
-  padding: 20px;
-  background: #f0f2f5;
+  padding: 16px;
+  background: #f5f7fa;
   overflow: auto;
 }
 
@@ -625,7 +675,7 @@ const handleCommand = (command: string) => {
   }
 
   .lang-switcher {
-    padding: 4px 8px;
+    padding: 5px 8px;
   }
 
   .lang-label {
@@ -637,7 +687,7 @@ const handleCommand = (command: string) => {
   }
 
   .content {
-    padding: 15px;
+    padding: 12px;
   }
 }
 
@@ -647,8 +697,8 @@ const handleCommand = (command: string) => {
   }
 
   .tab-item {
-    padding: 0 8px;
-    margin-right: 3px;
+    padding: 0 10px;
+    margin-right: 4px;
   }
 }
 
