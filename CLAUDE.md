@@ -63,6 +63,12 @@ The management UI is server-rendered and embedded in the binary (`webui/embed.go
 
 ```bash
 go test ./webui    # includes the four-locale key-sync test
+
+WEBUI_DEV=1 ./http2smtp    # dev mode: templates and static assets are read from
+                           # webui/templates and webui/static on every request, so
+                           # edits show up on a browser refresh — no rebuild, no
+                           # restart. Run the binary from the repository root (Init
+                           # fails loudly otherwise). The locale JSON stays embedded.
 ```
 
 - Pages are registered in `webui/pages.go` (`Pages.Init` → `registerPageRoutes`); handlers

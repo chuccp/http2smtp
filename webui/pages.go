@@ -1,9 +1,15 @@
 package webui
 
 import (
+	"fmt"
 	"html/template"
 	"io/fs"
+	"mime"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	wf "github.com/chuccp/go-web-frame"
@@ -72,14 +78,26 @@ func (p *Pages) Init(ctx *core.Context) error {
 	if p.loadErr != nil {
 		return p.loadErr
 	}
+	// In dev mode the templates are re-read per request; fail early and loudly when
+	// the directory is not where the docs say it is (binary started outside the repo).
+	if devMode {
+		if fi, err := os.Stat(devTemplatesDir); err != nil || !fi.IsDir() {
+			return fmt.Errorf("WEBUI_DEV is set but %s is not a directory — run the binary from the repository root", devTemplatesDir)
+		}
+	}
 
 	// Static assets live in the binary and are served through the route table (not the
 	// NoRoute fallback), so they take part in the same pipeline as everything else.
-	staticSub, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		return err
+	// In dev mode they are read from disk per request, like the templates.
+	if devMode {
+		ctx.Get("/static/*filepath", p.devStatic)
+	} else {
+		staticSub, err := fs.Sub(staticFS, "static")
+		if err != nil {
+			return err
+		}
+		ctx.StaticFs("/static", http.FS(staticSub))
 	}
-	ctx.StaticFs("/static", http.FS(staticSub))
 	ctx.Get("/favicon.svg", p.staticFile("favicon.svg", "image/svg+xml"))
 	ctx.Get("/icons.svg", p.staticFile("icons.svg", "image/svg+xml"))
 
@@ -93,10 +111,17 @@ func (p *Pages) Init(ctx *core.Context) error {
 	return nil
 }
 
-// staticFile serves one embedded asset by name with an explicit content type.
+// staticFile serves one asset by name with an explicit content type — from disk in
+// dev mode, from the embedded FS otherwise.
 func (p *Pages) staticFile(name, contentType string) web.HandlerFunc {
 	return func(req *web.Request) (any, error) {
-		data, err := staticFS.ReadFile("static/" + name)
+		var data []byte
+		var err error
+		if devMode {
+			data, err = os.ReadFile(filepath.Join(devStaticDir, name))
+		} else {
+			data, err = staticFS.ReadFile("static/" + name)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -105,4 +130,29 @@ func (p *Pages) staticFile(name, contentType string) web.HandlerFunc {
 		_, _ = resp.Write(data)
 		return nil, nil
 	}
+}
+
+// devStatic serves /static/* from the working tree. The path is cleaned and confined
+// to devStaticDir — a traversal attempt must not read the filesystem at large.
+func (p *Pages) devStatic(req *web.Request) (any, error) {
+	clean := path.Clean("/" + req.Param("filepath"))
+	// Clean both sides so the comparison holds on Windows, where Clean rewrites the
+	// forward slashes in devStaticDir to backslashes.
+	base := filepath.Clean(devStaticDir)
+	full := filepath.Join(base, clean)
+	if !strings.HasPrefix(full, base+string(filepath.Separator)) {
+		return nil, os.ErrNotExist
+	}
+	data, err := os.ReadFile(full)
+	if err != nil {
+		return nil, err
+	}
+	contentType := mime.TypeByExtension(filepath.Ext(full))
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+	resp := req.Response()
+	resp.Header().Set("Content-Type", contentType)
+	_, _ = resp.Write(data)
+	return nil, nil
 }

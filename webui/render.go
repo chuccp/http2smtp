@@ -6,12 +6,23 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/model"
 )
+
+// devMode reads templates and static assets from disk on every request instead of the
+// embedded copies, so a template edit only needs a browser refresh — no rebuild, no
+// restart. Set WEBUI_DEV=1 and run the binary from the repository root, where the
+// webui/ directory lives. The locale JSON stays embedded: translations change far
+// less often than templates, and the key-sync test guards them anyway.
+var devMode = os.Getenv("WEBUI_DEV") != ""
+
+const devTemplatesDir = "webui/templates"
+const devStaticDir = "webui/static"
 
 // NavUser is the slice of the signed-in user the layout may show. Nothing sensitive —
 // the session itself stays in the HttpOnly cookie.
@@ -86,13 +97,15 @@ var templateFuncs = template.FuncMap{
 }
 
 // layoutFor maps a page template onto the skeleton it renders inside: the full app
-// chrome for signed-in pages, the bare card for login/setup/error.
+// chrome for signed-in pages, the bare card for login/setup/error. The name is relative
+// to whichever FS is in play — the embedded "templates/" prefix or the dev directory
+// root — so callers add the prefix their FS needs.
 func layoutFor(name string) string {
 	switch name {
 	case "login", "setup", "error", "notadmin":
-		return "templates/bare.html"
+		return "bare.html"
 	default:
-		return "templates/layout.html"
+		return "layout.html"
 	}
 }
 
@@ -114,7 +127,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 	tmpls := make(map[string]*template.Template, len(pages))
 	for _, name := range pages {
 		t, err := template.New(name).Funcs(templateFuncs).
-			ParseFS(templatesFS, layoutFor(name), "templates/"+name+".html")
+			ParseFS(templatesFS, "templates/"+layoutFor(name), "templates/"+name+".html")
 		if err != nil {
 			return nil, fmt.Errorf("parsing template %s: %w", name, err)
 		}
@@ -150,12 +163,26 @@ func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bo
 	return b
 }
 
-// render executes the named page and writes it as UTF-8 HTML. Returning nil, nil lets
-// the framework's converter leave the response alone — the bytes are already written.
-func (p *Pages) render(req *web.Request, name string, data any) (any, error) {
+// templateFor returns the template set for a page: the once-parsed embedded copy, or
+// in dev mode a fresh parse from disk so edits show up on the next request.
+func (p *Pages) templateFor(name string) (*template.Template, error) {
+	if devMode {
+		return template.New(name).Funcs(templateFuncs).
+			ParseFS(os.DirFS(devTemplatesDir), layoutFor(name), name+".html")
+	}
 	tmpl, ok := p.tmpls[name]
 	if !ok {
 		return nil, fmt.Errorf("template %q is not registered", name)
+	}
+	return tmpl, nil
+}
+
+// render executes the named page and writes it as UTF-8 HTML. Returning nil, nil lets
+// the framework's converter leave the response alone — the bytes are already written.
+func (p *Pages) render(req *web.Request, name string, data any) (any, error) {
+	tmpl, err := p.templateFor(name)
+	if err != nil {
+		return nil, err
 	}
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", data); err != nil {
