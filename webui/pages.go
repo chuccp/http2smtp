@@ -19,9 +19,20 @@ type authFilter = auth2.AuthenticationFilter[*model.User]
 // Pages is the server-rendered management UI. It implements core.IRest and rides the
 // same port and auth filter as the JSON API, but its routes live at the site root.
 type Pages struct {
-	ctx         *core.Context
-	userService *service.UserService
-	authFilter  *authFilter
+	ctx          *core.Context
+	userService  *service.UserService
+	smtpService  *service.SmtpService
+	tokenService *service.TokenService
+	scheduleSvc  *service.ScheduleService
+	authFilter   *authFilter
+
+	// Models are captured once: SwitchDB re-runs Init on the same instances, so the
+	// pointers stay valid across a settings save.
+	smtpModel     *model.SMTPModel
+	mailModel     *model.MailModel
+	tokenModel    *model.TokenModel
+	scheduleModel *model.ScheduleModel
+	logModel      *model.LogModel
 
 	// Templates are parsed once per process: a restart re-runs Init on a fresh engine
 	// and re-registering the routes is cheap, re-parsing is not.
@@ -36,7 +47,15 @@ func NewPages() *Pages { return &Pages{} }
 func (p *Pages) Init(ctx *core.Context) error {
 	p.ctx = ctx
 	p.userService = wf.GetService[*service.UserService](ctx)
+	p.smtpService = wf.GetService[*service.SmtpService](ctx)
+	p.tokenService = wf.GetService[*service.TokenService](ctx)
+	p.scheduleSvc = wf.GetService[*service.ScheduleService](ctx)
 	p.authFilter = wf.GetFilter[*authFilter](ctx)
+	p.smtpModel = core.GetModel[*model.SMTPModel](ctx)
+	p.mailModel = core.GetModel[*model.MailModel](ctx)
+	p.tokenModel = core.GetModel[*model.TokenModel](ctx)
+	p.scheduleModel = core.GetModel[*model.ScheduleModel](ctx)
+	p.logModel = core.GetModel[*model.LogModel](ctx)
 
 	p.once.Do(func() {
 		if err := loadI18n(); err != nil {

@@ -101,6 +101,12 @@ func layoutFor(name string) string {
 func parseTemplates() (map[string]*template.Template, error) {
 	pages := []string{
 		"login", "setup", "error", "notadmin",
+		"dashboard",
+		"smtp_list", "smtp_form",
+		"mail_list", "mail_form",
+		"token_list", "token_form", "token_send",
+		"schedule_list", "schedule_form",
+		"logs_list", "logs_detail",
 	}
 	tmpls := make(map[string]*template.Template, len(pages))
 	for _, name := range pages {
@@ -129,7 +135,7 @@ func (p *Pages) newBase(lang, titleKey string) Base {
 
 // base builds the Base for a page render: active language, translated title, nav user
 // and any flash carried on the URL.
-func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bool) *Base {
+func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bool) Base {
 	lang := langOf(req)
 	b := p.newBase(lang, titleKey)
 	b.Path = req.URL().Path
@@ -138,7 +144,7 @@ func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bo
 		b.User = &NavUser{Name: user.Name, IsAdmin: user.IsAdmin}
 	}
 	b.Flash = flashOf(req)
-	return &b
+	return b
 }
 
 // render executes the named page and writes it as UTF-8 HTML. Returning nil, nil lets

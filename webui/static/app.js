@@ -121,10 +121,11 @@
      Row deletes call the existing JSON API (same session cookie) and reload, so the
      page always shows the post-delete state including the current page number. */
   document.addEventListener('click', function (ev) {
-    var el = ev.target.closest('[data-confirm]');
+    var el = ev.target.closest('[data-href]');
     if (!el) return;
     ev.preventDefault();
-    if (!window.confirm(el.getAttribute('data-confirm'))) return;
+    var confirmMsg = el.getAttribute('data-confirm');
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
     var href = el.getAttribute('data-href');
     var method = el.getAttribute('data-method') || 'DELETE';
     fetch(href, { method: method, credentials: 'same-origin' })
@@ -135,6 +136,8 @@
         }
         return resp.json().then(function (body) {
           if (body && (body.code === 0 || body.code === 200)) {
+            var flash = el.getAttribute('data-flash');
+            if (flash) window.alert(flash);
             location.reload();
           } else {
             window.alert((body && body.msg) || 'error');

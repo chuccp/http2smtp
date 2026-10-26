@@ -1,0 +1,54 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "smtp.smtpManagement"}}</h1>
+  <a class="btn btn-primary" href="/smtp/form">{{.L.T "smtp.addSMTP"}}</a>
+</div>
+
+<form class="filter-bar" method="get" action="/smtp">
+  <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "smtp.smtpName"}}">
+  <input type="text" name="host" value="{{.Host}}" placeholder="{{.L.T "smtp.host"}}">
+  <input type="text" name="username" value="{{.Username}}" placeholder="{{.L.T "smtp.username"}}">
+  {{if .User.IsAdmin}}
+  <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "smtp.adminCreated"}}</label>
+  {{end}}
+  <button class="btn" type="submit">{{.L.T "common.search"}}</button>
+  <a class="btn" href="/smtp">{{.L.T "common.reset"}}</a>
+</form>
+
+<div class="table-wrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{.L.T "smtp.smtpName"}}</th>
+      <th>{{.L.T "smtp.host"}}</th>
+      <th>{{.L.T "smtp.port"}}</th>
+      <th>{{.L.T "smtp.fromAddress"}}</th>
+      <th>{{.L.T "smtp.username"}}</th>
+      {{if .User.IsAdmin}}<th>{{.L.T "common.creator"}}</th>{{end}}
+      <th>{{.L.T "common.createTime"}}</th>
+      <th class="col-actions">{{.L.T "common.operations"}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td>{{.Name}}</td>
+      <td class="mono">{{.Host}}</td>
+      <td>{{.Port}}</td>
+      <td>{{.Mail}}</td>
+      <td>{{.Username}}</td>
+      {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
+      <td class="muted">{{fmtTime .CreateTime}}</td>
+      <td class="col-actions">
+        <a class="btn-link" href="/smtp/form/{{.Id}}">{{$.L.T "common.edit"}}</a>
+        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "smtp.deleteConfirm"}}" data-href="/api/smtp/{{.Id}}">{{$.L.T "common.delete"}}</button>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="8" class="muted">—</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{template "pager" .}}
+{{end}}

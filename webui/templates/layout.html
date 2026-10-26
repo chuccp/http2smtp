@@ -64,3 +64,18 @@
 </body>
 </html>
 {{end}}
+
+{{define "pager"}}
+{{if .Pager}}
+<nav class="pagination">
+  {{if .Pager.Prev}}<a href="{{.Pager.Prev.Href}}">{{.Pager.Prev.Label}}</a>{{end}}
+  {{range .Pager.Links}}
+    {{if .Gap}}<span class="gap">{{.Label}}</span>
+    {{else if .Current}}<span class="cur">{{.Label}}</span>
+    {{else}}<a href="{{.Href}}">{{.Label}}</a>{{end}}
+  {{end}}
+  {{if .Pager.Next}}<a href="{{.Pager.Next.Href}}">{{.Pager.Next.Label}}</a>{{end}}
+  <span class="page-info">{{.Pager.Total}} · {{.Pager.From}}-{{.Pager.To}}</span>
+</nav>
+{{end}}
+{{end}}

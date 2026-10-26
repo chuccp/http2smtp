@@ -1,0 +1,58 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{if .Id}}{{.L.T "smtp.editSMTP"}}{{else}}{{.L.T "smtp.addSMTP"}}{{end}}</h1>
+  <a class="btn" href="/smtp">← {{.L.T "layout.sidebar.smtp"}}</a>
+</div>
+
+<form method="post" action="/smtp/save" class="form card" id="smtp-form">
+  <input type="hidden" name="id" value="{{.Id}}">
+  <div class="form-grid">
+    <label class="field">
+      <span>{{.L.T "smtp.smtpName"}}</span>
+      <input type="text" name="name" value="{{.Name}}" required>
+    </label>
+    <label class="field">
+      <span>{{.L.T "smtp.host"}}</span>
+      <input type="text" name="host" value="{{.Host}}" required>
+    </label>
+    <label class="field">
+      <span>{{.L.T "smtp.port"}}</span>
+      <input type="number" name="port" value="{{.Port}}">
+    </label>
+    <label class="field">
+      <span>{{.L.T "smtp.fromAddress"}}</span>
+      <input type="text" name="mail" value="{{.Mail}}" required>
+    </label>
+    <label class="field">
+      <span>{{.L.T "smtp.username"}}</span>
+      <input type="text" name="username" value="{{.Username}}" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>{{.L.T "smtp.password"}}</span>
+      <input type="password" name="password" value="" autocomplete="new-password" {{if not .Id}}required{{end}} placeholder="{{if .Id}}{{.L.T "settings.passwordKeepHint"}}{{end}}">
+    </label>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{.L.T "common.save"}}</button>
+    <button type="button" class="btn" id="smtp-test-btn">{{.L.T "smtp.testConnection"}}</button>
+  </div>
+</form>
+
+<script>
+(function () {
+  var btn = document.getElementById('smtp-test-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var form = document.getElementById('smtp-form');
+    var body = new URLSearchParams(new FormData(form));
+    body.delete('id');
+    btn.disabled = true;
+    fetch('/smtp/test', { method: 'POST', body: body, credentials: 'same-origin' })
+      .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
+      .then(function (x) { window.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed'); })
+      .catch(function () { window.alert('failed'); })
+      .then(function () { btn.disabled = false; });
+  });
+})();
+</script>
+{{end}}

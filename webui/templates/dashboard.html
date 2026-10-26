@@ -1,0 +1,32 @@
+{{define "content"}}
+<h1 class="page-head">{{.L.T "dashboard.dashboard"}}</h1>
+
+<div class="grid-cards">
+  <a class="stat" href="/smtp">
+    <div class="stat-num">{{.SmtpCount}}</div>
+    <div class="stat-label">{{.L.T "dashboard.smtpServers"}}</div>
+  </a>
+  <a class="stat" href="/mail">
+    <div class="stat-num">{{.MailCount}}</div>
+    <div class="stat-label">{{.L.T "dashboard.recipients"}}</div>
+  </a>
+  <a class="stat" href="/tokens">
+    <div class="stat-num">{{.TokenCount}}</div>
+    <div class="stat-label">{{.L.T "dashboard.tokens"}}</div>
+  </a>
+  <a class="stat" href="/schedule">
+    <div class="stat-num">{{.SchedCount}}</div>
+    <div class="stat-label">{{.L.T "dashboard.scheduledTasks"}}</div>
+  </a>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <h2 style="margin:0 0 10px;font-size:15px">{{.L.T "dashboard.quickActions"}}</h2>
+  <div class="toolbar">
+    <a class="btn" href="/smtp/form">{{.L.T "smtp.addSMTP"}}</a>
+    <a class="btn" href="/mail/form">{{.L.T "mail.addRecipient"}}</a>
+    <a class="btn" href="/tokens/form">{{.L.T "token.generateToken"}}</a>
+    <a class="btn" href="/schedule/form">{{.L.T "schedule.addSchedule"}}</a>
+  </div>
+</div>
+{{end}}

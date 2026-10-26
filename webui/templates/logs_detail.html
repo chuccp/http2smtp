@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "log.logDetail"}}</h1>
+  <a class="btn" href="/logs">← {{.L.T "layout.sidebar.logs"}}</a>
+</div>
+
+<div class="card">
+  <dl class="desc">
+    <dt>{{.L.T "log.token"}}</dt>
+    <dd class="mono">{{.Entry.Token}}</dd>
+    <dt>{{.L.T "log.subject"}}</dt>
+    <dd>{{.Entry.Subject}}</dd>
+    <dt>{{.L.T "log.smtpServer"}}</dt>
+    <dd>{{.Entry.SMTP}}</dd>
+    <dt>{{.L.T "log.recipients"}}</dt>
+    <dd>{{.Entry.Mail}}</dd>
+    {{if .User.IsAdmin}}
+    <dt>{{.L.T "common.creator"}}</dt>
+    <dd>{{.Entry.UserName}}</dd>
+    {{end}}
+    <dt>{{.L.T "log.status"}}</dt>
+    <dd>
+      {{if eq .Entry.StatusStr "success"}}<span class="tag tag-ok">{{.L.T "log.success"}}</span>
+      {{else if eq .Entry.StatusStr "error"}}<span class="tag tag-off">{{.L.T "log.error"}}</span>
+      {{else}}<span class="tag tag-warn">{{.L.T "log.warning"}}</span>{{end}}
+    </dd>
+    <dt>{{.L.T "log.result"}}</dt>
+    <dd class="pre-content">{{.Entry.Result}}</dd>
+    <dt>{{.L.T "log.content"}}</dt>
+    <dd class="pre-content">{{.Entry.Content}}</dd>
+    {{if .Attachments}}
+    <dt>{{.L.T "log.attachments"}}</dt>
+    <dd>
+      {{range .Attachments}}
+      <a href="{{.Href}}" download>{{.Name}} ({{$.L.T "log.download"}})</a>
+      {{end}}
+    </dd>
+    {{end}}
+    <dt>{{.L.T "log.createTime"}}</dt>
+    <dd class="muted">{{fmtTime .Entry.CreateTime}}</dd>
+  </dl>
+</div>
+{{end}}

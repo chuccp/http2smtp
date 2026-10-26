@@ -21,6 +21,33 @@ func (p *Pages) registerPageRoutes(ctx *core.Context) {
 	ctx.Post("/setup/test", p.setupTest)
 	ctx.Post("/setup/admin", p.setupAdmin)
 	ctx.Post("/setup/skip", p.setupSkip)
+
+	ctx.Get("/dashboard", p.dashboard)
+
+	ctx.Get("/smtp", p.smtpList)
+	ctx.Get("/smtp/form", p.smtpForm)
+	ctx.Get("/smtp/form/:id", p.smtpForm)
+	ctx.Post("/smtp/save", p.smtpSave)
+	ctx.Post("/smtp/test", p.smtpTest)
+
+	ctx.Get("/mail", p.mailList)
+	ctx.Get("/mail/form", p.mailForm)
+	ctx.Get("/mail/form/:id", p.mailForm)
+	ctx.Post("/mail/save", p.mailSave)
+
+	ctx.Get("/tokens", p.tokenList)
+	ctx.Get("/tokens/form", p.tokenForm)
+	ctx.Get("/tokens/form/:id", p.tokenForm)
+	ctx.Post("/tokens/save", p.tokenSave)
+	ctx.Get("/tokens/send/:id", p.tokenSendForm)
+
+	ctx.Get("/schedule", p.scheduleList)
+	ctx.Get("/schedule/form", p.scheduleForm)
+	ctx.Get("/schedule/form/:id", p.scheduleForm)
+	ctx.Post("/schedule/save", p.scheduleSave)
+
+	ctx.Get("/logs", p.logList)
+	ctx.Get("/logs/:id", p.logDetail)
 }
 
 // home routes a first visit: the setup wizard before init, the login page without a

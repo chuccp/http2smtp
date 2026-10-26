@@ -1,0 +1,54 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "schedule.scheduleManagement"}}</h1>
+  <a class="btn btn-primary" href="/schedule/form">{{.L.T "schedule.addSchedule"}}</a>
+</div>
+
+<form class="filter-bar" method="get" action="/schedule">
+  <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "schedule.taskName"}}">
+  {{if .User.IsAdmin}}
+  <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "schedule.adminCreated"}}</label>
+  {{end}}
+  <button class="btn" type="submit">{{.L.T "common.search"}}</button>
+  <a class="btn" href="/schedule">{{.L.T "common.reset"}}</a>
+</form>
+
+<div class="table-wrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{.L.T "schedule.taskName"}}</th>
+      <th>{{.L.T "schedule.cronExpression"}}</th>
+      <th>{{.L.T "schedule.requestUrl"}}</th>
+      <th>{{.L.T "schedule.status"}}</th>
+      {{if .User.IsAdmin}}<th>{{.L.T "common.creator"}}</th>{{end}}
+      <th>{{.L.T "common.createTime"}}</th>
+      <th class="col-actions">{{.L.T "common.operations"}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td>{{.Name}}</td>
+      <td class="mono">{{.Cron}}</td>
+      <td class="mono">{{.Url}}</td>
+      <td>
+        {{if .IsUse}}<span class="tag tag-ok">{{$.L.T "schedule.enabled"}}</span>
+        {{else}}<span class="tag">{{$.L.T "schedule.disabled"}}</span>{{end}}
+      </td>
+      {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
+      <td class="muted">{{fmtTime .CreateTime}}</td>
+      <td class="col-actions">
+        <button type="button" class="btn-link" data-method="POST" data-href="/api/schedule/trigger/{{.Id}}" data-flash="{{$.L.T "schedule.triggered"}}">{{.L.T "schedule.triggerNow"}}</button>
+        <a class="btn-link" href="/schedule/form/{{.Id}}">{{$.L.T "common.edit"}}</a>
+        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "schedule.deleteConfirm"}}" data-href="/api/schedule/{{.Id}}">{{$.L.T "common.delete"}}</button>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="7" class="muted">—</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{template "pager" .}}
+{{end}}

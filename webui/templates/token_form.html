@@ -1,0 +1,55 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{if .Id}}{{.L.T "token.editToken"}}{{else}}{{.L.T "token.generateToken"}}{{end}}</h1>
+  <a class="btn" href="/tokens">← {{.L.T "layout.sidebar.tokens"}}</a>
+</div>
+
+<form method="post" action="/tokens/save" class="form card">
+  <input type="hidden" name="id" value="{{.Id}}">
+  <div class="form-grid">
+    <label class="field">
+      <span>{{.L.T "token.tokenName"}}</span>
+      <input type="text" name="name" value="{{.Name}}" required>
+    </label>
+    <label class="field">
+      <span>{{.L.T "token.tokenValue"}}</span>
+      <input type="text" name="token" value="{{.TokenValue}}" class="mono" required>
+      <span class="hint">{{.L.T "token.tokenGenerated"}}</span>
+    </label>
+    <label class="field">
+      <span>{{.L.T "token.subject"}}</span>
+      <input type="text" name="subject" value="{{.Subject}}" placeholder="{{.L.T "token.subjectPlaceholder"}}">
+    </label>
+    <label class="field">
+      <span>{{.L.T "token.associatedSMTP"}}</span>
+      <select name="smtpId" required>
+        <option value="">—</option>
+        {{range .SmtpOptions}}
+        <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
+        {{end}}
+      </select>
+    </label>
+  </div>
+
+  <label class="field">
+    <span>{{.L.T "token.allowedRecipients"}}</span>
+    <select name="receiveEmailIds" multiple size="8" required>
+      {{range .MailOptions}}
+      <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
+      {{end}}
+    </select>
+    <span class="hint">ctrl / cmd</span>
+  </label>
+
+  <fieldset>
+    <legend>{{.L.T "token.status"}}</legend>
+    <label class="check"><input type="radio" name="state" value="on" {{if not .State}}checked{{end}}> {{.L.T "token.inUse"}}</label>
+    &nbsp;
+    <label class="check"><input type="radio" name="state" value="off" {{if .State}}checked{{end}}> {{.L.T "token.userDisabled"}}</label>
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{.L.T "common.save"}}</button>
+  </div>
+</form>
+{{end}}

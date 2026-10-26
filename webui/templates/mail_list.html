@@ -1,0 +1,47 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "mail.mailManagement"}}</h1>
+  <a class="btn btn-primary" href="/mail/form">{{.L.T "mail.addRecipient"}}</a>
+</div>
+
+<form class="filter-bar" method="get" action="/mail">
+  <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "mail.recipientName"}}">
+  <input type="text" name="mail" value="{{.MailAddr}}" placeholder="{{.L.T "mail.emailAddress"}}">
+  {{if .User.IsAdmin}}
+  <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "mail.adminCreated"}}</label>
+  {{end}}
+  <button class="btn" type="submit">{{.L.T "common.search"}}</button>
+  <a class="btn" href="/mail">{{.L.T "common.reset"}}</a>
+</form>
+
+<div class="table-wrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{.L.T "mail.recipientName"}}</th>
+      <th>{{.L.T "mail.emailAddress"}}</th>
+      {{if .User.IsAdmin}}<th>{{.L.T "common.creator"}}</th>{{end}}
+      <th>{{.L.T "common.createTime"}}</th>
+      <th class="col-actions">{{.L.T "common.operations"}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td>{{.Name}}</td>
+      <td>{{.Mail}}</td>
+      {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
+      <td class="muted">{{fmtTime .CreateTime}}</td>
+      <td class="col-actions">
+        <a class="btn-link" href="/mail/form/{{.Id}}">{{$.L.T "common.edit"}}</a>
+        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "mail.deleteConfirm"}}" data-href="/api/mail/{{.Id}}">{{$.L.T "common.delete"}}</button>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" class="muted">—</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{template "pager" .}}
+{{end}}

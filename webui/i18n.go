@@ -153,7 +153,7 @@ func pickLang(cookieLang, acceptLanguage string) string {
 func parseAcceptLanguage(header string) []string {
 	type entry struct {
 		tag string
-	q   float64
+		q   float64
 	}
 	var entries []entry
 	for _, part := range strings.Split(header, ",") {

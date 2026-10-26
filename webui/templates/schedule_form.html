@@ -1,0 +1,151 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{if .Id}}{{.L.T "schedule.editSchedule"}}{{else}}{{.L.T "schedule.addSchedule"}}{{end}}</h1>
+  <a class="btn" href="/schedule">← {{.L.T "layout.sidebar.schedule"}}</a>
+</div>
+
+<form method="post" action="/schedule/save" class="form card" id="schedule-form">
+  <input type="hidden" name="id" value="{{.Id}}">
+  <div class="form-grid">
+    <label class="field">
+      <span>{{.L.T "schedule.taskName"}}</span>
+      <input type="text" name="name" value="{{.Name}}" required>
+    </label>
+    <label class="field">
+      <span>{{.L.T "schedule.associatedToken"}}</span>
+      <select name="tokenId" required>
+        <option value="">—</option>
+        {{range .TokenOptions}}
+        <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
+        {{end}}
+      </select>
+    </label>
+    <label class="field">
+      <span>{{.L.T "schedule.cronExpression"}}</span>
+      <input type="text" name="cron" value="{{.Cron}}" class="mono" required>
+      <span class="hint">{{.L.T "schedule.cronHelp"}} — {{.L.T "schedule.exampleCron"}}</span>
+    </label>
+    <label class="field">
+      <span>{{.L.T "schedule.requestUrl"}}</span>
+      <input type="url" name="url" value="{{.Url}}" required>
+    </label>
+  </div>
+
+  <fieldset>
+    <legend>{{.L.T "schedule.requestMethod"}}</legend>
+    <label class="check"><input type="radio" name="method" value="GET" {{if eq .Method "GET"}}checked{{end}}> GET</label>
+    &nbsp;
+    <label class="check"><input type="radio" name="method" value="POST" {{if eq .Method "POST"}}checked{{end}}> POST</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{.L.T "schedule.requestHeaders"}}</legend>
+    <div class="header-rows" id="header-rows">
+      {{range $i, $h := .Headers}}
+      <div class="header-row">
+        <input type="text" name="header_name_{{$i}}" value="{{$h.Name}}" placeholder="Name">
+        <input type="text" name="header_value_{{$i}}" value="{{$h.Value}}" placeholder="Value">
+        <button type="button" class="btn btn-sm js-del-header">×</button>
+      </div>
+      {{end}}
+    </div>
+    <button type="button" class="btn btn-sm" id="add-header" style="margin-top:6px">+</button>
+  </fieldset>
+
+  {{if eq .Method "POST"}}
+  <label class="field">
+    <span>{{.L.T "schedule.requestBody"}}</span>
+    <textarea name="body">{{.Body}}</textarea>
+  </label>
+  {{else}}
+  <input type="hidden" name="body" value="{{.Body}}">
+  {{end}}
+
+  <fieldset>
+    <legend>{{.L.T "schedule.useTemplate"}}</legend>
+    <label class="check">
+      <input type="checkbox" name="useTemplate" id="use-template" {{if .UseTemplate}}checked{{end}}>
+      {{.L.T "schedule.useTemplate"}} — {{.L.T "schedule.templateHelp"}}
+    </label>
+    <label class="field" id="template-field" style="margin-top:8px" {{if not .UseTemplate}}hidden{{end}}>
+      <textarea name="template" class="mono" rows="6">{{.Template}}</textarea>
+      <span class="hint">{{.L.T "schedule.templatePlaceholder"}}</span>
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>{{.L.T "schedule.status"}}</legend>
+    <label class="check"><input type="checkbox" name="onlyByError" {{if .OnlyByError}}checked{{end}}> {{.L.T "schedule.onlySendByError"}} — {{.L.T "schedule.onlySendByErrorHelp"}}</label>
+    <br>
+    <label class="check"><input type="checkbox" name="isUse" {{if .IsUse}}checked{{end}}> {{.L.T "schedule.enabled"}}</label>
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{.L.T "common.save"}}</button>
+    <button type="button" class="btn" id="schedule-test">{{.L.T "schedule.testSchedule"}}</button>
+  </div>
+</form>
+
+<script>
+(function () {
+  var rows = document.getElementById('header-rows');
+  document.getElementById('add-header').addEventListener('click', function () {
+    var i = rows.querySelectorAll('.header-row').length;
+    var row = document.createElement('div');
+    row.className = 'header-row';
+    row.innerHTML = '<input type="text" name="header_name_' + i + '" placeholder="Name">' +
+      '<input type="text" name="header_value_' + i + '" placeholder="Value">' +
+      '<button type="button" class="btn btn-sm js-del-header">×</button>';
+    rows.appendChild(row);
+  });
+  rows.addEventListener('click', function (ev) {
+    if (ev.target.classList.contains('js-del-header')) ev.target.closest('.header-row').remove();
+  });
+  var ut = document.getElementById('use-template');
+  if (ut) ut.addEventListener('change', function () {
+    document.getElementById('template-field').hidden = !ut.checked;
+  });
+
+  // Trial run: POST the form's settings to the same endpoint the runner uses.
+  document.getElementById('schedule-test').addEventListener('click', function () {
+    var form = document.getElementById('schedule-form');
+    function val(n) { var el = form.querySelector('[name=' + n + ']'); return el ? el.value : ''; }
+    var headers = [];
+    form.querySelectorAll('.header-row').forEach(function (row) {
+      var n = row.querySelector('[name^=header_name_]');
+      var v = row.querySelector('[name^=header_value_]');
+      if (n && (n.value || v.value)) headers.push({ name: n.value, value: v.value });
+    });
+    var body = {
+      name: val('name') || 'test',
+      tokenId: Number(val('tokenId')),
+      cron: val('cron') || '0 0 9 * * *',
+      url: val('url'),
+      method: form.querySelector('[name=method]:checked') ? form.querySelector('[name=method]:checked').value : 'GET',
+      headers: headers,
+      body: val('body'),
+      useTemplate: document.getElementById('use-template').checked,
+      template: val('template'),
+      isUse: true,
+      isSendOnlyByError: form.querySelector('[name=onlyByError]').checked
+    };
+    var btn = this;
+    btn.disabled = true;
+    fetch('/api/sendMailBySchedule', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().then(function (b) { return { ok: r.ok, b: b }; });
+    }).then(function (x) {
+      window.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed');
+      btn.disabled = false;
+    }).catch(function () {
+      window.alert('failed');
+      btn.disabled = false;
+    });
+  });
+})();
+</script>
+{{end}}

@@ -1,0 +1,91 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "log.systemLogs"}}</h1>
+</div>
+
+<form class="filter-bar" method="get" action="/logs">
+  <input type="text" name="searchKey" value="{{.SearchKey}}" placeholder="{{.L.T "log.searchKeyword"}}">
+  {{if .User.IsAdmin}}
+  <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "log.adminCreated"}}</label>
+  {{end}}
+  <button class="btn" type="submit">{{.L.T "common.search"}}</button>
+  <a class="btn" href="/logs">{{.L.T "common.reset"}}</a>
+  <span class="spacer"></span>
+  <button type="button" class="btn btn-danger" id="cleanup-btn"
+    data-days-label="{{.L.T "log.cleanupDays"}}"
+    data-hint="{{.L.T "log.cleanupDaysHint"}}"
+    data-done="{{.L.T "log.cleanupDone"}}">{{.L.T "log.cleanup"}}</button>
+</form>
+
+<div class="table-wrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{.L.T "log.token"}}</th>
+      {{if .User.IsAdmin}}<th>{{.L.T "common.creator"}}</th>{{end}}
+      <th>{{.L.T "log.smtpServer"}}</th>
+      <th>{{.L.T "log.recipients"}}</th>
+      <th>{{.L.T "log.subject"}}</th>
+      <th>{{.L.T "log.status"}}</th>
+      <th>{{.L.T "log.createTime"}}</th>
+      <th class="col-actions">{{.L.T "common.operations"}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td class="mono">{{shortToken .Token}}</td>
+      {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
+      <td>{{.SMTP}}</td>
+      <td>{{.Mail}}</td>
+      <td>{{.Subject}}</td>
+      <td>
+        {{if eq .StatusStr "success"}}<span class="tag tag-ok">{{$.L.T "log.success"}}</span>
+        {{else if eq .StatusStr "error"}}<span class="tag tag-off">{{$.L.T "log.error"}}</span>
+        {{else}}<span class="tag tag-warn">{{$.L.T "log.warning"}}</span>{{end}}
+      </td>
+      <td class="muted">{{fmtTime .CreateTime}}</td>
+      <td class="col-actions">
+        <a class="btn-link" href="/logs/{{.Id}}">{{$.L.T "log.logDetail"}}</a>
+        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "log.deleteConfirm"}}" data-href="/api/log/{{.Id}}">{{$.L.T "common.delete"}}</button>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="8" class="muted">{{.L.T "log.noResults"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{template "pager" .}}
+
+<script>
+(function () {
+  var btn = document.getElementById('cleanup-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var daysStr = window.prompt(btn.getAttribute('data-hint'), '30');
+    if (daysStr === null) return;
+    var days = Number(daysStr);
+    if (!Number.isFinite(days) || days < 0) return;
+    if (days === 0 && !window.confirm('0 = all')) return;
+    btn.disabled = true;
+    fetch('/api/log/cleanup', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days: days })
+    }).then(function (r) {
+      return r.json().then(function (b) { return { ok: r.ok, b: b }; });
+    }).then(function (x) {
+      btn.disabled = false;
+      if (!x.ok) { window.alert((x.b && x.b.msg) || 'failed'); return; }
+      var n = x.b && x.b.data && x.b.data.deleted || 0;
+      location.href = '/logs?ok=log.cleanupDone&n=' + n;
+    }).catch(function () {
+      btn.disabled = false;
+      window.alert('failed');
+    });
+  });
+})();
+</script>
+{{end}}
