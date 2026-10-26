@@ -40,13 +40,14 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	u.Id = dbUser.Id
 	u.IsAdmin = dbUser.IsAdmin
 	u.Salt = dbUser.Salt
-	token, err := l.authenticationFilter.SignIn(&u, request)
-	if err != nil {
+	// The session travels only in the HttpOnly cookie. Echoing the encrypted token in
+	// the response body as well would hand it to any script that can read a fetch
+	// result, defeating the point of HttpOnly.
+	if _, err := l.authenticationFilter.SignIn(&u, request); err != nil {
 		return nil, err
 	}
 	return map[string]any{
-		"isAdmin":        dbUser.IsAdmin,
-		entity.UserToken: token,
+		"isAdmin": dbUser.IsAdmin,
 	}, nil
 }
 

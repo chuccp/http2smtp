@@ -6,7 +6,6 @@ import (
 
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
-	"github.com/chuccp/go-web-frame/component/cors"
 	"github.com/chuccp/go-web-frame/component/schedule"
 	"github.com/chuccp/go-web-frame/config"
 	"github.com/chuccp/go-web-frame/core"
@@ -95,7 +94,11 @@ func createAPP() (*wf.WebFrame, error) {
 	// endpoint rewrites the ports here to make a port saved in the UI take effect.
 	manageServerConfig := &web.ServerConfig{Port: webPort}
 	restGroupBuilder.ServerConfig(manageServerConfig)
-	restGroupBuilder.Filter(cors.NewCrosFilter(), auth2.NewAuthenticationFilter[*model.User](&auth.Authentication{}))
+	// No CORS filter: the management UI is same-origin (the pages and the API share
+	// this server), and the framework's default filter answers every Origin with
+	// credentials allowed — which would expose the whole admin surface to any website
+	// a browser can reach, with only the session cookie's SameSite standing in the way.
+	restGroupBuilder.Filter(auth2.NewAuthenticationFilter[*model.User](&auth.Authentication{}))
 	restGroup := restGroupBuilder.Build()
 
 	builder.RestGroup(restGroup)

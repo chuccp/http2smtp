@@ -175,6 +175,13 @@ func (set *Set) getSet(req *web.Request) (any, error) {
 	}, nil
 }
 func (set *Set) defaultSet(req *web.Request) (any, error) {
+	// Same gate as /readSet: open while the wizard runs, nobody else's business once
+	// the system is initialised — MaskSecrets only hides the MySQL password, the rest
+	// (db host, sqlite path, ports) is still configuration an anonymous caller should
+	// not read.
+	if err := set.requireAdminOnceInitialised(req); err != nil {
+		return nil, err
+	}
 	cfg := model.DefaultConfig()
 	err := set.context.GetConfig().Unmarshal(cfg)
 	if err != nil {
@@ -186,13 +193,11 @@ func (set *Set) defaultSet(req *web.Request) (any, error) {
 // testConnection tries the database settings supplied in the request body without
 // persisting them, so a typo in the form is caught before it is saved.
 // Before setup completes it is reachable without a session (the wizard needs it);
-// afterwards it is a reconfiguration helper and requires login.
+// afterwards it is an admin-only reconfiguration helper — left open to any signed-in
+// user it is a probe that makes the server dial arbitrary MySQL hosts on request.
 func (set *Set) testConnection(req *web.Request) (any, error) {
-	if model.CoreState(set.context.GetConfig()).Init {
-		user, err := auth.User(req, set.context)
-		if user == nil {
-			return nil, err
-		}
+	if err := set.requireAdminOnceInitialised(req); err != nil {
+		return nil, err
 	}
 	setInfo := model.DefaultConfig()
 	if err := req.BindJSON(&setInfo); err != nil {
