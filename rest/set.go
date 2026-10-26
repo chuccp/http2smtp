@@ -6,17 +6,13 @@ import (
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
-	framedb "github.com/chuccp/go-web-frame/db"
-	"github.com/chuccp/http2smtp/db"
+	"github.com/chuccp/http2smtp/configapply"
 	"github.com/chuccp/http2smtp/entity"
 
-	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
-	"github.com/chuccp/http2smtp/util"
-	"go.uber.org/zap"
 )
 
 type Set struct {
@@ -59,68 +55,8 @@ func (set *Set) putDbInit(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Save database configuration
-	if setInfo.Core.DbType != "" {
-		set.context.GetConfig().Put("core.dbtype", setInfo.Core.DbType)
-	}
-	if setInfo.Sqlite != nil {
-		if setInfo.Sqlite.Filename != "" {
-			set.context.GetConfig().Put("sqlite.filename", setInfo.Sqlite.Filename)
-		}
-	}
-	if setInfo.Mysql != nil {
-		if setInfo.Mysql.Host != "" {
-			set.context.GetConfig().Put("mysql.host", setInfo.Mysql.Host)
-		}
-		if setInfo.Mysql.Port > 0 {
-			set.context.GetConfig().Put("mysql.port", setInfo.Mysql.Port)
-		}
-		if setInfo.Mysql.Dbname != "" {
-			set.context.GetConfig().Put("mysql.dbname", setInfo.Mysql.Dbname)
-		}
-		if setInfo.Mysql.Username != "" {
-			set.context.GetConfig().Put("mysql.username", setInfo.Mysql.Username)
-		}
-		if setInfo.Mysql.Password != "" {
-			set.context.GetConfig().Put("mysql.password", setInfo.Mysql.Password)
-		}
-		if setInfo.Mysql.Charset != "" {
-			set.context.GetConfig().Put("mysql.charset", setInfo.Mysql.Charset)
-		}
-	}
-
-	// Save manage port config
-	if setInfo.Manage != nil && setInfo.Manage.Port > 0 {
-		set.context.GetConfig().Put("manage.port", setInfo.Manage.Port)
-	}
 	set.writeWebPathIfSent(req)
-
-	// Save API port
-	if setInfo.Api != nil && setInfo.Api.Port > 0 {
-		set.context.GetConfig().Put("api.port", setInfo.Api.Port)
-	}
-
-	// Mark database as initialized
-	set.context.GetConfig().Put("core.dbinit", "true")
-
-	// Create the database connection and switch models to it
-	createDB, err := db.GetDb(set.context.GetConfig())
-	if err != nil {
-		return nil, err
-	}
-	err = set.context.DefaultModelGroup().SwitchDB(createDB, set.context)
-	if err != nil {
-		return nil, err
-	}
-
-	// Save config to file
-	err = set.context.GetConfig().WriteConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return web.Ok("ok"), nil
+	return web.Ok("ok"), configapply.ApplyDbInit(set.context, setInfo)
 }
 
 // putAdminInit handles Step 2 of setup: create or reset admin account.
@@ -138,36 +74,7 @@ func (set *Set) putAdminInit(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	if len(u.Username) == 0 || len(u.Password) == 0 {
-		return nil, errors.New("username or password is blank")
-	}
-	if err := util.ValidatePassword(u.Password); err != nil {
-		return nil, err
-	}
-
-	userService := wf.GetService[*service.UserService](set.context)
-
-	// If admin already exists, reset password; otherwise create new
-	hasAdmin, _ := userService.HasAdminUser()
-	if hasAdmin {
-		if err := userService.ResetAdminPassword(u.Username, u.Password); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := userService.CreateAdminUser(u.Username, u.Password); err != nil {
-			return nil, err
-		}
-	}
-
-	// Mark system as fully initialized
-	set.context.GetConfig().Put("core.init", "true")
-	err = set.context.GetConfig().WriteConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return web.Ok("ok"), nil
+	return web.Ok("ok"), configapply.ApplyAdminInit(set.context, &u)
 }
 
 // putAdminSkip skips admin creation if an admin already exists.
@@ -179,25 +86,7 @@ func (set *Set) putAdminSkip(req *web.Request) (any, error) {
 	if !model.CoreState(set.context.GetConfig()).DbInit {
 		return nil, web.NewErrorCode(web.CodeBadRequest, "database not initialized, please complete step 1 first")
 	}
-
-	// Check if an admin user exists
-	userService := wf.GetService[*service.UserService](set.context)
-	hasAdmin, err := userService.HasAdminUser()
-	if err != nil {
-		return nil, err
-	}
-	if !hasAdmin {
-		return nil, errors.New("no admin user exists, cannot skip")
-	}
-
-	// Mark system as fully initialized
-	set.context.GetConfig().Put("core.init", "true")
-	err = set.context.GetConfig().WriteConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return web.Ok("ok"), nil
+	return web.Ok("ok"), configapply.ApplyAdminInitSkip(set.context)
 }
 
 // postRestart restarts the process so settings that only apply at startup take effect.
@@ -309,30 +198,7 @@ func (set *Set) testConnection(req *web.Request) (any, error) {
 	if err := req.BindJSON(&setInfo); err != nil {
 		return nil, err
 	}
-	probe, err := openProbeDB(setInfo)
-	if err != nil {
-		return nil, err
-	}
-	if probe == nil {
-		return nil, errors.New("unsupported dbType: " + setInfo.Core.DbType)
-	}
-	if sqlDB, err := probe.GetGorm().DB(); err == nil {
-		defer func() { _ = sqlDB.Close() }()
-	}
-	return "ok", nil
-}
-
-// openProbeDB opens a throwaway connection from the supplied settings.
-// gorm.Open pings by default, so wrong credentials surface here as an error.
-func openProbeDB(setInfo *model.Config) (*framedb.DB, error) {
-	switch setInfo.Core.DbType {
-	case "mysql":
-		mysql := setInfo.Mysql
-		return framedb.ConnectionMysql(mysql.Host, mysql.Port, mysql.Username, mysql.Password, mysql.Dbname, mysql.Charset)
-	case "sqlite":
-		return framedb.ConnectionSQLite(setInfo.Sqlite.Filename)
-	}
-	return nil, nil
+	return "ok", configapply.ProbeDb(setInfo)
 }
 func (set *Set) readSet(req *web.Request) (any, error) {
 	if err := set.requireAdminOnceInitialised(req); err != nil {
@@ -384,64 +250,6 @@ func (set *Set) applyReSet(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debug("putSet", zap.Any("setInfo", &setInfo))
-
-	// Update database configuration
-	if setInfo.Core.DbType != "" {
-		set.context.GetConfig().Put("core.dbtype", setInfo.Core.DbType)
-	}
-	if setInfo.Sqlite != nil {
-		if setInfo.Sqlite.Filename != "" {
-			set.context.GetConfig().Put("sqlite.filename", setInfo.Sqlite.Filename)
-		}
-	}
-	if setInfo.Mysql != nil {
-		if setInfo.Mysql.Host != "" {
-			set.context.GetConfig().Put("mysql.host", setInfo.Mysql.Host)
-		}
-		if setInfo.Mysql.Port > 0 {
-			set.context.GetConfig().Put("mysql.port", setInfo.Mysql.Port)
-		}
-		if setInfo.Mysql.Dbname != "" {
-			set.context.GetConfig().Put("mysql.dbname", setInfo.Mysql.Dbname)
-		}
-		if setInfo.Mysql.Username != "" {
-			set.context.GetConfig().Put("mysql.username", setInfo.Mysql.Username)
-		}
-		if setInfo.Mysql.Password != "" {
-			set.context.GetConfig().Put("mysql.password", setInfo.Mysql.Password)
-		}
-		if setInfo.Mysql.Charset != "" {
-			set.context.GetConfig().Put("mysql.charset", setInfo.Mysql.Charset)
-		}
-	}
-
-	// Update manage configuration
-	if setInfo.Manage != nil && setInfo.Manage.Port > 0 {
-		set.context.GetConfig().Put("manage.port", setInfo.Manage.Port)
-	}
 	set.writeWebPathIfSent(req)
-
-	// Update API port
-	if setInfo.Api != nil && setInfo.Api.Port > 0 {
-		set.context.GetConfig().Put("api.port", setInfo.Api.Port)
-	}
-
-	set.context.GetConfig().Put("core.init", "true")
-
-	createDB, err := db.GetDb(set.context.GetConfig())
-	if err != nil {
-		return nil, err
-	}
-	err = set.context.DefaultModelGroup().SwitchDB(createDB, set.context)
-	if err != nil {
-		return nil, err
-	}
-	// Save the config to file
-	err = set.context.GetConfig().WriteConfig()
-	if err != nil {
-		return nil, err
-	}
-	return web.Ok("ok"), nil
+	return web.Ok("ok"), configapply.ApplyReSet(set.context, setInfo)
 }

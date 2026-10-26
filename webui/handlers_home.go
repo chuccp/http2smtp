@@ -16,6 +16,11 @@ import (
 // registerPageRoutes wires the rest of the server-rendered pages. It grows with each
 // migration step; home/login/logout/lang are wired directly in Init.
 func (p *Pages) registerPageRoutes(ctx *core.Context) {
+	ctx.Get("/setup", p.setupGet)
+	ctx.Post("/setup/db", p.setupDb)
+	ctx.Post("/setup/test", p.setupTest)
+	ctx.Post("/setup/admin", p.setupAdmin)
+	ctx.Post("/setup/skip", p.setupSkip)
 }
 
 // home routes a first visit: the setup wizard before init, the login page without a

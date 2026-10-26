@@ -100,7 +100,7 @@ func layoutFor(name string) string {
 // once per process: restart re-runs Init and the templates do not change.
 func parseTemplates() (map[string]*template.Template, error) {
 	pages := []string{
-		"login", "error", "notadmin",
+		"login", "setup", "error", "notadmin",
 	}
 	tmpls := make(map[string]*template.Template, len(pages))
 	for _, name := range pages {

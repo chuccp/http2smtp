@@ -200,6 +200,14 @@ legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
 .header-row input { flex: 1; }
 .header-row .btn { flex: none; }
 
+/* ---------- setup wizard steps ---------- */
+.steps { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+.steps .step {
+  padding: 5px 12px; border-radius: 999px; background: var(--bg);
+  color: var(--muted); font-size: 13px;
+}
+.steps .step.cur { background: var(--primary); color: #fff; }
+
 /* ---------- buttons ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;

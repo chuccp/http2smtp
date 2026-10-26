@@ -1,0 +1,112 @@
+{{define "content"}}
+<div class="login-head">
+  <div class="login-brand">HTTP2SMTP</div>
+  <h1>{{.L.T "setup.setupWizard"}}</h1>
+</div>
+
+<div class="steps">
+  <span class="step {{if eq .Step 1}}cur{{end}}">1. {{.L.T "setup.step1Database"}}</span>
+  <span class="step {{if eq .Step 2}}cur{{end}}">2. {{.L.T "setup.step2Admin"}}</span>
+</div>
+
+{{if eq .Step 1}}
+<form method="post" action="/setup/db" class="form">
+  <label class="field">
+    <span>{{.L.T "setup.databaseType"}}</span>
+    <select name="dbType" onchange="setupToggleDbType(this.value)">
+      <option value="sqlite" {{if eq .DbType "sqlite"}}selected{{end}}>{{.L.T "setup.sqlite"}}</option>
+      <option value="mysql" {{if eq .DbType "mysql"}}selected{{end}}>{{.L.T "setup.mysql"}}</option>
+    </select>
+  </label>
+
+  <div id="sqlite-fields" class="form-grid" {{if ne .DbType "sqlite"}}hidden{{end}}>
+    <label class="field">
+      <span>{{.L.T "setup.sqliteFile"}}</span>
+      <input type="text" name="sqliteFile" value="{{.SqliteFile}}" placeholder="http2smtp.db">
+    </label>
+  </div>
+
+  <div id="mysql-fields" class="form-grid" {{if ne .DbType "mysql"}}hidden{{end}}>
+    <label class="field">
+      <span>{{.L.T "setup.mysqlHost"}}</span>
+      <input type="text" name="mysqlHost" value="{{.MysqlHost}}">
+    </label>
+    <label class="field">
+      <span>{{.L.T "setup.mysqlPort"}}</span>
+      <input type="number" name="mysqlPort" value="{{if .MysqlPort}}{{.MysqlPort}}{{else}}3306{{end}}">
+    </label>
+    <label class="field">
+      <span>{{.L.T "setup.mysqlDatabase"}}</span>
+      <input type="text" name="mysqlDbname" value="{{.MysqlDbname}}">
+    </label>
+    <label class="field">
+      <span>{{.L.T "setup.mysqlUser"}}</span>
+      <input type="text" name="mysqlUsername" value="{{.MysqlUsername}}">
+    </label>
+    <label class="field">
+      <span>{{.L.T "setup.mysqlPassword"}}</span>
+      <input type="password" name="mysqlPassword" value="">
+    </label>
+    <label class="field">
+      <span>{{.L.T "setup.mysqlCharset"}}</span>
+      <input type="text" name="mysqlCharset" value="{{if .MysqlCharset}}{{.MysqlCharset}}{{else}}utf8mb4{{end}}">
+    </label>
+  </div>
+
+  <fieldset>
+    <legend>{{.L.T "setup.portConfig"}}</legend>
+    <div class="hint">{{.L.T "setup.portHint"}}</div>
+    {{if .WebPort}}
+    <div class="hint">web={{.WebPort}} · api={{.ApiPort}}{{if .IsDocker}} (docker){{end}}</div>
+    {{end}}
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{.L.T "setup.nextStep"}}</button>
+    <button type="submit" formaction="/setup/test" formmethod="post" class="btn">{{.L.T "setup.testConnection"}}</button>
+  </div>
+</form>
+{{end}}
+
+{{if eq .Step 2}}
+{{if .HasAdmin}}
+<div class="flash flash-err">{{.L.T "setup.adminAlreadyExists"}}</div>
+<div class="card">
+  <div class="hint">{{.L.T "setup.currentAdmin"}}: <strong>{{.AdminName}}</strong></div>
+</div>
+{{end}}
+
+<form method="post" action="/setup/admin" class="form">
+  <label class="field">
+    <span>{{.L.T "setup.adminUsername"}}</span>
+    <input type="text" name="username" value="{{.AdminUsername}}" autocomplete="username" required>
+  </label>
+  <label class="field">
+    <span>{{if .HasAdmin}}{{.L.T "setup.newPasswordPlaceholder"}}{{else}}{{.L.T "setup.adminPassword"}}{{end}}</span>
+    <input type="password" name="password" autocomplete="new-password" required minlength="8">
+  </label>
+  <label class="field">
+    <span>{{.L.T "setup.confirmPassword"}}</span>
+    <input type="password" name="confirm" autocomplete="new-password" required minlength="8">
+  </label>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{if .HasAdmin}}{{.L.T "setup.resetAdmin"}}{{else}}{{.L.T "setup.initialize"}}{{end}}</button>
+  </div>
+</form>
+
+{{if .HasAdmin}}
+<form method="post" action="/setup/skip" class="form" style="margin-top:10px">
+  <div class="form-actions">
+    <button type="submit" class="btn">{{.L.T "setup.skipAdmin"}}</button>
+  </div>
+</form>
+{{end}}
+{{end}}
+
+<script>
+function setupToggleDbType(v) {
+  document.getElementById('sqlite-fields').hidden = v !== 'sqlite';
+  document.getElementById('mysql-fields').hidden = v !== 'mysql';
+}
+</script>
+{{end}}
