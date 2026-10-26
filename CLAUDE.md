@@ -113,11 +113,12 @@ while the admin surface stays private.
 
 ### Web UI hosting
 
-The management UI is server-rendered html/template, embedded in the binary through
-`webui/embed.go` — no nginx, no reverse proxy, no `web/` directory. `main.go` registers
-`webui.NewPages()` on the management group alongside the JSON REST types; its routes live
-at the site root (`/login`, `/smtp`, …) and the static assets under `/static` (also
-embedded). The old `manage.webPath` key is no longer read — the config struct still
+The management UI is server-rendered html/template — no nginx, no reverse proxy, no
+`web/` directory. `main.go` registers `webui.NewPages()` on the management group
+alongside the JSON REST types; its routes live at the site root (`/login`, `/smtp`, …)
+and the static assets under `/static`. Release builds embed everything through
+`webui/embed.go`; local builds serve templates/assets from the working tree (dev mode,
+see above). The old `manage.webPath` key is no longer read — the config struct still
 carries the field so an existing `config.ini` parses, but nothing consumes it.
 
 There is no `ContextPath` on the management group: it is a server-wide prefix in the
@@ -239,16 +240,17 @@ Precedence is defaults → `config.ini` → CLI flags → environment variables.
 ## Web UI (`webui/`)
 
 Server-rendered management UI — see "Web UI (`webui/`, Go html/template)" under Common
-Commands for the layout, the render/auth rules and the i18n setup. The four locales
-(`zh-cn`, `en`, `zh-tw`, `ja`) must stay in key-for-key sync; `go test ./webui` enforces
-it. Templates, static assets and locale JSON are all embedded, so the binary needs no
-companion files at runtime.
+Commands for the layout, the render/auth rules, dev mode and the i18n setup. The four
+locales (`zh-cn`, `en`, `zh-tw`, `ja`) must stay in key-for-key sync; `go test ./webui`
+enforces it. Release builds (`-tags release`) embed templates, static assets and locale
+JSON, so the shipped binary needs no companion files; a plain local build serves the
+templates and assets from the working tree by design.
 
 ### Release packaging
 
-The release workflow only sets up Go and runs `go build`; the tarball carries the binary
-alone (the UI travels inside it). The Dockerfile unpacks that tarball and needs no
-change — it never referenced `web/` directly.
+The release workflow only sets up Go and runs `go build -tags release`; the tarball
+carries the binary alone (the UI travels inside it). The Dockerfile unpacks that tarball
+and needs no change — it never referenced `web/` directly.
 
 ## Known gaps
 
@@ -256,6 +258,7 @@ change — it never referenced `web/` directly.
   salt (see above). Per-device revocation would need a server-side session store.
 - **The public `/sendMail` endpoint has no rate limiting.** The framework ships a
   `ratelimit` component; it is not wired up here.
-- **INI cannot express a `[]string` field.** `web.server.locations` therefore has to be set
-  in code (see `main.go`); putting it in `config.ini` makes startup fail with
-  `cannot convert string to []string`.
+- **INI cannot express a `[]string` field.** A bad `[]string` value makes startup fail
+  with `cannot convert string to []string` rather than reporting a config error; the app
+  no longer has such a field (the old `web.server.locations` usage went away with the
+  static frontend), but the framework limitation remains.
