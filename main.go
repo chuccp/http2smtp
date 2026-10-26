@@ -20,6 +20,7 @@ import (
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
 	"github.com/chuccp/http2smtp/service"
+	"github.com/chuccp/http2smtp/webui"
 	"go.uber.org/zap"
 )
 
@@ -88,7 +89,7 @@ func createAPP() (*wf.WebFrame, error) {
 	webPath := fileConfig.GetStringOrDefault("manage.webPath", "web")
 
 	restGroupBuilder := core.NewRestGroupBuilder()
-	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{})
+	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, webui.NewPages())
 	restGroupBuilder.Port(webPort)
 	// No ContextPath: it is a server-wide prefix in the framework, so it would also land
 	// on the server-rendered page routes that must live at the site root (/login, /smtp,

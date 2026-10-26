@@ -1,0 +1,7 @@
+{{define "content"}}
+<div class="error-page">
+  <h1>{{.Message}}</h1>
+  {{if .Detail}}<pre class="error-detail">{{.Detail}}</pre>{{end}}
+  <a class="btn btn-primary" href="/dashboard">{{.L.T "layout.sidebar.dashboard"}}</a>
+</div>
+{{end}}

@@ -1,0 +1,66 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} - HTTP2SMTP</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="/dashboard">HTTP2SMTP</a>
+    <nav class="nav">
+      <a class="nav-item" data-path="/dashboard" href="/dashboard">{{.L.T "layout.sidebar.dashboard"}}</a>
+      <a class="nav-item" data-path="/smtp" href="/smtp">{{.L.T "layout.sidebar.smtp"}}</a>
+      <a class="nav-item" data-path="/mail" href="/mail">{{.L.T "layout.sidebar.mail"}}</a>
+      <a class="nav-item" data-path="/tokens" href="/tokens">{{.L.T "layout.sidebar.tokens"}}</a>
+      <a class="nav-item" data-path="/schedule" href="/schedule">{{.L.T "layout.sidebar.schedule"}}</a>
+      <a class="nav-item" data-path="/logs" href="/logs">{{.L.T "layout.sidebar.logs"}}</a>
+      {{if .User.IsAdmin}}
+      <a class="nav-item" data-path="/users" href="/users">{{.L.T "layout.sidebar.users"}}</a>
+      <a class="nav-item" data-path="/settings" href="/settings">{{.L.T "layout.sidebar.settings"}}</a>
+      {{end}}
+    </nav>
+    <div class="sidebar-footer">
+      <div class="whoami">
+        <span class="avatar">{{slice .User.Name 0 1}}</span>
+        <span class="whoami-name">{{.User.Name}}</span>
+        {{if .User.IsAdmin}}<span class="tag tag-admin">admin</span>{{end}}
+      </div>
+      <div class="whoami-actions">
+        <a href="/password">{{.L.T "user.changePassword"}}</a>
+        <form method="post" action="/logout" class="inline-form">
+          <button type="submit" class="linklike">{{.L.T "auth.logout"}}</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div id="tabbar" class="tabbar" data-close-others="{{.L.T "layout.tabs.closeOthers"}}" data-close-all="{{.L.T "layout.tabs.closeAll"}}"></div>
+      <form method="post" action="/lang" class="lang-form">
+        <input type="hidden" name="back" value="{{.Path}}">
+        <select name="lang" class="lang-select" onchange="this.form.submit()">
+          {{range $l := .Languages}}
+          <option value="{{$l}}" {{if eq $.Lang $l}}selected{{end}}>{{index $.LangNames $l}}</option>
+          {{end}}
+        </select>
+      </form>
+    </header>
+    {{if or .Flash.OK .Flash.Err}}
+    <div class="flash {{if .Flash.Err}}flash-err{{else}}flash-ok{{end}}">
+      {{if .Flash.Err}}{{.Flash.Err}}{{else}}{{flashText .Flash .L}}{{end}}
+    </div>
+    {{end}}
+    <div class="content">
+      {{template "content" .}}
+    </div>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
+{{end}}

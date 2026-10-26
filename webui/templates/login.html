@@ -1,0 +1,18 @@
+{{define "content"}}
+<div class="login-head">
+  <div class="login-brand">HTTP2SMTP</div>
+  <h1>{{.L.T "auth.login"}}</h1>
+</div>
+<form method="post" action="/login" class="form">
+  <input type="hidden" name="next" value="{{.Next}}">
+  <label class="field">
+    <span>{{.L.T "auth.username"}}</span>
+    <input type="text" name="username" autofocus autocomplete="username" required>
+  </label>
+  <label class="field">
+    <span>{{.L.T "auth.password"}}</span>
+    <input type="password" name="password" autocomplete="current-password" required>
+  </label>
+  <button type="submit" class="btn btn-primary btn-block">{{.L.T "auth.login"}}</button>
+</form>
+{{end}}

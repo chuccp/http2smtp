@@ -1,0 +1,33 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} - HTTP2SMTP</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="bare">
+<div class="bare-card">
+  {{if or .Flash.OK .Flash.Err}}
+  <div class="flash {{if .Flash.Err}}flash-err{{else}}flash-ok{{end}}">
+    {{if .Flash.Err}}{{.Flash.Err}}{{else}}{{flashText .Flash .L}}{{end}}
+  </div>
+  {{end}}
+  {{template "content" .}}
+</div>
+<div class="bare-lang">
+  <form method="post" action="/lang">
+    <input type="hidden" name="back" value="{{.Path}}">
+    <select name="lang" class="lang-select" onchange="this.form.submit()">
+      {{range $l := .Languages}}
+      <option value="{{$l}}" {{if eq $.Lang $l}}selected{{end}}>{{index $.LangNames $l}}</option>
+      {{end}}
+    </select>
+  </form>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
+{{end}}
