@@ -48,6 +48,18 @@ func (p *Pages) registerPageRoutes(ctx *core.Context) {
 
 	ctx.Get("/logs", p.logList)
 	ctx.Get("/logs/:id", p.logDetail)
+
+	ctx.Get("/users", p.userList)
+	ctx.Get("/users/form", p.userForm)
+	ctx.Get("/users/form/:id", p.userForm)
+	ctx.Post("/users/save", p.userSave)
+
+	ctx.Get("/settings", p.settingsGet)
+	ctx.Post("/settings/save", p.settingsSave)
+	ctx.Post("/settings/restart", p.settingsRestart)
+
+	ctx.Get("/password", p.passwordGet)
+	ctx.Post("/password", p.passwordPost)
 }
 
 // home routes a first visit: the setup wizard before init, the login page without a

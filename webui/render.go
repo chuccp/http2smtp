@@ -16,6 +16,7 @@ import (
 // NavUser is the slice of the signed-in user the layout may show. Nothing sensitive —
 // the session itself stays in the HttpOnly cookie.
 type NavUser struct {
+	Id      uint
 	Name    string
 	IsAdmin bool
 }
@@ -107,6 +108,8 @@ func parseTemplates() (map[string]*template.Template, error) {
 		"token_list", "token_form", "token_send",
 		"schedule_list", "schedule_form",
 		"logs_list", "logs_detail",
+		"users_list", "users_form",
+		"settings", "password", "restarting",
 	}
 	tmpls := make(map[string]*template.Template, len(pages))
 	for _, name := range pages {
@@ -141,7 +144,7 @@ func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bo
 	b.Path = req.URL().Path
 	b.Tab = tab
 	if user != nil {
-		b.User = &NavUser{Name: user.Name, IsAdmin: user.IsAdmin}
+		b.User = &NavUser{Id: user.Id, Name: user.Name, IsAdmin: user.IsAdmin}
 	}
 	b.Flash = flashOf(req)
 	return b

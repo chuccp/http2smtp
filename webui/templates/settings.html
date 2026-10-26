@@ -1,0 +1,109 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "settings.systemSettings"}}</h1>
+</div>
+
+<form method="post" action="/settings/save" class="form" id="settings-form">
+  {{if .IsDocker}}<input type="hidden" name="isDocker" value="1">{{end}}
+
+  <div class="card">
+    <h2 style="margin:0 0 10px;font-size:15px">{{.L.T "settings.portConfig"}}</h2>
+    {{if .IsDocker}}
+    <div class="flash flash-err">{{.L.T "settings.portLockedByDocker"}}</div>
+    {{end}}
+    <div class="form-grid">
+      <label class="field">
+        <span>{{.L.T "settings.managementPort"}}</span>
+        <input type="number" name="webPort" value="{{.WebPort}}" {{if .IsDocker}}readonly{{end}}>
+      </label>
+      <label class="field">
+        <span>{{.L.T "settings.apiPort"}}</span>
+        <input type="number" name="apiPort" value="{{.ApiPort}}" {{if .IsDocker}}readonly{{end}}>
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 10px;font-size:15px">{{.L.T "settings.databaseConfig"}}</h2>
+    <label class="field" style="max-width:240px">
+      <span>{{.L.T "settings.databaseType"}}</span>
+      <select name="dbType" onchange="settingsToggleDbType(this.value)">
+        <option value="sqlite" {{if eq .DbType "sqlite"}}selected{{end}}>{{.L.T "settings.sqlite"}}</option>
+        <option value="mysql" {{if eq .DbType "mysql"}}selected{{end}}>{{.L.T "settings.mysql"}}</option>
+      </select>
+    </label>
+
+    <div id="sqlite-fields" class="form-grid" style="margin-top:10px" {{if ne .DbType "sqlite"}}hidden{{end}}>
+      <label class="field">
+        <span>{{.L.T "settings.sqliteFile"}}</span>
+        <input type="text" name="sqliteFile" value="{{.SqliteFile}}">
+      </label>
+    </div>
+
+    <div id="mysql-fields" class="form-grid" style="margin-top:10px" {{if ne .DbType "mysql"}}hidden{{end}}>
+      <label class="field">
+        <span>{{.L.T "settings.mysqlHost"}}</span>
+        <input type="text" name="mysqlHost" value="{{.MysqlHost}}">
+      </label>
+      <label class="field">
+        <span>{{.L.T "settings.mysqlPort"}}</span>
+        <input type="number" name="mysqlPort" value="{{.MysqlPort}}">
+      </label>
+      <label class="field">
+        <span>{{.L.T "settings.mysqlDatabase"}}</span>
+        <input type="text" name="mysqlDbname" value="{{.MysqlDbname}}">
+      </label>
+      <label class="field">
+        <span>{{.L.T "settings.mysqlUser"}}</span>
+        <input type="text" name="mysqlUsername" value="{{.MysqlUsername}}">
+      </label>
+      <label class="field">
+        <span>{{.L.T "settings.mysqlPassword"}}</span>
+        <input type="password" name="mysqlPassword" value="" autocomplete="new-password" placeholder="{{.L.T "settings.passwordKeepHint"}}">
+      </label>
+      <label class="field">
+        <span>{{.L.T "settings.mysqlCharset"}}</span>
+        <input type="text" name="mysqlCharset" value="{{.MysqlCharset}}">
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{.L.T "settings.saveSettings"}}</button>
+  </div>
+</form>
+
+<form method="post" action="/settings/restart" class="form card" id="restart-form" style="max-width:640px">
+  <div class="hint">{{.L.T "settings.restartConfirm"}}</div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-danger">{{.L.T "settings.saveAndRestart"}}</button>
+  </div>
+</form>
+
+<script>
+function settingsToggleDbType(v) {
+  document.getElementById('sqlite-fields').hidden = v !== 'sqlite';
+  document.getElementById('mysql-fields').hidden = v !== 'mysql';
+}
+(function () {
+  // The settings form has to POST its own fields to /settings/restart — a bare form
+  // post would send nothing.
+  var rf = document.getElementById('restart-form');
+  var sf = document.getElementById('settings-form');
+  rf.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (!window.confirm(rf.querySelector('.hint').textContent)) return;
+    var fd = new FormData(sf);
+    fd.append('webPort', sf.querySelector('[name=webPort]').value);
+    fd.append('apiPort', sf.querySelector('[name=apiPort]').value);
+    var body = new URLSearchParams(fd);
+    var btn = rf.querySelector('button');
+    btn.disabled = true;
+    fetch('/settings/restart', { method: 'POST', body: body, credentials: 'same-origin' })
+      .then(function (r) { return r.text(); })
+      .then(function (html) { document.open(); document.write(html); document.close(); })
+      .catch(function () { window.alert('failed'); btn.disabled = false; });
+  });
+})();
+</script>
+{{end}}

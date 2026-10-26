@@ -1,0 +1,46 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "layout.sidebar.users"}}</h1>
+  <a class="btn btn-primary" href="/users/form">{{.L.T "common.add"}}</a>
+</div>
+
+<div class="table-wrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{.L.T "auth.username"}}</th>
+      <th>{{.L.T "common.status"}}</th>
+      <th>{{.L.T "common.createTime"}}</th>
+      <th class="col-actions">{{.L.T "common.operations"}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td>
+        {{.Name}}
+        {{if .IsAdmin}}<span class="tag tag-admin">admin</span>{{end}}
+        {{if eq .Id $.User.Id}}<span class="tag">{{$.L.T "auth.login"}}</span>{{end}}
+      </td>
+      <td>
+        {{if .IsUse}}<span class="tag tag-ok">{{$.L.T "common.enable"}}</span>
+        {{else}}<span class="tag tag-off">{{$.L.T "common.disable"}}</span>{{end}}
+      </td>
+      <td class="muted">{{fmtTime .CreateTime}}</td>
+      <td class="col-actions">
+        {{if .IsAdmin}}
+        <span class="muted">—</span>
+        {{else}}
+        <a class="btn-link" href="/users/form/{{.Id}}">{{$.L.T "common.edit"}}</a>
+        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "user.deleteConfirm"}}" data-href="/api/user/{{.Id}}">{{$.L.T "common.delete"}}</button>
+        {{end}}
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="4" class="muted">—</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{template "pager" .}}
+{{end}}

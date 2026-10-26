@@ -1,0 +1,23 @@
+{{define "content"}}
+<div class="error-page">
+  <h1>{{.L.T "settings.restarting"}}</h1>
+  {{if .PortChanged}}
+  <div class="flash flash-err" id="port-msg" style="display:none">{{.Message}}</div>
+  <p class="mono" id="new-ports" style="display:none">web={{.ManagePort}} · api={{.ApiPort}}</p>
+  {{else}}
+  <p class="muted">{{.L.T "settings.pleaseWait"}}</p>
+  {{end}}
+</div>
+
+<script>
+(function () {
+  {{if .PortChanged}}
+  document.getElementById('port-msg').style.display = '';
+  document.getElementById('new-ports').style.display = '';
+  {{else}}
+  // Same port: give the process a moment, then reload this origin.
+  setTimeout(function () { location.reload(); }, 3000);
+  {{end}}
+})();
+</script>
+{{end}}
