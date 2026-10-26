@@ -227,12 +227,12 @@ func (token *Token) Init(context *core.Context) error {
 	token.context = context
 	token.tokenService = wf.GetService[*service.TokenService](token.context)
 	token.tokenModel = wf.GetModel[*model.TokenModel](token.context)
-	token.context.Get("/token/:id", token.getOne).WithMeta(auth2.WithLogin())
-	token.context.Delete("/token/:id", token.deleteOne).WithMeta(auth2.WithLogin())
-	token.context.Get("/token", token.getPage).WithMeta(auth2.WithLogin())
-	token.context.Post("/token", token.postOne).WithMeta(auth2.WithLogin())
-	token.context.Put("/token", token.putOne).WithMeta(auth2.WithLogin())
-	token.context.Post("/sendMailByToken", token.sendMail).WithMeta(auth2.WithLogin())
-	token.context.Post("/sendMailByTokenId", token.sendMailById).WithMeta(auth2.WithLogin())
+	token.context.Get("/api/token/:id", token.getOne).WithMeta(auth2.WithLogin())
+	token.context.Delete("/api/token/:id", token.deleteOne).WithMeta(auth2.WithLogin())
+	token.context.Get("/api/token", token.getPage).WithMeta(auth2.WithLogin())
+	token.context.Post("/api/token", token.postOne).WithMeta(auth2.WithLogin())
+	token.context.Put("/api/token", token.putOne).WithMeta(auth2.WithLogin())
+	token.context.Post("/api/sendMailByToken", token.sendMail).WithMeta(auth2.WithLogin())
+	token.context.Post("/api/sendMailByTokenId", token.sendMailById).WithMeta(auth2.WithLogin())
 	return nil
 }

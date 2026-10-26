@@ -250,11 +250,11 @@ func (l *Log) Init(context *core.Context) error {
 	l.context = context
 	l.logModel = wf.GetModel[*model.LogModel](context)
 	l.userService = wf.GetService[*service.UserService](context)
-	context.Get("/log/:id", l.getOne).WithMeta(auth2.WithLogin())
-	context.Get("/log", l.getPage).WithMeta(auth2.WithLogin())
-	context.Delete("/log/:id", l.deleteOne).WithMeta(auth2.WithLogin())
-	context.Post("/log/cleanup", l.cleanUp).WithMeta(auth2.WithLogin())
-	context.Get("/download", l.downLoad).WithMeta(auth2.WithLogin())
+	context.Get("/api/log/:id", l.getOne).WithMeta(auth2.WithLogin())
+	context.Get("/api/log", l.getPage).WithMeta(auth2.WithLogin())
+	context.Delete("/api/log/:id", l.deleteOne).WithMeta(auth2.WithLogin())
+	context.Post("/api/log/cleanup", l.cleanUp).WithMeta(auth2.WithLogin())
+	context.Get("/api/download", l.downLoad).WithMeta(auth2.WithLogin())
 	return nil
 
 }

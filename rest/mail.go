@@ -176,11 +176,11 @@ func (m *Mail) putOne(req *web.Request) (any, error) {
 }
 func (m *Mail) Init(context *core.Context) error {
 	m.context = context
-	context.Get("/mail/:id", m.getOne).WithMeta(auth2.WithLogin())
-	context.Delete("/mail/:id", m.deleteOne).WithMeta(auth2.WithLogin())
-	context.Get("/mail", m.getPage).WithMeta(auth2.WithLogin())
-	context.Post("/mail", m.postOne).WithMeta(auth2.WithLogin())
-	context.Put("/mail", m.putOne).WithMeta(auth2.WithLogin())
+	context.Get("/api/mail/:id", m.getOne).WithMeta(auth2.WithLogin())
+	context.Delete("/api/mail/:id", m.deleteOne).WithMeta(auth2.WithLogin())
+	context.Get("/api/mail", m.getPage).WithMeta(auth2.WithLogin())
+	context.Post("/api/mail", m.postOne).WithMeta(auth2.WithLogin())
+	context.Put("/api/mail", m.putOne).WithMeta(auth2.WithLogin())
 	m.mailModel = core.GetModel[*model.MailModel](context)
 	m.userService = wf.GetService[*service.UserService](context)
 	return nil

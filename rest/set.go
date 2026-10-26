@@ -347,17 +347,17 @@ func (set *Set) readSet(req *web.Request) (any, error) {
 
 func (set *Set) Init(context *core.Context) error {
 	set.context = context
-	context.Get("/set", set.getSet)
-	context.Get("/defaultSet", set.defaultSet)
-	context.Put("/set", set.putSet)
-	context.Put("/dbInit", set.putDbInit)
-	context.Put("/adminInit", set.putAdminInit)
-	context.Put("/adminSkip", set.putAdminSkip)
-	context.Get("/adminExists", set.getAdminExists)
-	context.Get("/readSet", set.readSet)
-	context.Put("/reSet", set.putReSet).WithMeta(auth2.WithLogin())
-	context.Post("/restart", set.postRestart).WithMeta(auth2.WithLogin())
-	context.Post("/testConnection", set.testConnection)
+	context.Get("/api/set", set.getSet)
+	context.Get("/api/defaultSet", set.defaultSet)
+	context.Put("/api/set", set.putSet)
+	context.Put("/api/dbInit", set.putDbInit)
+	context.Put("/api/adminInit", set.putAdminInit)
+	context.Put("/api/adminSkip", set.putAdminSkip)
+	context.Get("/api/adminExists", set.getAdminExists)
+	context.Get("/api/readSet", set.readSet)
+	context.Put("/api/reSet", set.putReSet).WithMeta(auth2.WithLogin())
+	context.Post("/api/restart", set.postRestart).WithMeta(auth2.WithLogin())
+	context.Post("/api/testConnection", set.testConnection)
 	return nil
 }
 

@@ -255,14 +255,14 @@ func (schedule *Schedule) triggerById(req *web.Request) (any, error) {
 
 func (schedule *Schedule) Init(context *core.Context) error {
 	schedule.context = context
-	context.Get("/schedule/:id", schedule.getOne).WithMeta(auth2.WithLogin())
-	context.Delete("/schedule/:id", schedule.deleteOne).WithMeta(auth2.WithLogin())
-	context.Get("/schedule", schedule.getPage).WithMeta(auth2.WithLogin())
-	context.Post("/schedule", schedule.postOne).WithMeta(auth2.WithLogin())
-	context.Put("/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
-	context.Post("/schedule/trigger/:id", schedule.triggerById).WithMeta(auth2.WithLogin())
-	context.Post("/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
-	context.Any("/scheduleTestApi", schedule.scheduleTestApi).WithMeta(auth2.WithLogin())
+	context.Get("/api/schedule/:id", schedule.getOne).WithMeta(auth2.WithLogin())
+	context.Delete("/api/schedule/:id", schedule.deleteOne).WithMeta(auth2.WithLogin())
+	context.Get("/api/schedule", schedule.getPage).WithMeta(auth2.WithLogin())
+	context.Post("/api/schedule", schedule.postOne).WithMeta(auth2.WithLogin())
+	context.Put("/api/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
+	context.Post("/api/schedule/trigger/:id", schedule.triggerById).WithMeta(auth2.WithLogin())
+	context.Post("/api/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
+	context.Any("/api/scheduleTestApi", schedule.scheduleTestApi).WithMeta(auth2.WithLogin())
 	schedule.scheduleService = wf.GetService[*service.ScheduleService](schedule.context)
 	schedule.tokenService = wf.GetService[*service.TokenService](schedule.context)
 	schedule.scheduleModel = wf.GetModel[*model.ScheduleModel](schedule.context)

@@ -90,7 +90,10 @@ func createAPP() (*wf.WebFrame, error) {
 	restGroupBuilder := core.NewRestGroupBuilder()
 	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{})
 	restGroupBuilder.Port(webPort)
-	restGroupBuilder.ContextPath("/api")
+	// No ContextPath: it is a server-wide prefix in the framework, so it would also land
+	// on the server-rendered page routes that must live at the site root (/login, /smtp,
+	// ...). The JSON endpoints carry the /api prefix in their registrations instead —
+	// the URLs callers see are unchanged.
 	// Both server configs are kept: a restart re-runs these same groups, so the restart
 	// endpoint rewrites the ports here to make a port saved in the UI take effect.
 	manageServerConfig := &web.ServerConfig{

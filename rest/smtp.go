@@ -205,12 +205,12 @@ func (smtp *Smtp) Init(context *core.Context) error {
 	smtp.context = context
 	smtp.smtpModel = core.GetModel[*model.SMTPModel](context)
 	smtp.smtpService = core.GetService[*service.SmtpService](context)
-	context.Get("/smtp/:id", smtp.getOne).WithMeta(auth2.WithLogin())
-	context.Delete("/smtp/:id", smtp.deleteOne).WithMeta(auth2.WithLogin())
-	context.Get("/smtp", smtp.getPage).WithMeta(auth2.WithLogin())
-	context.Post("/smtp", smtp.postOne).WithMeta(auth2.WithLogin())
-	context.Post("/test", smtp.test).WithMeta(auth2.WithLogin())
-	context.Put("/smtp", smtp.putOne).WithMeta(auth2.WithLogin())
-	context.Post("/sendMailBySMTP", smtp.sendMail).WithMeta(auth2.WithLogin())
+	context.Get("/api/smtp/:id", smtp.getOne).WithMeta(auth2.WithLogin())
+	context.Delete("/api/smtp/:id", smtp.deleteOne).WithMeta(auth2.WithLogin())
+	context.Get("/api/smtp", smtp.getPage).WithMeta(auth2.WithLogin())
+	context.Post("/api/smtp", smtp.postOne).WithMeta(auth2.WithLogin())
+	context.Post("/api/test", smtp.test).WithMeta(auth2.WithLogin())
+	context.Put("/api/smtp", smtp.putOne).WithMeta(auth2.WithLogin())
+	context.Post("/api/sendMailBySMTP", smtp.sendMail).WithMeta(auth2.WithLogin())
 	return nil
 }

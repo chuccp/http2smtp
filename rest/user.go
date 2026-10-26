@@ -199,13 +199,13 @@ func (l *User) Init(context *core.Context) error {
 	l.context = context
 	l.authenticationFilter = wf.GetFilter[*authFilter](context)
 	l.userService = wf.GetService[*service.UserService](context)
-	context.Post("/signIn", l.signIn)
-	context.Post("/logout", l.logout)
-	context.Post("/changePassword", l.changePassword).WithMeta(auth2.WithLogin())
-	context.Get("/user", l.getUserPage).WithMeta(auth2.WithLogin())
-	context.Get("/user/:id", l.getUserOne).WithMeta(auth2.WithLogin())
-	context.Post("/user", l.createUser).WithMeta(auth2.WithLogin())
-	context.Put("/user", l.updateUser).WithMeta(auth2.WithLogin())
-	context.Delete("/user/:id", l.deleteUser).WithMeta(auth2.WithLogin())
+	context.Post("/api/signIn", l.signIn)
+	context.Post("/api/logout", l.logout)
+	context.Post("/api/changePassword", l.changePassword).WithMeta(auth2.WithLogin())
+	context.Get("/api/user", l.getUserPage).WithMeta(auth2.WithLogin())
+	context.Get("/api/user/:id", l.getUserOne).WithMeta(auth2.WithLogin())
+	context.Post("/api/user", l.createUser).WithMeta(auth2.WithLogin())
+	context.Put("/api/user", l.updateUser).WithMeta(auth2.WithLogin())
+	context.Delete("/api/user/:id", l.deleteUser).WithMeta(auth2.WithLogin())
 	return nil
 }
