@@ -16,10 +16,23 @@ import (
 
 // devMode reads templates and static assets from disk on every request instead of the
 // embedded copies, so a template edit only needs a browser refresh — no rebuild, no
-// restart. Set WEBUI_DEV=1 and run the binary from the repository root, where the
-// webui/ directory lives. The locale JSON stays embedded: translations change far
-// less often than templates, and the key-sync test guards them anyway.
-var devMode = os.Getenv("WEBUI_DEV") != ""
+// restart. It defaults to on for local builds and off for release builds
+// (`go build -tags release`, which the release workflow uses); WEBUI_DEV=0 or 1
+// overrides either default. When on, run the binary from the repository root, where
+// the webui/ directory lives. The locale JSON stays embedded either way:
+// translations change far less often than templates, and the key-sync test guards
+// them.
+var devMode = resolveDevMode()
+
+func resolveDevMode() bool {
+	switch os.Getenv("WEBUI_DEV") {
+	case "1", "true", "yes":
+		return true
+	case "0", "false", "no":
+		return false
+	}
+	return devDefault
+}
 
 const devTemplatesDir = "webui/templates"
 const devStaticDir = "webui/static"

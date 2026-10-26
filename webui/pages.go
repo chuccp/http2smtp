@@ -82,7 +82,7 @@ func (p *Pages) Init(ctx *core.Context) error {
 	// the directory is not where the docs say it is (binary started outside the repo).
 	if devMode {
 		if fi, err := os.Stat(devTemplatesDir); err != nil || !fi.IsDir() {
-			return fmt.Errorf("WEBUI_DEV is set but %s is not a directory — run the binary from the repository root", devTemplatesDir)
+			return fmt.Errorf("development mode serves templates from disk but %s is not a directory — run the binary from the repository root, or build with -tags release for a self-contained binary (WEBUI_DEV=0 also forces the embedded copies in a dev build)", devTemplatesDir)
 		}
 	}
 

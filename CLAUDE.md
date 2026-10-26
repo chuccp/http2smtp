@@ -63,13 +63,15 @@ The management UI is server-rendered and embedded in the binary (`webui/embed.go
 
 ```bash
 go test ./webui    # includes the four-locale key-sync test
-
-WEBUI_DEV=1 ./http2smtp    # dev mode: templates and static assets are read from
-                           # webui/templates and webui/static on every request, so
-                           # edits show up on a browser refresh — no rebuild, no
-                           # restart. Run the binary from the repository root (Init
-                           # fails loudly otherwise). The locale JSON stays embedded.
 ```
+
+**Dev mode is the build default.** An ordinary `go build` / `go run` binary reads
+templates and static assets from `webui/templates` and `webui/static` on every
+request, so edits show up on a browser refresh — no rebuild, no restart. Run it from
+the repository root (Init fails loudly otherwise). Release binaries are built with
+**`-tags release`** (the release workflow and `make release-*` do) and serve the
+embedded copies instead; `WEBUI_DEV=0` / `1` overrides either default. The locale
+JSON is embedded in every build.
 
 - Pages are registered in `webui/pages.go` (`Pages.Init` → `registerPageRoutes`); handlers
   live in `webui/handlers_*.go`. Page routes sit at the site root (`/login`, `/smtp`, …)

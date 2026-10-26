@@ -72,7 +72,9 @@ jobs:
 
       - name: Build http2smtp
         run: |
-          go build  -v -o build_assets/http2smtp  ./
+          # -tags release: the binary serves the embedded UI instead of reading
+          # templates from the working tree (the dev-mode default)
+          go build -tags release -v -o build_assets/http2smtp  ./
 
       - name: Rename Windows http2smtp
         if: matrix.goos == 'windows'
