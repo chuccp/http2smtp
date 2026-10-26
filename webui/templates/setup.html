@@ -55,10 +55,17 @@
 
   <fieldset>
     <legend>{{.L.T "setup.portConfig"}}</legend>
-    <div class="hint">{{.L.T "setup.portHint"}}</div>
-    {{if .WebPort}}
-    <div class="hint">web={{.WebPort}} · api={{.ApiPort}}{{if .IsDocker}} (docker){{end}}</div>
-    {{end}}
+    <div class="form-grid">
+      <label class="field">
+        <span>{{.L.T "setup.webPort"}}</span>
+        <input type="text" value="{{.WebPort}}" readonly tabindex="-1">
+      </label>
+      <label class="field">
+        <span>{{.L.T "setup.apiPort"}}</span>
+        <input type="text" value="{{.ApiPort}}" readonly tabindex="-1">
+      </label>
+    </div>
+    <div class="hint">{{.L.T "setup.portHint"}}{{if .IsDocker}} · {{.L.T "settings.portLockedByDocker"}}{{end}}</div>
   </fieldset>
 
   <div class="form-actions">

@@ -21,6 +21,9 @@
         <input type="number" name="apiPort" value="{{.ApiPort}}" {{if .IsDocker}}readonly{{end}}>
       </label>
     </div>
+    {{if not .IsDocker}}
+    <div class="hint">{{.L.T "setup.portHint"}}</div>
+    {{end}}
   </div>
 
   <div class="card">

@@ -196,6 +196,10 @@ select, input[type=text], input[type=password], input[type=number], input[type=u
 select[multiple] { padding: 4px; }
 select[multiple] option { padding: 4px 6px; border-radius: 4px; }
 input:focus, select:focus, textarea:focus { outline: 2px solid #bfdbfe; border-color: var(--primary); }
+/* Read-only values (wizard ports, Docker-locked ports) must read as display, not as
+   inputs waiting for a click. */
+input[readonly] { background: var(--bg); color: var(--muted); cursor: not-allowed; }
+input[readonly]:focus { outline: none; border-color: var(--border); }
 .hint { color: var(--muted); font-size: 12px; }
 fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 0; }
 legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
