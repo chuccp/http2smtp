@@ -61,6 +61,7 @@ func (token *Token) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	page = capPage(page)
 	user, err := auth.User(req, token.context)
 	if user == nil {
 		return nil, err

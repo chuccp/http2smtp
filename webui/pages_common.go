@@ -135,7 +135,8 @@ func queryOf(req *web.Request, keys ...string) url.Values {
 	return q
 }
 
-// listPage extracts pagination for a list handler.
+// listPage extracts pagination for a list handler. The bounds mirror the JSON API's:
+// a request cannot pull more than 200 rows into memory.
 func listPage(req *web.Request) *web.Page {
 	page, err := req.Page()
 	if err != nil || page == nil {
@@ -144,8 +145,11 @@ func listPage(req *web.Request) *web.Page {
 	if page.PageNo < 1 {
 		page.PageNo = 1
 	}
-	if page.PageSize < 1 || page.PageSize > 200 {
+	if page.PageSize < 1 {
 		page.PageSize = 10
+	}
+	if page.PageSize > 200 {
+		page.PageSize = 200
 	}
 	return page
 }

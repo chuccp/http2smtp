@@ -6,6 +6,7 @@ package configapply
 
 import (
 	"errors"
+	"sync/atomic"
 
 	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/core"
@@ -18,6 +19,29 @@ import (
 	"github.com/chuccp/http2smtp/util"
 	"go.uber.org/zap"
 )
+
+// previousDb remembers the connection attached most recently, so the pool behind the
+// old one can be closed on the next switch instead of leaking one per settings save.
+// The framework's SwitchDB re-Inits the models on the new connection but never closes
+// the old handle, and it exposes no way to reach it.
+var previousDb atomic.Pointer[framedb.DB]
+
+// closeDb closes the pools behind a connection. Safe on a nil connection.
+func closeDb(conn *framedb.DB) {
+	if conn == nil {
+		return
+	}
+	if sqlDB, err := conn.GetGorm().DB(); err == nil {
+		_ = sqlDB.Close()
+	}
+}
+
+// AttachInitial registers the connection created at startup (main.go) as the one the
+// next switch should close. A restart re-runs startup in the same process, so the
+// handle from before the restart goes away here rather than accumulating.
+func AttachInitial(conn *framedb.DB) {
+	closeDb(previousDb.Swap(conn))
+}
 
 // putDbSettings copies the non-empty database fields of setInfo onto the live config.
 // Empty fields are left alone so a partial form never wipes what config.ini holds.
@@ -61,14 +85,21 @@ func putPortSettings(ctx *core.Context, setInfo *model.Config) {
 }
 
 // attachDb opens the database named by the live config and hot-swaps it under the
-// running models, then persists the file.
+// running models, then persists the file. The pool behind the previous connection is
+// closed once the models have switched; queries already running on it may fail in
+// that instant, the same small window the switch itself has always had.
 func attachDb(ctx *core.Context) error {
 	createDB, err := h2sdb.GetDb(ctx.GetConfig())
 	if err != nil {
 		return err
 	}
 	if err := ctx.DefaultModelGroup().SwitchDB(createDB, ctx); err != nil {
+		// The switch failed: the new pool is unused, drop it rather than leak it.
+		closeDb(createDB)
 		return err
+	}
+	if old := previousDb.Swap(createDB); old != nil && old != createDB {
+		closeDb(old)
 	}
 	return ctx.GetConfig().WriteConfig()
 }

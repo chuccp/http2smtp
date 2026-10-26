@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -136,24 +137,26 @@ func SendMail(sendMsg *SendMsg, invalidMails ...string) error {
 		}
 	}
 
+	// A recipient go-mail refuses must fail the request, not vanish: silently skipping
+	// it meant the log listed an address that never received anything while the call
+	// still reported success.
 	for _, email := range sendMsg.ReceiveEmails {
-		if !util.EqualsAnyIgnoreCase(email.Mail, invalidMails...) {
-			if len(email.Name) > 0 {
-				err := msg.AddToFormat(email.Name, email.Mail)
-				if err != nil {
-					continue
-				}
-			} else {
-				msg.AddTo(email.Mail)
+		if util.EqualsAnyIgnoreCase(email.Mail, invalidMails...) {
+			continue
+		}
+		if len(email.Name) > 0 {
+			if err := msg.AddToFormat(email.Name, email.Mail); err != nil {
+				return fmt.Errorf("invalid recipient %q: %w", email.Mail, err)
 			}
+		} else if err := msg.AddTo(email.Mail); err != nil {
+			return fmt.Errorf("invalid recipient %q: %w", email.Mail, err)
 		}
 	}
 	msg.Subject(sendMsg.Subject)
 	msg.SetBodyString(mail.TypeTextPlain, sendMsg.BodyString)
 	for _, f := range sendMsg.ff {
-		err := msg.AttachReader(f.Name, f.File, mail.WithFileName(f.Name))
-		if err != nil {
-			continue
+		if err := msg.AttachReader(f.Name, f.File, mail.WithFileName(f.Name)); err != nil {
+			return fmt.Errorf("attachment %q: %w", f.Name, err)
 		}
 	}
 	options := []mail.Option{
@@ -298,14 +301,22 @@ func SendAPIMail2(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mai
 		if errSend != nil {
 			return errSend.Error(), err
 		}
-		return err.Error(), nil
+		// The alert mail went out, but the call itself failed: that failure is what the
+		// caller and the mail log must see. Returning nil here used to log a permanently
+		// broken schedule as SUCCESS with the error text as its result.
+		return err.Error(), err
 	}
 	if schedule.IsOnlySendByError {
 		if response.StatusCode >= 400 {
-			return SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
+			body, errSend := SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
+			if errSend != nil {
+				return body, errSend
+			}
+			// Same rule as the transport error above: the alert was delivered, the API
+			// call still failed, and the log records the failure.
+			return body, fmt.Errorf("api returned status %d", response.StatusCode)
 		}
 		return string(response.Body), nil
-	} else {
-		return SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
 	}
+	return SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
 }

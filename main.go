@@ -16,6 +16,7 @@ import (
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
+	"github.com/chuccp/http2smtp/configapply"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
 	"github.com/chuccp/http2smtp/service"
@@ -130,6 +131,9 @@ func createAPP() (*wf.WebFrame, error) {
 			return nil, err
 		}
 		manageModelGroupBuilder.DB(connection)
+		// Hand the connection to the switch bookkeeping so a later settings save (or a
+		// restart in this same process) closes this pool instead of leaking it.
+		configapply.AttachInitial(connection)
 	}
 	restartService := &service.RestartService{}
 	builder.Service(restartService, &service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{})

@@ -60,6 +60,7 @@ func (l *Log) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	page = capPage(page)
 	user, err := auth.User(req, l.context)
 	if user == nil {
 		return nil, err

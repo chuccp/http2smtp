@@ -107,6 +107,7 @@ func (l *User) getUserPage(request *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	page = capPage(page)
 	return l.userService.GetPage(page)
 }
 

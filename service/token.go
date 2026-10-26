@@ -165,6 +165,20 @@ func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any,
 	defer l.lock.Unlock()
 	var sendMailApi entity.SendMailApi
 	files := make([]*smtp.File, 0)
+	// Until the files are recorded in the mail log they belong to this request alone:
+	// every error return after this point removes them, or a failed base64 field would
+	// leave copies in the cache that nothing references and nothing ever deletes.
+	// Registered before the close below so the handles are closed first (LIFO).
+	logged := false
+	defer func() {
+		if !logged {
+			for _, file := range files {
+				if file != nil && file.FilePath != "" {
+					_ = os.Remove(file.FilePath)
+				}
+			}
+		}
+	}()
 	// go-mail reads these readers but never closes them, and the handles below are
 	// *os.File: without this they stay open until the GC finalizer gets around to them,
 	// which is how a busy instance runs out of file descriptors.
@@ -243,6 +257,9 @@ func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any,
 		}
 		files = append(files, &smtp.File{File: vFile, Name: file.Name, FilePath: filePath})
 	}
+	// sendMailWithToken always writes the log entry — even for a failed send — and the
+	// entry records these paths, so from here on the log's cleanup owns the files.
+	logged = true
 	return l.sendMailWithToken(byToken, sendMailApi.Recipients, sendMailApi.Subject, sendMailApi.Content, files)
 }
 

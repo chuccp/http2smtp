@@ -120,7 +120,12 @@ func (smtp *Smtp) putOne(req *web.Request) (any, error) {
 	exist.Mail = st.Mail
 	exist.Username = st.Username
 	exist.Name = st.Name
-	exist.Password = st.Password
+	// Keep the stored password when the request omits it, the same rule the token PUT
+	// uses: the UI never echoes a password back, so an unconditional write turned a
+	// form that simply did not carry one into silently broken deliveries.
+	if st.Password != "" {
+		exist.Password = st.Password
+	}
 	exist.UpdateTime = time.Now()
 	err = smtp.smtpModel.Save(exist)
 	if err != nil {
@@ -187,6 +192,7 @@ func (smtp *Smtp) getPage(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	page = capPage(page)
 	user, err := auth.User(req, smtp.context)
 	if user == nil {
 		return nil, err
