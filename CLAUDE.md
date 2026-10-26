@@ -56,28 +56,35 @@ cd docker && docker compose up -d
 docker build -t http2smtp .
 ```
 
-### Frontend (`view/`, Vue 3 + Vite)
+### Web UI (`webui/`, Go html/template)
+
+The management UI is server-rendered and embedded in the binary (`webui/embed.go`
+`//go:embed templates static i18n`) — there is no Node/pnpm in the build or the release.
 
 ```bash
-cd view && pnpm install
-cd view && pnpm run dev          # Dev server on :3000, proxies /api → localhost:12566
-cd view && pnpm run type-check   # vue-tsc --noEmit
-cd view && pnpm run build        # vue-tsc && vite build — must stay green
-cd view && pnpm run build:force  # vite build only
+go test ./webui    # includes the four-locale key-sync test
 ```
 
-pnpm (11.25.0, pinned in `packageManager`) is the package manager; `pnpm-lock.yaml` is the
-only lockfile. Two things about this setup that fail loudly if mishandled:
-
-- pnpm 11 keeps project config in `pnpm-workspace.yaml` (which otherwise has no `packages:`
-  field here — it is config only). It requires a yes/no on every dependency install script;
-  an undecided entry is written as a placeholder string, and that placeholder makes *every*
-  `pnpm run` fail on the pre-run deps check. The one entry here denies `@parcel/watcher`'s
-  build, which `scripts/build-from-source.js` runs only when no prebuilt binary shipped.
-- **element-plus stays at 2.14.0 — do not take 2.14.5.** Its el-table slot props got typed
-  as `DefaultRow`, which `vue-tsc` rejects at every `#default="{ row }"` destructure (18
-  errors across `views/{smtp,token,user}/index.vue`), and `pnpm run build` runs `vue-tsc`
-  first, so the build fails rather than the release.
+- Pages are registered in `webui/pages.go` (`Pages.Init` → `registerPageRoutes`); handlers
+  live in `webui/handlers_*.go`. Page routes sit at the site root (`/login`, `/smtp`, …)
+  and call `requireUser`/`requireAdmin` themselves — they deliberately do **not** carry the
+  framework's `WithLogin` meta, whose 403 JSON is wrong for a browser navigation.
+- Rendering: `webui/render.go`. Each page is its own template set (layout skeleton +
+  page file defining `content`); handlers write HTML via `Pages.render` and return
+  `nil, nil` so the framework converter leaves the response alone. Form saves redirect
+  (PRG) with `?ok=<i18n key>`; failures re-render the form with the values echoed back.
+- Deletes, trigger-now and log cleanup are the few AJAX calls: they hit the existing
+  `/api/*` JSON endpoints from `webui/static/app.js` (which also implements the tab bar,
+  backed by localStorage — the tabs are visited-page bookmarks, switching is a normal
+  navigation).
+- **Translations**: `webui/i18n/{zh-cn,zh-tw,en,ja}.json`, flat dot-keys, embedded. These
+  files are the source of truth (they descend from the removed Vue locale files, same
+  keys and `{name}` placeholders); `webui/i18n_test.go` fails the build if the four fall
+  out of key-for-key sync. Templates read them via `{{.L.T "key"}}` — never a template
+  func, since funcs bind at parse time and cannot see the request's language.
+- The wizard/settings persistence is shared with the JSON API through the
+  `configapply` package (`ApplyDbInit`, `ApplyAdminInit`, `ApplyReSet`, `ProbeDb`); the
+  form handlers and `rest.Set` both call it, so the two cannot drift.
 
 ## Architecture
 
@@ -98,23 +105,32 @@ while the admin surface stays private.
 
 ### Web UI hosting
 
-The management server serves the built frontend itself, so no nginx or reverse proxy is
-needed. `manage.webPath` (default `web`) points at the built bundle and `main.go` hands it
-to the server group as `web.ServerConfig{Locations, Page404: "index.html"}`. API routes
-stay under `/api`; everything else falls through to the static handler, which serves the
-bundle from the site root and returns `index.html` for unmatched HTML requests so
-client-side routes survive a refresh or deep link.
+The management UI is server-rendered html/template, embedded in the binary through
+`webui/embed.go` — no nginx, no reverse proxy, no `web/` directory. `main.go` registers
+`webui.NewPages()` on the management group alongside the JSON REST types; its routes live
+at the site root (`/login`, `/smtp`, …) and the static assets under `/static` (also
+embedded). The old `manage.webPath` key is no longer read — the config struct still
+carries the field so an existing `config.ini` parses, but nothing consumes it.
 
-The static handler runs as a no-route fallback, so it sits outside the auth filter — the
-bundle (login page included) must load unauthenticated. Every `/api/*` route is still
-authorised normally.
+There is no `ContextPath` on the management group: it is a server-wide prefix in the
+framework and would land on the page routes too. The `/api` prefix lives in the JSON
+route registrations (`rest/*.go`) instead — the URLs callers see are unchanged, and the
+public API group on its own port is untouched.
+
+Auth split: `/api/*` routes carry `WithLogin` meta as before; page routes skip it (its
+403 JSON is the wrong answer for a browser navigation) and gate in the handler through
+`Pages.requireUser`/`requireAdmin`, redirecting to `/login` or rendering the refusal
+page. A restart re-runs every `Rest.Init` on a fresh engine, which is why `webui.Pages`
+parses its templates once per process (`sync.Once`) and only re-registers routes.
 
 ### Backend layout
 
 | Path | Role |
 |---|---|
 | `main.go` | Wires both rest groups, models, services and the cron runner |
-| `rest/` | HTTP handlers. `Init(context)` registers routes; protect with `.WithMeta(auth2.WithLogin())` |
+| `rest/` | JSON API handlers. `Init(context)` registers routes under `/api`; protect with `.WithMeta(auth2.WithLogin())` |
+| `webui/` | Server-rendered management UI (templates, handlers, embedded static/i18n) |
+| `configapply/` | Configuration-writing bodies shared by the JSON API and the web forms |
 | `service/` | Business logic: `TokenService`, `ScheduleService`, `LogService`, `SmtpService`, `UserService`, `RestartService` |
 | `model/` | GORM models plus the `Config` struct mapped to `config.ini` |
 | `entity/` | Request/response DTOs and the log status constants |
@@ -212,34 +228,19 @@ Precedence is defaults → `config.ini` → CLI flags → environment variables.
 > - A `[]string` field cannot be set from an INI file at all (`cannot convert string to
 >   []string`), and a bad value crashes startup rather than reporting a config error.
 
-## Frontend (`view/`)
+## Web UI (`webui/`)
 
-Vue 3 + Element Plus + Pinia + vue-i18n, four locales (`zh-cn`, `en`, `zh-tw`, `ja`) that
-must stay in key-for-key sync.
-
-- `src/api/request.ts` — axios on `/api`, `withCredentials: true`, no credentials are
-  attached by hand: the session cookie rides along automatically. Non-`0`/`200` codes and
-  HTTP errors both reject, and 401 clears the local state and redirects to `/login`.
-- `src/store/auth.ts` — holds **display state only** (username, `isAdmin`, a `loggedIn`
-  flag). The session credential is HttpOnly and deliberately unreadable from script, so
-  this flag drives navigation only; every request is authorised server-side.
-  `views/Index.vue` hydrates it from `GET /api/set`, which reports `hasLogin`,
-  `username` and `isAdmin`.
-- `src/router/index.ts` — guard on `meta.requiresAuth` / `meta.requiresAdmin`.
-- `src/views/settings/index.vue` — admin-only; ports and database config, plus the
-  save-and-restart button that makes a saved port take effect.
-- `vite.config.ts` — dev proxy for `/api`. Keep `VITE_API_BASE_URL` relative so requests
-  stay same-origin; pointing it at the backend directly is cross-origin and the session
-  cookie will be dropped.
+Server-rendered management UI — see "Web UI (`webui/`, Go html/template)" under Common
+Commands for the layout, the render/auth rules and the i18n setup. The four locales
+(`zh-cn`, `en`, `zh-tw`, `ja`) must stay in key-for-key sync; `go test ./webui` enforces
+it. Templates, static assets and locale JSON are all embedded, so the binary needs no
+companion files at runtime.
 
 ### Release packaging
 
-`view/` is the frontend that ships. The release workflow installs pnpm 11.25.0, then runs
-`pnpm install --frozen-lockfile` and `pnpm run build` in `view/`, and packages `view/dist`
-as `web/` in the release tarball. Because `pnpm run build` runs `vue-tsc` first, a type error
-fails the release rather than shipping.
-(Older releases pulled a prebuilt frontend from `chuccp/d-mail-view`; that dependency is
-gone, so `d-mail-view` is no longer part of the build.)
+The release workflow only sets up Go and runs `go build`; the tarball carries the binary
+alone (the UI travels inside it). The Dockerfile unpacks that tarball and needs no
+change — it never referenced `web/` directly.
 
 ## Known gaps
 

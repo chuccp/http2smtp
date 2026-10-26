@@ -103,7 +103,6 @@ filename = d-mail.db  ## Database path
 
 [manage]
 port    = 12566       ## Management port
-webPath = web         ## Directory holding the built frontend
 
 [api]
 port = 12567          ## API port
@@ -193,16 +192,15 @@ curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%
 
 ## Build Instructions
 
-The web UI lives in [`view/`](./view). Build it first, then the server:
+The management UI is server-rendered Go templates, embedded in the binary — there is no
+frontend build step:
 
 ```bash
-cd view && pnpm install && pnpm run build
-cd .. && go build -o http2smtp ./
+go build -o http2smtp ./
 ```
 
-The release workflow does the same and additionally copies `view/dist` to `web/` beside the
-binary. The server hosts that directory itself (key `manage.webPath`, default `web`), so the
-UI is served at `http://127.0.0.1:12566/` with no separate web server.
+The release workflow does the same; the tarball carries only the binary. The UI is served
+at `http://127.0.0.1:12566/` with no separate web server.
 
 ## UI Display
 

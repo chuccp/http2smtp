@@ -1,4 +1,0 @@
-allowBuilds:
-  # sass/vite 的可选文件监视加速依赖；darwin-arm64 预编译二进制已随包安装，
-  # 无需运行 scripts/build-from-source.js（仅在没有预编译产物时才需要 node-gyp 构建）。
-  '@parcel/watcher': false

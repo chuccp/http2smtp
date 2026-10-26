@@ -103,7 +103,6 @@ filename = d-mail.db  ##数据库路径
 
 [manage]
 port    = 12566       ##管理端口
-webPath = web         ##前端构建产物目录
 
 [api]
 port = 12567          ##API端口    
@@ -191,14 +190,14 @@ curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%
 
 ## 构建说明
 
-前端在 [`view/`](./view) 目录。先构建前端，再构建服务端：
+管理界面是 Go 模板服务端渲染，已嵌入二进制，没有单独的前端构建步骤：
 
 ```bash
-cd view && pnpm install && pnpm run build
-cd .. && go build -o http2smtp ./
+go build -o http2smtp ./
 ```
 
-发布流程会做同样的事，并额外把 `view/dist` 复制为二进制旁的 `web/` 目录。服务端会自行托管该目录（配置项 `manage.webPath`，默认 `web`），因此界面直接访问 `http://127.0.0.1:12566/` 即可，无需额外的 Web 服务器。
+发布流程同样只构建二进制，压缩包内不再包含 `web/` 目录。界面直接访问
+`http://127.0.0.1:12566/` 即可，无需额外的 Web 服务器。
 
 ## 界面展示
 

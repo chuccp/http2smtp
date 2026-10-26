@@ -83,26 +83,17 @@ func createAPP() (*wf.WebFrame, error) {
 	if webPort == 0 {
 		webPort = model.ManagePort
 	}
-	// manage.webPath points at the built frontend; the management server serves it
-	// directly, so the UI needs no separate web server. The API keeps its /api prefix
-	// while assets are served from the site root.
-	webPath := fileConfig.GetStringOrDefault("manage.webPath", "web")
-
+	// The management UI is server-rendered and embedded in the binary (see webui/), so
+	// there is no web/ directory to serve and no SPA fallback to configure. The API
+	// keeps its /api prefix in the route registrations instead of through ContextPath,
+	// which is a server-wide prefix and would also land on the page routes that must
+	// live at the site root (/login, /smtp, ...).
 	restGroupBuilder := core.NewRestGroupBuilder()
 	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, webui.NewPages())
 	restGroupBuilder.Port(webPort)
-	// No ContextPath: it is a server-wide prefix in the framework, so it would also land
-	// on the server-rendered page routes that must live at the site root (/login, /smtp,
-	// ...). The JSON endpoints carry the /api prefix in their registrations instead —
-	// the URLs callers see are unchanged.
 	// Both server configs are kept: a restart re-runs these same groups, so the restart
 	// endpoint rewrites the ports here to make a port saved in the UI take effect.
-	manageServerConfig := &web.ServerConfig{
-		Port:      webPort,
-		Locations: []string{webPath},
-		// Serve index.html for unmatched HTML requests so client-side routes deep-link
-		Page404: "index.html",
-	}
+	manageServerConfig := &web.ServerConfig{Port: webPort}
 	restGroupBuilder.ServerConfig(manageServerConfig)
 	restGroupBuilder.Filter(cors.NewCrosFilter(), auth2.NewAuthenticationFilter[*model.User](&auth.Authentication{}))
 	restGroup := restGroupBuilder.Build()

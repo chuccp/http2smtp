@@ -8,8 +8,10 @@ import (
 	"strings"
 )
 
-// The four locale JSON files are generated from view/src/locales by tools/gen-i18n.mjs
-// and committed; they are embedded so a release is a single binary.
+// The four locale JSON files are the UI's translation bundles. They descend from the
+// Vue frontend's locale files (same keys, same {name} placeholders), but these files
+// are now the source of truth: they are embedded, so a release is a single binary, and
+// webui/i18n_test.go keeps the four in key-for-key sync.
 //
 //go:embed i18n/zh-cn.json
 var zhCnJSON []byte
