@@ -79,6 +79,10 @@ func (smtp *Smtp) postOne(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
+	// Create is create: a client-supplied id must not turn this into an UPDATE of an
+	// existing row (gorm Save updates when the primary key is set), which would let any
+	// signed-in user overwrite another account's SMTP credentials and take ownership.
+	st.Id = 0
 	st.UserId = user.Id
 
 	err = smtp.smtpModel.Save(&st)

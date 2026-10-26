@@ -137,6 +137,11 @@ func (s *UserService) UpdateUser(id uint, name string, password string, isAdmin,
 	}
 
 	user.IsAdmin = isAdmin
+	// Disabling an account must also end the sessions it already had open: User() only
+	// checks the salt, never is_use, so rotate it here the same way DeleteUser does.
+	if user.IsUse && !isUse {
+		user.Salt = newSessionSalt()
+	}
 	user.IsUse = isUse
 	user.UpdateTime = time.Now()
 

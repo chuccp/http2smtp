@@ -80,6 +80,10 @@ func (token *Token) postOne(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
+	// Create is create: a client-supplied id must not turn this into an UPDATE of an
+	// existing row (gorm Save updates when the primary key is set), which would let any
+	// signed-in user overwrite another account's token and take ownership of it.
+	st.Id = 0
 	st.UserId = user.Id
 	if err = token.ensureSMTPOwnedBy(st.SMTPId, st.UserId); err != nil {
 		return nil, err
@@ -87,7 +91,7 @@ func (token *Token) postOne(req *web.Request) (any, error) {
 	if err = token.ensureRecipientsOwnedBy(st.ReceiveEmailIds, st.UserId); err != nil {
 		return nil, err
 	}
-	st.State = token.resolveState(st.State, user.IsAdmin)
+	st.State = token.resolveState(st.State, entity.TokenStateInUse, user.IsAdmin)
 	err = token.tokenModel.Save(&st)
 	if err != nil {
 		return nil, err
@@ -129,7 +133,7 @@ func (token *Token) putOne(req *web.Request) (any, error) {
 	if st.Token != "" {
 		exist.Token = st.Token
 	}
-	exist.State = token.resolveState(st.State, user.IsAdmin)
+	exist.State = token.resolveState(st.State, exist.State, user.IsAdmin)
 	exist.UpdateTime = time.Now()
 	// Save rather than UpdateByPK: the update path drops zero values, so re-enabling a
 	// token (state = 0) would be ignored and the row would stay disabled.
@@ -180,8 +184,15 @@ func (token *Token) ensureRecipientsOwnedBy(receiveEmailIds string, userId uint)
 	return nil
 }
 
-func (token *Token) resolveState(state uint8, isAdmin bool) uint8 {
+// resolveState maps the requested state onto the state the caller is allowed to set.
+// current is the state already stored on the row (TokenStateInUse for a fresh create).
+// Re-enabling is deliberately not the caller's call alone: "admin disabled" is the
+// administrator's disposal, so a plain owner asking for state = 0 must not undo it.
+func (token *Token) resolveState(state uint8, current uint8, isAdmin bool) uint8 {
 	if state == entity.TokenStateInUse {
+		if !isAdmin && current == entity.TokenStateAdminDisabled {
+			return entity.TokenStateAdminDisabled
+		}
 		return entity.TokenStateInUse
 	}
 	// 前端传来非 0 值，后端根据角色决定具体状态
