@@ -80,6 +80,9 @@ func (p *Pages) scheduleForm(req *web.Request) (any, error) {
 		Headers: []*model.Header{{}, {}},
 	}
 	var selectedToken uint
+	// A schedule belongs to its owner; an admin editing someone else's schedule must
+	// pick from that user's tokens, not their own.
+	ownerId := user.Id
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
@@ -90,6 +93,10 @@ func (p *Pages) scheduleForm(req *web.Request) (any, error) {
 			return p.renderErr(req, http.StatusNotFound, "common.failed", "schedule not found")
 		}
 		selectedToken = row.TokenId
+		ownerId = row.UserId
+		if ownerId == 0 {
+			ownerId = user.Id
+		}
 		data.Id = row.Id
 		data.Name = row.Name
 		data.Cron = row.Cron
@@ -105,16 +112,16 @@ func (p *Pages) scheduleForm(req *web.Request) (any, error) {
 		}
 		data.Title = translatorFor(data.Lang).T("schedule.editSchedule")
 	}
-	if err := p.fillTokenOptions(data, user, selectedToken); err != nil {
+	if err := p.fillTokenOptions(data, ownerId, selectedToken); err != nil {
 		return p.renderErr(req, 0, "common.failed", err.Error())
 	}
 	return p.render(req, "schedule_form", data)
 }
 
-// fillTokenOptions loads the caller's enabled tokens into the form's select; only
-// in-use tokens may drive a schedule.
-func (p *Pages) fillTokenOptions(data *ScheduleFormData, user *model.User, selected uint) error {
-	tokens, err := p.tokenModel.Query().Where("user_id = ? AND state = 0", user.Id).Order("id desc").All()
+// fillTokenOptions loads the schedule owner's enabled tokens into the form's select;
+// only in-use tokens may drive a schedule.
+func (p *Pages) fillTokenOptions(data *ScheduleFormData, ownerId uint, selected uint) error {
+	tokens, err := p.tokenModel.Query().Where("user_id = ? AND state = 0", ownerId).Order("id desc").All()
 	if err != nil {
 		return err
 	}
@@ -184,6 +191,11 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 		}
 	}
 
+	// The schedule's owner, not the caller, owns the token. Resolve the row before
+	// validating the token so an admin editing someone else's schedule can neither be
+	// offered the admin's tokens nor re-point the schedule at one.
+	ownerId := user.Id
+	var existing *model.Schedule
 	fail := func(msg string) (any, error) {
 		data := &ScheduleFormData{
 			Base:        p.base(req, user, "schedule.addSchedule", false),
@@ -199,13 +211,27 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 			IsUse:       st.IsUse,
 			Headers:     st.Headers,
 		}
+		if data.Id != 0 {
+			data.Title = translatorFor(data.Lang).T("schedule.editSchedule")
+		}
 		data.Flash = Flash{Err: msg}
 		if len(data.Headers) == 0 {
 			data.Headers = []*model.Header{{}, {}}
 		}
-		_ = p.fillTokenOptions(data, user, st.TokenId)
+		_ = p.fillTokenOptions(data, ownerId, st.TokenId)
 		req.Response().WriteStatus(http.StatusBadRequest)
 		return p.render(req, "schedule_form", data)
+	}
+	if st.Id != 0 {
+		loaded, err := p.scheduleOwnedBy(st.Id, user)
+		if err != nil || loaded == nil {
+			return fail("schedule not found")
+		}
+		existing = loaded
+		ownerId = loaded.UserId
+		if ownerId == 0 {
+			ownerId = user.Id
+		}
 	}
 	if st.Name == "" {
 		return fail("common.failed")
@@ -219,29 +245,26 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 	if st.TokenId == 0 {
 		return fail("schedule.associatedToken")
 	}
-	// The token must belong to the caller — ScheduleService only checks existence.
-	owned, err := p.tokenModel.Query().Where("id = ? AND user_id = ?", st.TokenId, user.Id).One()
+	// ScheduleService only checks existence, so the form enforces that the token
+	// belongs to the schedule's owner.
+	owned, err := p.tokenModel.Query().Where("id = ? AND user_id = ? AND state = 0", st.TokenId, ownerId).One()
 	if err != nil || owned == nil {
 		return fail("token not found")
 	}
 
-	if st.Id != 0 {
-		exist, err := p.scheduleOwnedBy(st.Id, user)
-		if err != nil || exist == nil {
-			return fail("schedule not found")
-		}
-		exist.Name = st.Name
-		exist.TokenId = st.TokenId
-		exist.Cron = st.Cron
-		exist.Url = st.Url
-		exist.Method = st.Method
-		exist.Body = st.Body
-		exist.UseTemplate = st.UseTemplate
-		exist.Template = st.Template
-		exist.IsUse = st.IsUse
-		exist.IsOnlySendByError = st.IsOnlySendByError
-		exist.Headers = st.Headers
-		if err := p.scheduleSvc.Edit(exist); err != nil {
+	if existing != nil {
+		existing.Name = st.Name
+		existing.TokenId = st.TokenId
+		existing.Cron = st.Cron
+		existing.Url = st.Url
+		existing.Method = st.Method
+		existing.Body = st.Body
+		existing.UseTemplate = st.UseTemplate
+		existing.Template = st.Template
+		existing.IsUse = st.IsUse
+		existing.IsOnlySendByError = st.IsOnlySendByError
+		existing.Headers = st.Headers
+		if err := p.scheduleSvc.Edit(existing); err != nil {
 			return fail(err.Error())
 		}
 	} else {

@@ -199,7 +199,9 @@ admins use to reach other users' rows, and those exclude nothing by default
 
 Two references are checked as well, because resolving them by id alone would hand out
 another account's credentials: a token may only point at the owner's own SMTP server and
-its own contacts. And a token stops sending once its owner is disabled — the public API
+its own contacts. Schedules follow the same rule — the form lists the schedule owner's
+active tokens (not the admin's when an admin edits someone else's row), and the save
+validates the chosen token against the schedule owner. And a token stops sending once its owner is disabled — the public API
 has no session, so `TokenService` re-reads the owner (`t_user.is_use`) on every send.
 Rows with `user_id = 0` predate token ownership; they are left alone rather than broken.
 
