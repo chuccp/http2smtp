@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -108,10 +109,7 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 		selectedSmtp = row.SMTPId
 		// user_id = 0 predates token ownership; keep it editable with the caller's
 		// resources rather than stranding the row with no options at all.
-		ownerId = row.UserId
-		if ownerId == 0 {
-			ownerId = user.Id
-		}
+		ownerId = resourceOwnerId(row.UserId, user.Id)
 		for _, id := range util.StringToUintIds(row.ReceiveEmailIds) {
 			data.SelectedMails[id] = true
 		}
@@ -149,6 +147,39 @@ func (p *Pages) fillTokenFormOptions(data *TokenFormData, ownerId uint, selected
 			Label:    m.Name + " <" + m.Mail + ">",
 			Selected: data.SelectedMails[m.Id],
 		})
+	}
+	return nil
+}
+
+// resourceOwnerId keeps legacy rows (user_id = 0) editable by their caller while a
+// normal row stays with its original owner, even when an admin edits it.
+func resourceOwnerId(rowUserId, callerId uint) uint {
+	if rowUserId == 0 {
+		return callerId
+	}
+	return rowUserId
+}
+
+// checkTokenResources verifies that the selected SMTP server and recipient rows belong
+// to the token owner, not to the caller. An admin editing someone else's token must
+// not be able to point it at the admin's own credentials.
+func (p *Pages) checkTokenResources(ownerId, smtpId uint, mailIds []string) error {
+	owned, err := p.smtpModel.Query().Where("id = ? AND user_id = ?", smtpId, ownerId).One()
+	if err != nil {
+		return err
+	}
+	if owned == nil {
+		return errors.New("smtp not found")
+	}
+	for _, n := range mailIds {
+		mid, _ := strconv.ParseUint(n, 10, 32)
+		m, err := p.mailModel.Query().Where("id = ? AND user_id = ?", uint(mid), ownerId).One()
+		if err != nil {
+			return err
+		}
+		if m == nil {
+			return errors.New("mail not found")
+		}
 	}
 	return nil
 }
@@ -237,27 +268,16 @@ func (p *Pages) tokenSave(req *web.Request) (any, error) {
 		data.Id = existing.Id
 		data.IsNew = false
 		data.Title = translatorFor(data.Lang).T("token.editToken")
-		ownerId = existing.UserId
-		if ownerId == 0 {
-			ownerId = user.Id
-		}
+		ownerId = resourceOwnerId(existing.UserId, user.Id)
 	}
 
 	if data.Name == "" || data.TokenValue == "" || smtpId == 0 {
 		return fail("common.failed")
 	}
-	// The API enforces the same ownership; pointing at a server the owner does not
-	// hold would send through someone else's credentials.
-	owned, err := p.smtpModel.Query().Where("id = ? AND user_id = ?", smtpId, ownerId).One()
-	if err != nil || owned == nil {
-		return fail("smtp not found")
-	}
-	for _, n := range idsDedup {
-		mid, _ := strconv.ParseUint(n, 10, 32)
-		m, err := p.mailModel.Query().Where("id = ? AND user_id = ?", uint(mid), ownerId).One()
-		if err != nil || m == nil {
-			return fail("mail not found")
-		}
+	// The API enforces the same ownership; pointing at a server/contact the owner
+	// does not hold would send through someone else's credentials.
+	if err := p.checkTokenResources(ownerId, smtpId, idsDedup); err != nil {
+		return fail(err.Error())
 	}
 	recvIds := strings.Join(idsDedup, ",")
 

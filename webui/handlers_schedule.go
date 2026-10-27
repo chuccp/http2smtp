@@ -93,10 +93,7 @@ func (p *Pages) scheduleForm(req *web.Request) (any, error) {
 			return p.renderErr(req, http.StatusNotFound, "common.failed", "schedule not found")
 		}
 		selectedToken = row.TokenId
-		ownerId = row.UserId
-		if ownerId == 0 {
-			ownerId = user.Id
-		}
+		ownerId = resourceOwnerId(row.UserId, user.Id)
 		data.Id = row.Id
 		data.Name = row.Name
 		data.Cron = row.Cron
@@ -133,6 +130,12 @@ func (p *Pages) fillTokenOptions(data *ScheduleFormData, ownerId uint, selected 
 		})
 	}
 	return nil
+}
+
+// activeTokenOwnedBy returns an in-use token owned by ownerId, the only kind a
+// schedule may point at.
+func (p *Pages) activeTokenOwnedBy(ownerId, tokenId uint) (*model.Token, error) {
+	return p.tokenModel.Query().Where("id = ? AND user_id = ? AND state = 0", tokenId, ownerId).One()
 }
 
 func (p *Pages) scheduleOwnedBy(id uint, user *model.User) (*model.Schedule, error) {
@@ -228,10 +231,7 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 			return fail("schedule not found")
 		}
 		existing = loaded
-		ownerId = loaded.UserId
-		if ownerId == 0 {
-			ownerId = user.Id
-		}
+		ownerId = resourceOwnerId(loaded.UserId, user.Id)
 	}
 	if st.Name == "" {
 		return fail("common.failed")
@@ -246,9 +246,8 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 		return fail("schedule.associatedToken")
 	}
 	// ScheduleService only checks existence, so the form enforces that the token
-	// belongs to the schedule's owner.
-	owned, err := p.tokenModel.Query().Where("id = ? AND user_id = ? AND state = 0", st.TokenId, ownerId).One()
-	if err != nil || owned == nil {
+	// belongs to the schedule's owner and is in use.
+	if owned, err := p.activeTokenOwnedBy(ownerId, st.TokenId); err != nil || owned == nil {
 		return fail("token not found")
 	}
 
