@@ -15,7 +15,8 @@
     <select name="toEmail" {{if .Recipients}}required{{end}} data-picker
       data-title="{{.L.T "mail.recipientName"}}"
       data-placeholder="{{.L.T "smtp.pleaseSelectRecipient"}}">
-      {{range .Recipients}}<option value="{{.Mail}}">{{.Name}} &lt;{{.Mail}}&gt;</option>{{else}}<option value="">{{.L.T "smtp.pleaseSelectRecipient"}}</option>{{end}}
+      <option value="">{{.L.T "smtp.pleaseSelectRecipient"}}</option>
+      {{range .Recipients}}<option value="{{.Mail}}">{{.Name}} &lt;{{.Mail}}&gt;</option>{{end}}
     </select>
   </label>
   <label class="field">

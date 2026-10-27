@@ -46,6 +46,7 @@ window.UI = (function () {
   }
 
   /* ---------- modal ---------- */
+  var modalStack = [];
   // A dialog shell: title bar with ×, body, footer. Returns a handle the dialog
   // builders below (and page scripts) drive. opts: title, width, className,
   // escClose, cancelValue, onClose.
@@ -82,9 +83,14 @@ window.UI = (function () {
       closed = true;
       document.removeEventListener('keydown', onKey, true);
       overlay.remove();
+      var at = modalStack.indexOf(handle);
+      if (at >= 0) modalStack.splice(at, 1);
       if (opts.onClose) opts.onClose(value);
     }
     function onKey(ev) {
+      // Only the topmost dialog reacts to Esc; stacked pickers must not close the
+      // form dialog underneath them as well.
+      if (modalStack[modalStack.length - 1] !== handle) return;
       if (ev.key === 'Escape' && opts.escClose !== false) {
         ev.preventDefault();
         close(opts.cancelValue);
@@ -129,6 +135,7 @@ window.UI = (function () {
     };
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+    modalStack.push(handle);
     handle.focus = function (target) {
       (target || foot.querySelector('.btn-primary') || closeBtn).focus();
     };
@@ -325,6 +332,27 @@ window.UI = (function () {
         });
         if (!choices.length) ok.disabled = true;
         dlg.focus(list.querySelector('input:checked') || list.querySelector('input'));
+      }
+
+      // The select itself is invisible, so surface its validation failure on the
+      // trigger the user can actually see.
+      select.addEventListener('invalid', function () {
+        trigger.classList.add('is-invalid');
+        trigger.scrollIntoView({ block: 'center' });
+      });
+      select.addEventListener('change', function () {
+        trigger.classList.remove('is-invalid');
+      });
+
+      // The control sits inside the field's <label>, so clicking the field caption would
+      // otherwise activate the (invisible) native select and open its dropdown.
+      var fieldLabel = select.closest('label');
+      if (fieldLabel) {
+        fieldLabel.addEventListener('click', function (ev) {
+          if (ev.target.closest('.ui-picker')) return;
+          ev.preventDefault();
+          openPicker();
+        });
       }
 
       // preventDefault also keeps the surrounding <label> from forwarding the click

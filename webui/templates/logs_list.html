@@ -90,27 +90,42 @@
       dlg.close();
     });
     var ok = dlg.addButton(document.body.getAttribute('data-ui-ok') || 'OK', false, function () {
-      var days = Number(input.value);
-      if (!Number.isFinite(days) || days < 0) return;
-      ok.disabled = true;
-      fetch('/api/log/cleanup', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ days: days })
-      }).then(function (r) {
-        return r.json().then(function (b) { return { ok: r.ok, b: b }; });
-      }).then(function (x) {
-        ok.disabled = false;
-        if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
-        var n = x.b && x.b.data && x.b.data.deleted || 0;
-        dlg.close();
-        UI.toast(btn.getAttribute('data-done').replace('{count}', n), 'ok');
-        UI.refresh();
-      }).catch(function () {
-        ok.disabled = false;
-        UI.alert('failed');
-      });
+      var raw = input.value.trim();
+      var days = Number(raw);
+      if (raw === '' || !Number.isFinite(days) || days < 0) {
+        input.focus();
+        return;
+      }
+      var run = function () {
+        ok.disabled = true;
+        fetch('/api/log/cleanup', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ days: days })
+        }).then(function (r) {
+          return r.json().then(function (b) { return { ok: r.ok, b: b }; });
+        }).then(function (x) {
+          ok.disabled = false;
+          if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
+          var n = x.b && x.b.data && x.b.data.deleted || 0;
+          dlg.close();
+          UI.toast(btn.getAttribute('data-done').replace('{count}', n), 'ok');
+          UI.refresh();
+        }).catch(function () {
+          ok.disabled = false;
+          UI.alert('failed');
+        });
+      };
+      // 0 wipes every entry and its attachments, so it gets a second confirmation;
+      // an emptied input also maps to 0 and must not slip through as "clear all".
+      if (days === 0) {
+        UI.confirm(btn.getAttribute('data-hint')).then(function (confirmed) {
+          if (confirmed) run();
+        });
+      } else {
+        run();
+      }
     });
     ok.classList.add('btn-danger');
     input.focus();

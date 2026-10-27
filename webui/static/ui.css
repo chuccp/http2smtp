@@ -81,6 +81,11 @@
   border: 1px solid #dcdfe6; border-radius: 4px; background: #fff;
 }
 .ui-picker-trigger:hover { border-color: var(--primary); }
+.ui-picker-trigger.is-invalid { border-color: var(--danger); }
+.ui-picker-native:focus ~ .ui-picker-trigger {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, .15);
+}
 .ui-picker-tags {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
   flex: 1; min-width: 0;

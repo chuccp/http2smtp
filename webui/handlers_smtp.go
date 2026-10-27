@@ -194,7 +194,9 @@ func (p *Pages) smtpSendForm(req *web.Request) (any, error) {
 		return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
 	}
 	row, err := p.smtpOwnedBy(id, user)
-	if err != nil || row == nil {
+	if err != nil || row == nil || row.UserId != user.Id {
+		// The send API only lets a caller send through their own SMTP server, so an
+		// admin opening another user's row would get a form that can never send.
 		return p.renderErr(req, http.StatusNotFound, "common.failed", "smtp not found")
 	}
 	mails, err := p.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
