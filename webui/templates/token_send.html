@@ -17,7 +17,7 @@
   </dl>
 </div>
 
-<form class="form card" id="send-form">
+<form class="form card" id="send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
   <input type="hidden" name="tokenId" value="{{.TokenId}}">
   <label class="field">
     <span>{{.L.T "token.subject"}}</span>
@@ -52,11 +52,18 @@
     }).then(function (r) {
       return r.json().then(function (b) { return { ok: r.ok, b: b }; });
     }).then(function (x) {
-      window.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed');
       btn.disabled = false;
+      if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
+      var msg = form.getAttribute('data-success') || 'OK';
+      if (btn.closest('.ui-dialog-mask')) {
+        UI.dialogDone(btn, msg);
+      } else {
+        UI.toast(msg, 'ok');
+        location.href = '/tokens';
+      }
     }).catch(function () {
-      window.alert('failed');
       btn.disabled = false;
+      UI.alert('failed');
     });
   });
 })();

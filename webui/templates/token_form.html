@@ -5,7 +5,7 @@
 </div>
 
 <form method="post" action="/tokens/save" class="form card">
-  <input type="hidden" name="id" value="{{.Id}}">
+  <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
     <label class="field">
       <span>{{.L.T "token.tokenName"}}</span>
@@ -14,7 +14,7 @@
     <label class="field">
       <span>{{.L.T "token.tokenValue"}}</span>
       <input type="text" name="token" value="{{.TokenValue}}" class="mono" required>
-      <span class="hint">{{.L.T "token.tokenGenerated"}}</span>
+      <span class="hint">{{.L.T "token.tokenGenerated" .TokenValue}}</span>
     </label>
     <label class="field">
       <span>{{.L.T "token.subject"}}</span>
@@ -22,7 +22,9 @@
     </label>
     <label class="field">
       <span>{{.L.T "token.associatedSMTP"}}</span>
-      <select name="smtpId" required>
+      <select name="smtpId" required data-picker
+        data-title="{{.L.T "token.associatedSMTP"}}"
+        data-placeholder="{{.L.T "token.pleaseSelectSMTP"}}">
         <option value="">—</option>
         {{range .SmtpOptions}}
         <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
@@ -33,12 +35,13 @@
 
   <label class="field">
     <span>{{.L.T "token.allowedRecipients"}}</span>
-    <select name="receiveEmailIds" multiple size="8" required>
+    <select name="receiveEmailIds" multiple required data-picker
+      data-title="{{.L.T "token.allowedRecipients"}}"
+      data-placeholder="{{.L.T "token.pleaseSelectRecipients"}}">
       {{range .MailOptions}}
       <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
       {{end}}
     </select>
-    <span class="hint">ctrl / cmd</span>
   </label>
 
   <fieldset>

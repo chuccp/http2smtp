@@ -1,0 +1,73 @@
+{{define "content"}}
+<div class="card">
+  <dl class="desc">
+    <dt>{{.L.T "smtp.smtpName"}}</dt>
+    <dd>{{.Name}}</dd>
+    <dt>{{.L.T "smtp.fromAddress"}}</dt>
+    <dd>{{.Mail}}</dd>
+  </dl>
+</div>
+
+<form class="form card" id="smtp-send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
+  <input type="hidden" name="smtpId" value="{{.Id}}">
+  <label class="field">
+    <span>{{.L.T "mail.recipientName"}}</span>
+    <select name="toEmail" {{if .Recipients}}required{{end}} data-picker
+      data-title="{{.L.T "mail.recipientName"}}"
+      data-placeholder="{{.L.T "smtp.pleaseSelectRecipient"}}">
+      {{range .Recipients}}<option value="{{.Mail}}">{{.Name}} &lt;{{.Mail}}&gt;</option>{{else}}<option value="">{{.L.T "smtp.pleaseSelectRecipient"}}</option>{{end}}
+    </select>
+  </label>
+  <label class="field">
+    <span>{{.L.T "token.subject"}}</span>
+    <input type="text" name="subject" value="{{.Subject}}" required>
+  </label>
+  <label class="field">
+    <span>{{.L.T "log.content"}}</span>
+    <textarea name="content" required>{{.L.T "smtp.testEmailContent"}}</textarea>
+  </label>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{.L.T "smtp.sendTestMail"}}</button>
+  </div>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById('smtp-send-form');
+  if (!form) return;
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var select = form.querySelector('[name=toEmail]');
+    if (!select.value) { UI.alert(select.options[select.selectedIndex].text); return; }
+    var btn = form.querySelector('button[type=submit]');
+    btn.disabled = true;
+    fetch('/api/sendMailBySMTP', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        SMTPId: Number(form.querySelector('[name=smtpId]').value),
+        recipients: [select.value],
+        subject: form.querySelector('[name=subject]').value,
+        content: form.querySelector('[name=content]').value
+      })
+    }).then(function (r) {
+      return r.json().then(function (b) { return { ok: r.ok, b: b }; });
+    }).then(function (x) {
+      btn.disabled = false;
+      if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
+      var msg = form.getAttribute('data-success') || 'OK';
+      if (btn.closest('.ui-dialog-mask')) {
+        UI.dialogDone(btn, msg);
+      } else {
+        UI.toast(msg, 'ok');
+        location.href = '/smtp';
+      }
+    }).catch(function () {
+      btn.disabled = false;
+      UI.alert('failed');
+    });
+  });
+})();
+</script>
+{{end}}

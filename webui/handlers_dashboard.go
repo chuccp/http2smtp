@@ -4,8 +4,8 @@ import (
 	"github.com/chuccp/go-web-frame/web"
 )
 
-// DashboardData carries the four counters. Counting in SQL keeps the dashboard cheap:
-// the Vue page used to pull four whole lists just to read their totals.
+// DashboardData carries the four counters. Counting in SQL keeps the dashboard cheap
+// rather than loading four whole lists just to read their totals.
 type DashboardData struct {
 	Base
 	SmtpCount  int

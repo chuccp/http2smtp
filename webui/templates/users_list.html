@@ -1,7 +1,6 @@
 {{define "content"}}
-<div class="page-head">
-  <h1>{{.L.T "layout.sidebar.users"}}</h1>
-  <a class="btn btn-primary" href="/users/form">{{.L.T "common.add"}}</a>
+<div class="toolbar">
+  <button type="button" class="btn btn-primary" data-form-dialog="/users/form" data-success="{{.L.T "common.success"}}">{{.L.T "common.add"}}</button>
 </div>
 
 <div class="table-wrap">
@@ -31,8 +30,8 @@
         {{if .IsAdmin}}
         <span class="muted">—</span>
         {{else}}
-        <a class="btn-link" href="/users/form/{{.Id}}">{{$.L.T "common.edit"}}</a>
-        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "user.deleteConfirm"}}" data-href="/api/user/{{.Id}}">{{$.L.T "common.delete"}}</button>
+        <button type="button" class="btn btn-sm" data-form-dialog="/users/form/{{.Id}}" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
+        <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "user.deleteConfirm"}}" data-href="/api/user/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
         {{end}}
       </td>
     </tr>

@@ -5,7 +5,7 @@
 </div>
 
 <form method="post" action="/schedule/save" class="form card" id="schedule-form">
-  <input type="hidden" name="id" value="{{.Id}}">
+  <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
     <label class="field">
       <span>{{.L.T "schedule.taskName"}}</span>
@@ -13,7 +13,9 @@
     </label>
     <label class="field">
       <span>{{.L.T "schedule.associatedToken"}}</span>
-      <select name="tokenId" required>
+      <select name="tokenId" required data-picker
+        data-title="{{.L.T "schedule.associatedToken"}}"
+        data-placeholder="{{.L.T "schedule.associatedToken"}}">
         <option value="">—</option>
         {{range .TokenOptions}}
         <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
@@ -139,10 +141,10 @@
     }).then(function (r) {
       return r.json().then(function (b) { return { ok: r.ok, b: b }; });
     }).then(function (x) {
-      window.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed');
+      UI.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed');
       btn.disabled = false;
     }).catch(function () {
-      window.alert('failed');
+      UI.alert('failed');
       btn.disabled = false;
     });
   });

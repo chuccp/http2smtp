@@ -5,7 +5,7 @@
 </div>
 
 <form method="post" action="/smtp/save" class="form card" id="smtp-form">
-  <input type="hidden" name="id" value="{{.Id}}">
+  <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
     <label class="field">
       <span>{{.L.T "smtp.smtpName"}}</span>
@@ -49,8 +49,8 @@
     btn.disabled = true;
     fetch('/smtp/test', { method: 'POST', body: body, credentials: 'same-origin' })
       .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
-      .then(function (x) { window.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed'); })
-      .catch(function () { window.alert('failed'); })
+      .then(function (x) { UI.alert(x.ok ? 'OK' : (x.b && x.b.msg) || 'failed'); })
+      .catch(function () { UI.alert('failed'); })
       .then(function () { btn.disabled = false; });
   });
 })();

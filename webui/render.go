@@ -129,7 +129,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 	pages := []string{
 		"login", "setup", "error", "notadmin",
 		"dashboard",
-		"smtp_list", "smtp_form",
+		"smtp_list", "smtp_form", "smtp_send",
 		"mail_list", "mail_form",
 		"token_list", "token_form", "token_send",
 		"schedule_list", "schedule_form",

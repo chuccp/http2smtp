@@ -1,32 +1,111 @@
 /* HTTP2SMTP management UI behaviour.
-   The pages are server-rendered; this file carries the small bits of interactivity:
-   the tab bar, nav highlighting, delete confirmation, token copy and flash hiding. */
+   The pages are server-rendered; this file wires the shell to the ui.js component
+   library: sidebar collapse, tab bar, nav highlighting, breadcrumb, delete
+   confirmation, password visibility and token copy. Partial navigation (pjax),
+   dialogs, toasts and the loading mask live in ui.js. */
 (function () {
   'use strict';
 
-  /* ---------- nav highlight ---------- */
-  var path = location.pathname;
-  document.querySelectorAll('.nav-item[data-path]').forEach(function (el) {
-    var target = el.getAttribute('data-path');
-    if (path === target || path.indexOf(target + '/') === 0) {
-      el.classList.add('active');
+  /* ---------- sidebar ----------
+     Desktop collapses to an icon rail (remembered in localStorage); on mobile the
+     sidebar slides in over the content with a backdrop, like the old Vue layout. */
+  var shell = document.getElementById('app-shell');
+  var toggle = document.getElementById('sidebar-toggle');
+  var overlay = document.getElementById('sidebar-overlay');
+  var COLLAPSE_KEY = 'http2smtp-sidebar-collapsed';
+
+  function isMobile() { return window.innerWidth < 768; }
+  function collapsedOnLoad() {
+    try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch (e) { return false; }
+  }
+  function syncShell() {
+    if (!shell) return;
+    if (isMobile()) {
+      shell.classList.remove('sidebar-collapsed');
+    } else {
+      shell.classList.remove('sidebar-open');
+      shell.classList.toggle('sidebar-collapsed', collapsedOnLoad());
     }
+  }
+  syncShell();
+  window.addEventListener('resize', syncShell);
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      if (!shell) return;
+      if (isMobile()) {
+        shell.classList.toggle('sidebar-open');
+        return;
+      }
+      var collapsed = shell.classList.toggle('sidebar-collapsed');
+      try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (e) { /* private mode */ }
+    });
+  }
+  if (overlay) {
+    overlay.addEventListener('click', function () { shell.classList.remove('sidebar-open'); });
+  }
+  document.querySelectorAll('.nav-item').forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (isMobile() && shell) shell.classList.remove('sidebar-open');
+    });
   });
 
+  /* ---------- nav highlight ---------- */
+  function markNav() {
+    var path = location.pathname;
+    document.querySelectorAll('.nav-item[data-path]').forEach(function (el) {
+      var target = el.getAttribute('data-path');
+      var on = path === target || path.indexOf(target + '/') === 0;
+      el.classList.toggle('active', on);
+    });
+  }
+  markNav();
+
+  /* ---------- header ---------- */
+  // The header is outside the swapped content, so the breadcrumb and the language
+  // form's return target have to be updated from the new location on every pjax.
+  var breadcrumb = document.getElementById('breadcrumb');
+  function syncHeader() {
+    if (breadcrumb) {
+      var title = document.title.replace(/\s*-\s*HTTP2SMTP\s*$/, '');
+      breadcrumb.innerHTML = '';
+      var span = document.createElement('span');
+      span.textContent = title;
+      breadcrumb.appendChild(span);
+    }
+    var back = document.querySelector('.lang-form input[name=back]');
+    if (back) back.value = location.pathname + location.search;
+  }
+  syncHeader();
+
   /* ---------- tab bar ----------
-     Tabs are a client-side record of visited pages in localStorage; switching is a
-     normal navigation (the pages re-render server-side anyway). The dashboard tab is
-     always present and cannot be closed. Form pages and the password page never enter
-     the bar, so an unsaved form is not a tab someone can lose data through. */
+     Tabs are a client-side record of visited pages in localStorage, keyed by path so
+     a filter change does not open a second tab (the first URL is kept, as the Vue
+     version did). Switching a tab is a partial navigation (ui.js), so the bar and the
+     sidebar stay put. The dashboard tab is always present and cannot be closed. Form
+     pages and the password page never enter the bar. */
   var TAB_KEY = 'http2smtp-tabs';
-  var FIXED = [{ path: '/dashboard', title: 'Dashboard' }];
-  var EXCLUDE = [/^\/(login|setup|password)$/, /\/form(\/|$)/, /^\/logs\/\d+$/];
+  var tabbar = document.getElementById('tabbar');
+  var HOME = {
+    path: '/dashboard',
+    fullPath: '/dashboard',
+    title: (tabbar && tabbar.getAttribute('data-home-title')) || 'Dashboard'
+  };
+  var EXCLUDE = [/^\/(login|setup|password)$/, /\/form(\/|$)/, /\/send(\/|$)/, /^\/logs\/\d+$/];
 
   function loadTabs() {
     try {
       var raw = localStorage.getItem(TAB_KEY);
       var arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
+      var seen = {};
+      return (Array.isArray(arr) ? arr : []).reduce(function (out, t) {
+        if (!t || !t.path) return out;
+        var path = String(t.path).split('?')[0];
+        if (path === HOME.path || seen[path]) return out;
+        seen[path] = true;
+        out.push({ path: path, fullPath: t.fullPath || t.path, title: t.title || path });
+        return out;
+      }, []);
     } catch (e) {
       return [];
     }
@@ -37,7 +116,11 @@
   }
 
   function currentTab() {
-    return { path: location.pathname + location.search, title: document.title.replace(/\s*-\s*HTTP2SMTP\s*$/, '') };
+    return {
+      path: location.pathname,
+      fullPath: location.pathname + location.search,
+      title: document.title.replace(/\s*-\s*HTTP2SMTP\s*$/, '')
+    };
   }
 
   function excluded(p) {
@@ -45,57 +128,72 @@
     return EXCLUDE.some(function (re) { return re.test(bare); });
   }
 
-  var tabbar = document.getElementById('tabbar');
-  if (tabbar) {
-    var cur = currentTab();
-    if (!excluded(cur.path)) {
-      var tabs = loadTabs().filter(function (t) { return t && t.path && !excluded(t.path) && t.path.indexOf('/dashboard') !== 0; });
-      if (!tabs.some(function (t) { return t.path === cur.path; })) {
-        tabs.push(cur);
-      }
-      saveTabs(tabs);
-    }
+  var cur = currentTab();
 
-    function renderTabs() {
-      var open = loadTabs().filter(function (t) { return t && t.path && !excluded(t.path) && t.path.indexOf('/dashboard') !== 0; });
-      tabbar.innerHTML = '';
-      FIXED.concat(open).forEach(function (t, idx) {
-        var a = document.createElement('a');
-        a.className = 'tab' + (t.path === cur.path ? ' active' : '');
-        a.href = t.path;
-        a.textContent = t.title || t.path;
-        if (idx >= FIXED.length) {
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'tab-close';
-          btn.textContent = '×';
-          btn.title = '×';
-          btn.addEventListener('click', function (ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            saveTabs(loadTabs().filter(function (o) { return o.path !== t.path; }));
-            renderTabs();
-          });
-          a.appendChild(btn);
-        }
-        tabbar.appendChild(a);
-      });
+  function rememberTab() {
+    if (!tabbar || cur.path === HOME.path || excluded(cur.path)) return;
+    var tabs = loadTabs();
+    if (!tabs.some(function (t) { return t.path === cur.path; })) {
+      tabs.push(cur);
     }
+    saveTabs(tabs);
+  }
+
+  function allTabs() {
+    return [HOME].concat(loadTabs());
+  }
+
+  function renderTabs() {
+    if (!tabbar) return;
+    tabbar.innerHTML = '';
+    allTabs().forEach(function (t, idx) {
+      var a = document.createElement('a');
+      a.className = 'tab' + (t.path === location.pathname ? ' active' : '');
+      a.href = t.fullPath;
+      a.setAttribute('data-path', t.path);
+      a.textContent = t.title || t.path;
+      if (idx > 0) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tab-close';
+        btn.textContent = '×';
+        btn.title = '×';
+        btn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          closeTab(t);
+        });
+        a.appendChild(btn);
+      }
+      tabbar.appendChild(a);
+    });
+  }
+
+  // Closing the active tab lands on its neighbour, as the Vue tabs did.
+  function closeTab(t) {
+    var tabs = allTabs();
+    var idx = tabs.findIndex(function (o) { return o.path === t.path; });
+    saveTabs(loadTabs().filter(function (o) { return o.path !== t.path; }));
+    renderTabs();
+    if (t.path === location.pathname) {
+      var next = tabs[idx + 1] || tabs[idx - 1] || HOME;
+      if (next) UI.navigate(next.fullPath, true);
+    }
+  }
+
+  if (tabbar) {
+    rememberTab();
     renderTabs();
 
-    /* Right-click menu: close others / close all, mirroring the old SPA's tab menu. */
+    /* Close-others / close-all menu, shared by right-click and the tab-bar chevron. */
     var menu = null;
     function closeMenu() { if (menu) { menu.remove(); menu = null; } }
-    tabbar.addEventListener('contextmenu', function (ev) {
-      var tab = ev.target.closest('.tab');
-      if (!tab || !tab.getAttribute('href')) return;
-      ev.preventDefault();
+    function openTabMenu(x, y, path, fullPath) {
       closeMenu();
-      var href = tab.getAttribute('href');
       menu = document.createElement('div');
       menu.className = 'tab-menu';
-      menu.style.left = ev.clientX + 'px';
-      menu.style.top = ev.clientY + 'px';
+      menu.style.left = x + 'px';
+      menu.style.top = y + 'px';
       function mk(label, fn) {
         var b = document.createElement('button');
         b.type = 'button';
@@ -104,50 +202,127 @@
         menu.appendChild(b);
       }
       mk(tabbar.getAttribute('data-close-others') || 'Close Others', function () {
-        saveTabs(loadTabs().filter(function (o) { return o.path === href || o.path.indexOf('/dashboard') === 0; }));
+        saveTabs(loadTabs().filter(function (o) { return o.path === path; }));
         renderTabs();
+        if (location.pathname !== path && path !== HOME.path) UI.navigate(fullPath, true);
       });
       mk(tabbar.getAttribute('data-close-all') || 'Close All', function () {
         saveTabs([]);
         renderTabs();
+        if (location.pathname !== HOME.path) UI.navigate(HOME.fullPath, true);
       });
       document.body.appendChild(menu);
+    }
+    tabbar.addEventListener('contextmenu', function (ev) {
+      var tab = ev.target.closest('.tab');
+      if (!tab || !tab.getAttribute('href')) return;
+      ev.preventDefault();
+      openTabMenu(ev.clientX, ev.clientY, tab.getAttribute('data-path'), tab.getAttribute('href'));
     });
+    var actions = document.getElementById('tab-actions');
+    if (actions) {
+      actions.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var r = actions.getBoundingClientRect();
+        openTabMenu(Math.max(8, r.right - 140), r.bottom + 4,
+          location.pathname, location.pathname + location.search);
+      });
+    }
     document.addEventListener('click', closeMenu);
     document.addEventListener('scroll', closeMenu, true);
   }
 
-  /* ---------- delete confirmation ----------
-     Row deletes call the existing JSON API (same session cookie) and reload, so the
-     page always shows the post-delete state including the current page number. */
+  /* Partial navigation (ui.js) swaps .content and leaves the shell in place, so the
+     nav highlight, tab bar and header have to follow the new location themselves. */
+  UI.onNavigate(function () {
+    cur = currentTab();
+    markNav();
+    rememberTab();
+    renderTabs();
+    syncHeader();
+    if (isMobile() && shell) shell.classList.remove('sidebar-open');
+  });
+
+  /* ---------- logout confirmation ---------- */
+  document.addEventListener('submit', function (ev) {
+    var form = ev.target;
+    if (!form.matches || !form.matches('form[data-confirm]')) return;
+    ev.preventDefault();
+    UI.confirm(form.getAttribute('data-confirm')).then(function (ok) {
+      if (ok) form.submit(); // bypasses the submit event, so this handler does not loop
+    });
+  });
+
+  /* ---------- delete / trigger actions ----------
+     Row actions call the existing JSON API (same session cookie) and then refresh
+     only the content area, so the shell survives and the page number is kept. */
   document.addEventListener('click', function (ev) {
     var el = ev.target.closest('[data-href]');
     if (!el) return;
     ev.preventDefault();
-    var confirmMsg = el.getAttribute('data-confirm');
-    if (confirmMsg && !window.confirm(confirmMsg)) return;
     var href = el.getAttribute('data-href');
     var method = el.getAttribute('data-method') || 'DELETE';
-    fetch(href, { method: method, credentials: 'same-origin' })
-      .then(function (resp) {
-        if (resp.status === 401 || resp.status === 403) {
-          location.href = '/login';
-          return;
-        }
-        return resp.json().then(function (body) {
-          if (body && (body.code === 0 || body.code === 200)) {
-            var flash = el.getAttribute('data-flash');
-            if (flash) window.alert(flash);
-            location.reload();
-          } else {
-            window.alert((body && body.msg) || 'error');
+    var confirmMsg = el.getAttribute('data-confirm');
+    var proceed = confirmMsg ? UI.confirm(confirmMsg) : Promise.resolve(true);
+    proceed.then(function (ok) {
+      if (!ok) return;
+      fetch(href, { method: method, credentials: 'same-origin' })
+        .then(function (resp) {
+          if (resp.status === 401 || resp.status === 403) {
+            location.href = '/login';
+            return;
           }
-        });
-      })
-      .catch(function () { window.alert('request failed'); });
+          return resp.json().then(function (body) {
+            if (body && (body.code === 0 || body.code === 200)) {
+              var flash = el.getAttribute('data-flash');
+              if (flash) UI.toast(flash);
+              UI.refresh();
+            } else {
+              UI.alert((body && body.msg) || 'error');
+            }
+          });
+        })
+        .catch(function () { UI.alert('request failed'); });
+    });
   });
 
-  /* ---------- copy to clipboard ---------- */
+  /* ---------- password visibility ----------
+     The eye button inside .password-wrap flips the input between password and text.
+     The labels come from data attributes so the announcement stays in the page's
+     language; aria-pressed drives which of the two icons CSS shows. */
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('[data-password-toggle]');
+    if (!btn) return;
+    var box = btn.closest('.password-wrap');
+    var input = box && box.querySelector('input');
+    if (!input) return;
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    var label = btn.getAttribute(show ? 'data-hide-label' : 'data-show-label');
+    if (label) {
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+    }
+  });
+
+  /* ---------- copy to clipboard ----------
+     navigator.clipboard only exists in a secure context; the management UI is
+     normally reached over plain http on a LAN address, so fall back to the old
+     textarea + execCommand path instead of silently doing nothing. */
+  function legacyCopy(text) {
+    var area = document.createElement('textarea');
+    area.value = text;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    area.remove();
+    return ok;
+  }
+
   document.addEventListener('click', function (ev) {
     var el = ev.target.closest('[data-copy]');
     if (!el) return;
@@ -158,17 +333,17 @@
       el.textContent = ok;
       setTimeout(function () { el.textContent = old; }, 1500);
     }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(flash, function () {});
+    function failed() {
+      UI.alert(el.getAttribute('data-fail') || 'copy failed');
     }
-  });
-
-  /* ---------- flash auto-hide ---------- */
-  document.querySelectorAll('.flash-ok').forEach(function (el) {
-    setTimeout(function () {
-      el.style.transition = 'opacity .4s';
-      el.style.opacity = '0';
-      setTimeout(function () { el.remove(); }, 400);
-    }, 4000);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(flash, function () {
+        if (legacyCopy(text)) flash(); else failed();
+      });
+    } else if (legacyCopy(text)) {
+      flash();
+    } else {
+      failed();
+    }
   });
 })();

@@ -11,7 +11,10 @@
   </label>
   <label class="field">
     <span>{{.L.T "auth.password"}}</span>
-    <input type="password" name="password" autocomplete="current-password" required>
+    <div class="password-wrap">
+      <input type="password" name="password" autocomplete="current-password" required>
+      {{template "passwordToggle" .}}
+    </div>
   </label>
   <button type="submit" class="btn btn-primary btn-block">{{.L.T "auth.login"}}</button>
 </form>

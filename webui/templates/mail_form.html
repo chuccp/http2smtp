@@ -5,7 +5,7 @@
 </div>
 
 <form method="post" action="/mail/save" class="form card" style="max-width:480px">
-  <input type="hidden" name="id" value="{{.Id}}">
+  <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <label class="field">
     <span>{{.L.T "mail.recipientName"}}</span>
     <input type="text" name="name" value="{{.Name}}" required>

@@ -104,9 +104,9 @@ func (p *Pages) userSave(req *web.Request) (any, error) {
 			return fail(err.Error())
 		}
 		data.Self = exist.Id == caller.Id
-		// Demoting or disabling the last active admin would lock the instance; the
-		// Vue UI blocked editing the admin row entirely, this keeps the milder rule:
-		// the admin account may change name/password but not its own flags.
+		// Demoting or disabling the last active admin would lock the instance, so
+		// the admin row stays admin and active: the admin account may change
+		// name/password but not its own flags.
 		if exist.IsAdmin {
 			data.IsAdmin = true
 			data.IsUse = true

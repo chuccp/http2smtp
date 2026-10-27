@@ -109,11 +109,19 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 		data.Title = translatorFor(data.Lang).T("token.editToken")
 	}
 
-	// The selects list the caller's own servers and contacts — the API enforces the
-	// same ownership, the form just never offers what would be refused.
+	if err := p.fillTokenFormOptions(data, user, selectedSmtp); err != nil {
+		return p.renderErr(req, 0, "common.failed", err.Error())
+	}
+	return p.render(req, "token_form", data)
+}
+
+// fillTokenFormOptions lists the caller's own servers and contacts — the API enforces the
+// same ownership, the form just never offers what would be refused. Both the form and
+// a failed save (which re-renders it) need this.
+func (p *Pages) fillTokenFormOptions(data *TokenFormData, user *model.User, selectedSmtp uint) error {
 	smtps, err := p.smtpModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return err
 	}
 	for _, s := range smtps {
 		data.SmtpOptions = append(data.SmtpOptions, SelectOption{
@@ -124,7 +132,7 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 	}
 	mails, err := p.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return err
 	}
 	for _, m := range mails {
 		data.MailOptions = append(data.MailOptions, SelectOption{
@@ -133,7 +141,7 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 			Selected: data.SelectedMails[m.Id],
 		})
 	}
-	return p.render(req, "token_form", data)
+	return nil
 }
 
 func (p *Pages) tokenOwnedBy(id uint, user *model.User) (*model.Token, error) {
@@ -170,29 +178,34 @@ func (p *Pages) tokenSave(req *web.Request) (any, error) {
 	ids := req.Request().Form["receiveEmailIds"]
 	idsDedup := util.RemoveDuplicates(ids)
 
+	smtpId64, _ := strconv.ParseUint(req.GetFormParam("smtpId"), 10, 32)
+	smtpId := uint(smtpId64)
+	state := entity.TokenStateInUse
+	if req.GetFormParam("state") == "off" {
+		state = entity.TokenStateUserDisabled
+	}
+
 	data := &TokenFormData{
 		Base:          p.base(req, user, "token.generateToken", false),
 		Name:          req.GetFormParam("name"),
 		TokenValue:    req.GetFormParam("token"),
 		Subject:       req.GetFormParam("subject"),
+		State:         state,
 		IsNew:         req.GetFormParam("id") == "",
 		SelectedMails: map[uint]bool{},
-	}
-	fail := func(msg string) (any, error) {
-		data.Flash = Flash{Err: msg}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "token_form", data)
 	}
 	for _, s := range idsDedup {
 		if n, err := strconv.ParseUint(s, 10, 32); err == nil {
 			data.SelectedMails[uint(n)] = true
 		}
 	}
-	smtpId64, _ := strconv.ParseUint(req.GetFormParam("smtpId"), 10, 32)
-	smtpId := uint(smtpId64)
-	state := entity.TokenStateInUse
-	if req.GetFormParam("state") == "off" {
-		state = entity.TokenStateUserDisabled
+	fail := func(msg string) (any, error) {
+		data.Flash = Flash{Err: msg}
+		if err := p.fillTokenFormOptions(data, user, smtpId); err != nil {
+			return p.renderErr(req, 0, "common.failed", err.Error())
+		}
+		req.Response().WriteStatus(http.StatusBadRequest)
+		return p.render(req, "token_form", data)
 	}
 
 	if data.Name == "" || data.TokenValue == "" || smtpId == 0 {

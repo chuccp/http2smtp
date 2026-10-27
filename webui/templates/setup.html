@@ -1,3 +1,6 @@
+{{/* The database step carries six MySQL fields plus two ports; at the login card's
+     360px they all stack and the page outgrows the viewport. */}}
+{{define "cardClass"}} bare-card-wide{{end}}
 {{define "content"}}
 <div class="login-head">
   <div class="login-brand">HTTP2SMTP</div>
@@ -26,7 +29,7 @@
     </label>
   </div>
 
-  <div id="mysql-fields" class="form-grid" {{if ne .DbType "mysql"}}hidden{{end}}>
+  <div id="mysql-fields" class="form-grid form-grid-2" {{if ne .DbType "mysql"}}hidden{{end}}>
     <label class="field">
       <span>{{.L.T "setup.mysqlHost"}}</span>
       <input type="text" name="mysqlHost" value="{{.MysqlHost}}">
@@ -40,6 +43,10 @@
       <input type="text" name="mysqlDbname" value="{{.MysqlDbname}}">
     </label>
     <label class="field">
+      <span>{{.L.T "setup.mysqlCharset"}}</span>
+      <input type="text" name="mysqlCharset" value="{{if .MysqlCharset}}{{.MysqlCharset}}{{else}}utf8mb4{{end}}">
+    </label>
+    <label class="field">
       <span>{{.L.T "setup.mysqlUser"}}</span>
       <input type="text" name="mysqlUsername" value="{{.MysqlUsername}}">
     </label>
@@ -47,15 +54,11 @@
       <span>{{.L.T "setup.mysqlPassword"}}</span>
       <input type="password" name="mysqlPassword" value="">
     </label>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlCharset"}}</span>
-      <input type="text" name="mysqlCharset" value="{{if .MysqlCharset}}{{.MysqlCharset}}{{else}}utf8mb4{{end}}">
-    </label>
   </div>
 
   <fieldset>
     <legend>{{.L.T "setup.portConfig"}}</legend>
-    <div class="form-grid">
+    <div class="form-grid form-grid-2">
       <label class="field">
         <span>{{.L.T "setup.webPort"}}</span>
         <input type="text" value="{{.WebPort}}" readonly tabindex="-1">
@@ -90,11 +93,17 @@
   </label>
   <label class="field">
     <span>{{if .HasAdmin}}{{.L.T "setup.newPasswordPlaceholder"}}{{else}}{{.L.T "setup.adminPassword"}}{{end}}</span>
-    <input type="password" name="password" autocomplete="new-password" required minlength="8">
+    <div class="password-wrap">
+      <input type="password" name="password" autocomplete="new-password" required minlength="8">
+      {{template "passwordToggle" .}}
+    </div>
   </label>
   <label class="field">
     <span>{{.L.T "setup.confirmPassword"}}</span>
-    <input type="password" name="confirm" autocomplete="new-password" required minlength="8">
+    <div class="password-wrap">
+      <input type="password" name="confirm" autocomplete="new-password" required minlength="8">
+      {{template "passwordToggle" .}}
+    </div>
   </label>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">{{if .HasAdmin}}{{.L.T "setup.resetAdmin"}}{{else}}{{.L.T "setup.initialize"}}{{end}}</button>

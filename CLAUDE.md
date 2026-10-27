@@ -81,15 +81,39 @@ JSON is embedded in every build.
   page file defining `content`); handlers write HTML via `Pages.render` and return
   `nil, nil` so the framework converter leaves the response alone. Form saves redirect
   (PRG) with `?ok=<i18n key>`; failures re-render the form with the values echoed back.
-- Deletes, trigger-now and log cleanup are the few AJAX calls: they hit the existing
-  `/api/*` JSON endpoints from `webui/static/app.js` (which also implements the tab bar,
-  backed by localStorage — the tabs are visited-page bookmarks, switching is a normal
-  navigation).
+- `webui/static/ui.js` is the hand-rolled component library: modal dialogs
+  (alert/confirm/prompt), toast, loading mask, partial navigation (pjax), form dialogs
+  and page dialogs. Menu/tab/links fetch the target page and swap only `.content`, so
+  the fixed sidebar, header and tab bar stay put; GET filter forms and POST forms
+  marked `data-pjax-form` also submit through fetch, so list searches and settings
+  saves do not reload the shell. A response without the app shell (login redirect,
+  setup, refusal page) falls back to a normal navigation; unmarked form posts stay
+  full navigations (PRG).
+- `select[data-picker]` is progressively enhanced into the Vue-style selector: a tag
+  trigger with a × per tag, and a nested modal listing the options as radio (single) or
+  checkbox (multiple) rows. The native select stays in the form — invisible but
+  focusable — so required validation and FormData still work. Used by the token form
+  (SMTP, recipients), the schedule form (token) and the SMTP send dialog (recipient).
+- Add/edit forms are the existing server-rendered form pages opened through
+  `data-form-dialog`: the page head is dropped, Cancel is appended to the form actions,
+  a redirect means saved (close + toast + refresh the list), and a 400 re-render is
+  shown inside the dialog. Read-only/action pages (token send, SMTP send, log detail)
+  open through `data-page-dialog`; their scripts call `UI.dialogDone(btn, msg)` on
+  success. The same form URLs still render standalone.
+- `app.js` wires the shell — fixed viewport, collapsible sidebar (mobile off-canvas),
+  breadcrumb, tab bar (localStorage, keyed by path; closing the active tab lands on a
+  neighbour), nav highlight, logout confirmation, password visibility, clipboard
+  fallback and the delete/trigger AJAX actions — and re-syncs after each swap through
+  `UI.onNavigate`. Dialog button labels come from `data-ui-ok`/`data-ui-cancel` on
+  `<body>`, so no copy is hardcoded in the library.
+- Deletes and trigger-now hit the existing `/api/*` JSON endpoints, toast the optional
+  `data-flash`, and refresh only the content area; log cleanup opens a modal with the
+  days input, posts to `/api/log/cleanup` and toasts the deleted count.
 - **Translations**: `webui/i18n/{zh-cn,zh-tw,en,ja}.json`, flat dot-keys, embedded. These
-  files are the source of truth (they descend from the removed Vue locale files, same
-  keys and `{name}` placeholders); `webui/i18n_test.go` fails the build if the four fall
-  out of key-for-key sync. Templates read them via `{{.L.T "key"}}` — never a template
-  func, since funcs bind at parse time and cannot see the request's language.
+  files are the source of truth, using `{name}` placeholders; `webui/i18n_test.go` fails
+  the build if the four fall out of key-for-key sync. Templates read them via
+  `{{.L.T "key"}}` — never a template func, since funcs bind at parse time and cannot see
+  the request's language.
 - The wizard/settings persistence is shared with the JSON API through the
   `configapply` package (`ApplyDbInit`, `ApplyAdminInit`, `ApplyReSet`, `ProbeDb`); the
   form handlers and `rest.Set` both call it, so the two cannot drift.

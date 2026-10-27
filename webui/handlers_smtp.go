@@ -174,6 +174,44 @@ func (p *Pages) smtpSave(req *web.Request) (any, error) {
 	return p.redirect(req, backTo("/smtp", "common.success", "", ""))
 }
 
+// SmtpSendData backs the "send test mail" dialog opened from the SMTP list.
+type SmtpSendData struct {
+	Base
+	Id         uint
+	Name       string
+	Mail       string
+	Subject    string
+	Recipients []*model.Mail
+}
+
+func (p *Pages) smtpSendForm(req *web.Request) (any, error) {
+	user, ok := p.requireUser(req)
+	if !ok {
+		return nil, nil
+	}
+	id, err := idParam(req, "id")
+	if err != nil {
+		return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+	}
+	row, err := p.smtpOwnedBy(id, user)
+	if err != nil || row == nil {
+		return p.renderErr(req, http.StatusNotFound, "common.failed", "smtp not found")
+	}
+	mails, err := p.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
+	if err != nil {
+		return p.renderErr(req, 0, "common.failed", err.Error())
+	}
+	data := &SmtpSendData{
+		Base:       p.base(req, user, "smtp.sendTestMail", false),
+		Id:         row.Id,
+		Name:       row.Name,
+		Mail:       row.Mail,
+		Recipients: mails,
+	}
+	data.Subject = data.L.T("smtp.testEmailSubject")
+	return p.render(req, "smtp_send", data)
+}
+
 // smtpTest runs the connection probe from the form footer without saving anything.
 func (p *Pages) smtpTest(req *web.Request) (any, error) {
 	if _, ok := p.requireUser(req); !ok {

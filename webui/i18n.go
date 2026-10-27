@@ -8,10 +8,9 @@ import (
 	"strings"
 )
 
-// The four locale JSON files are the UI's translation bundles. They descend from the
-// Vue frontend's locale files (same keys, same {name} placeholders), but these files
-// are now the source of truth: they are embedded, so a release is a single binary, and
-// webui/i18n_test.go keeps the four in key-for-key sync.
+// The four locale JSON files are the UI's translation bundles and the source of truth
+// for every string the templates render: they are embedded, so a release is a single
+// binary, and webui/i18n_test.go keeps the four in key-for-key sync.
 //
 //go:embed i18n/zh-cn.json
 var zhCnJSON []byte
@@ -25,8 +24,8 @@ var enJSON []byte
 //go:embed i18n/ja.json
 var jaJSON []byte
 
-// DefaultLanguage is what a browser expressing no preference gets. The Vue app's rule:
-// zh* → zh-cn, everything else → en.
+// DefaultLanguage is what a browser expressing no preference gets, and the fallback
+// when nothing in Accept-Language matches a shipped language.
 const DefaultLanguage = "zh-cn"
 
 // Languages lists the supported language codes, in menu order.
@@ -38,15 +37,15 @@ type Translator struct {
 	m map[string]string
 }
 
-// placeholder matches the Vue locale's {count}-style parameter slots. Go-template
+// placeholder matches the locale files' {count}-style parameter slots. Go-template
 // text like {{.key}} inside a value never matches (the dot is not a word character),
 // so template-help strings pass through untouched.
 var placeholder = regexp.MustCompile(`\{[A-Za-z0-9_]+\}`)
 
 // T returns the translation for key. When args are given, they replace the {name}
-// placeholders in order of appearance — the locale values keep their Vue-side
-// placeholder syntax rather than printf verbs. A key no language carries is returned
-// as-is, visible in the UI rather than silently blank.
+// placeholders in order of appearance — the locale values use brace placeholders
+// rather than printf verbs. A key no language carries is returned as-is, visible in
+// the UI rather than silently blank.
 func (tr *Translator) T(key string, args ...any) string {
 	v, ok := tr.m[key]
 	if !ok {

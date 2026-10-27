@@ -6,22 +6,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}} - HTTP2SMTP</title>
 <link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="/static/ui.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script src="/static/ui.js"></script>
 </head>
-<body>
-<div class="app">
+<body class="app-body" data-ui-ok="{{.L.T "common.confirm"}}" data-ui-cancel="{{.L.T "common.cancel"}}" data-ui-select="{{.L.T "common.select"}}" data-ui-change="{{.L.T "common.change"}}" data-ui-add="{{.L.T "common.add"}}" data-ui-no-options="{{.L.T "common.noOptions"}}">
+<div class="app" id="app-shell">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
   <aside class="sidebar">
-    <a class="brand" href="/dashboard">HTTP2SMTP</a>
+    <a class="brand" href="/dashboard" title="HTTP2SMTP">
+      <span class="brand-full">HTTP2SMTP</span><span class="brand-short">H</span>
+    </a>
     <nav class="nav">
-      <a class="nav-item" data-path="/dashboard" href="/dashboard">{{.L.T "layout.sidebar.dashboard"}}</a>
-      <a class="nav-item" data-path="/smtp" href="/smtp">{{.L.T "layout.sidebar.smtp"}}</a>
-      <a class="nav-item" data-path="/mail" href="/mail">{{.L.T "layout.sidebar.mail"}}</a>
-      <a class="nav-item" data-path="/tokens" href="/tokens">{{.L.T "layout.sidebar.tokens"}}</a>
-      <a class="nav-item" data-path="/schedule" href="/schedule">{{.L.T "layout.sidebar.schedule"}}</a>
-      <a class="nav-item" data-path="/logs" href="/logs">{{.L.T "layout.sidebar.logs"}}</a>
+      <a class="nav-item" data-path="/dashboard" href="/dashboard" title="{{.L.T "layout.sidebar.dashboard"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.dashboard"}}</span>
+      </a>
+      <a class="nav-item" data-path="/smtp" href="/smtp" title="{{.L.T "layout.sidebar.smtp"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.smtp"}}</span>
+      </a>
+      <a class="nav-item" data-path="/mail" href="/mail" title="{{.L.T "layout.sidebar.mail"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.mail"}}</span>
+      </a>
+      <a class="nav-item" data-path="/tokens" href="/tokens" title="{{.L.T "layout.sidebar.tokens"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8m-3 3 3 3"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.tokens"}}</span>
+      </a>
+      <a class="nav-item" data-path="/schedule" href="/schedule" title="{{.L.T "layout.sidebar.schedule"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.schedule"}}</span>
+      </a>
+      <a class="nav-item" data-path="/logs" href="/logs" title="{{.L.T "layout.sidebar.logs"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.logs"}}</span>
+      </a>
       {{if .User.IsAdmin}}
-      <a class="nav-item" data-path="/users" href="/users">{{.L.T "layout.sidebar.users"}}</a>
-      <a class="nav-item" data-path="/settings" href="/settings">{{.L.T "layout.sidebar.settings"}}</a>
+      <a class="nav-item" data-path="/users" href="/users" title="{{.L.T "layout.sidebar.users"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.users"}}</span>
+      </a>
+      <a class="nav-item" data-path="/settings" href="/settings" title="{{.L.T "layout.sidebar.settings"}}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg>
+        <span class="nav-label">{{.L.T "layout.sidebar.settings"}}</span>
+      </a>
       {{end}}
     </nav>
     <div class="sidebar-footer">
@@ -31,16 +60,25 @@
         {{if .User.IsAdmin}}<span class="tag tag-admin">admin</span>{{end}}
       </div>
       <div class="whoami-actions">
-        <a href="/password">{{.L.T "user.changePassword"}}</a>
-        <form method="post" action="/logout" class="inline-form">
-          <button type="submit" class="linklike">{{.L.T "auth.logout"}}</button>
+        <button type="button" class="linklike" data-form-dialog="/password" data-dialog-width="480px" title="{{.L.T "user.changePassword"}}">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span class="nav-label">{{.L.T "user.changePassword"}}</span>
+        </button>
+        <form method="post" action="/logout" class="inline-form" data-confirm="{{.L.T "layout.logoutConfirm"}}">
+          <button type="submit" class="linklike" title="{{.L.T "auth.logout"}}">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5v16h4"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9"/></svg>
+            <span class="nav-label">{{.L.T "auth.logout"}}</span>
+          </button>
         </form>
       </div>
     </div>
   </aside>
   <main class="main">
     <header class="topbar">
-      <div id="tabbar" class="tabbar" data-close-others="{{.L.T "layout.tabs.closeOthers"}}" data-close-all="{{.L.T "layout.tabs.closeAll"}}"></div>
+      <button type="button" class="icon-btn" id="sidebar-toggle" aria-label="toggle sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <nav class="breadcrumb" id="breadcrumb"><span>{{.Title}}</span></nav>
       <form method="post" action="/lang" class="lang-form">
         <input type="hidden" name="back" value="{{.Path}}">
         <select name="lang" class="lang-select" onchange="this.form.submit()">
@@ -50,6 +88,12 @@
         </select>
       </form>
     </header>
+    <div class="tabs-row">
+      <div id="tabbar" class="tabbar" data-home-title="{{.L.T "dashboard.dashboard"}}" data-close-others="{{.L.T "layout.tabs.closeOthers"}}" data-close-all="{{.L.T "layout.tabs.closeAll"}}"></div>
+      <button type="button" class="tab-actions" id="tab-actions" title="{{.L.T "common.operations"}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
     {{if or .Flash.OK .Flash.Err}}
     <div class="flash {{if .Flash.Err}}flash-err{{else}}flash-ok{{end}}">
       {{if .Flash.Err}}{{.Flash.Err}}{{else}}{{flashText .Flash .L}}{{end}}

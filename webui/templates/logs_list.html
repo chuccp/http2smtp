@@ -1,9 +1,5 @@
 {{define "content"}}
-<div class="page-head">
-  <h1>{{.L.T "log.systemLogs"}}</h1>
-</div>
-
-<form class="filter-bar" method="get" action="/logs">
+<form class="filter-bar search-bar" method="get" action="/logs">
   <input type="text" name="searchKey" value="{{.SearchKey}}" placeholder="{{.L.T "log.searchKeyword"}}">
   {{if .User.IsAdmin}}
   <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "log.adminCreated"}}</label>
@@ -12,6 +8,7 @@
   <a class="btn" href="/logs">{{.L.T "common.reset"}}</a>
   <span class="spacer"></span>
   <button type="button" class="btn btn-danger" id="cleanup-btn"
+    data-title="{{.L.T "log.cleanup"}}"
     data-days-label="{{.L.T "log.cleanupDays"}}"
     data-hint="{{.L.T "log.cleanupDaysHint"}}"
     data-done="{{.L.T "log.cleanupDone"}}">{{.L.T "log.cleanup"}}</button>
@@ -46,8 +43,8 @@
       </td>
       <td class="muted">{{fmtTime .CreateTime}}</td>
       <td class="col-actions">
-        <a class="btn-link" href="/logs/{{.Id}}">{{$.L.T "log.logDetail"}}</a>
-        <button type="button" class="btn-link danger" data-confirm="{{$.L.T "log.deleteConfirm"}}" data-href="/api/log/{{.Id}}">{{$.L.T "common.delete"}}</button>
+        <button type="button" class="btn btn-sm" data-page-dialog="/logs/{{.Id}}" data-dialog-width="600px">{{$.L.T "log.logDetail"}}</button>
+        <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "log.deleteConfirm"}}" data-href="/api/log/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
       </td>
     </tr>
     {{else}}
@@ -63,28 +60,61 @@
   var btn = document.getElementById('cleanup-btn');
   if (!btn) return;
   btn.addEventListener('click', function () {
-    var daysStr = window.prompt(btn.getAttribute('data-hint'), '30');
-    if (daysStr === null) return;
-    var days = Number(daysStr);
-    if (!Number.isFinite(days) || days < 0) return;
-    if (days === 0 && !window.confirm('0 = all')) return;
-    btn.disabled = true;
-    fetch('/api/log/cleanup', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ days: days })
-    }).then(function (r) {
-      return r.json().then(function (b) { return { ok: r.ok, b: b }; });
-    }).then(function (x) {
-      btn.disabled = false;
-      if (!x.ok) { window.alert((x.b && x.b.msg) || 'failed'); return; }
-      var n = x.b && x.b.data && x.b.data.deleted || 0;
-      location.href = '/logs?ok=log.cleanupDone&n=' + n;
-    }).catch(function () {
-      btn.disabled = false;
-      window.alert('failed');
+    var dlg = UI.modal({
+      title: btn.getAttribute('data-title'),
+      width: '420px',
+      cancelValue: null
     });
+    var field = document.createElement('label');
+    field.className = 'field';
+    var label = document.createElement('span');
+    label.textContent = btn.getAttribute('data-days-label');
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.max = '3650';
+    input.value = '30';
+    field.appendChild(label);
+    field.appendChild(input);
+
+    var hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = btn.getAttribute('data-hint');
+
+    var body = document.createElement('div');
+    body.appendChild(field);
+    body.appendChild(hint);
+    dlg.setBody(body);
+
+    var cancel = dlg.addButton(document.body.getAttribute('data-ui-cancel') || 'Cancel', false, function () {
+      dlg.close();
+    });
+    var ok = dlg.addButton(document.body.getAttribute('data-ui-ok') || 'OK', false, function () {
+      var days = Number(input.value);
+      if (!Number.isFinite(days) || days < 0) return;
+      ok.disabled = true;
+      fetch('/api/log/cleanup', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days: days })
+      }).then(function (r) {
+        return r.json().then(function (b) { return { ok: r.ok, b: b }; });
+      }).then(function (x) {
+        ok.disabled = false;
+        if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
+        var n = x.b && x.b.data && x.b.data.deleted || 0;
+        dlg.close();
+        UI.toast(btn.getAttribute('data-done').replace('{count}', n), 'ok');
+        UI.refresh();
+      }).catch(function () {
+        ok.disabled = false;
+        UI.alert('failed');
+      });
+    });
+    ok.classList.add('btn-danger');
+    input.focus();
+    cancel.blur();
   });
 })();
 </script>

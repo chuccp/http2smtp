@@ -28,6 +28,7 @@ func (p *Pages) registerPageRoutes(ctx *core.Context) {
 	ctx.Get("/smtp/form", p.smtpForm)
 	ctx.Get("/smtp/form/:id", p.smtpForm)
 	ctx.Post("/smtp/save", p.smtpSave)
+	ctx.Get("/smtp/send/:id", p.smtpSendForm)
 	ctx.Post("/smtp/test", p.smtpTest)
 
 	ctx.Get("/mail", p.mailList)

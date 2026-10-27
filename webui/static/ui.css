@@ -1,0 +1,129 @@
+/* UI component library — modal dialogs, toast messages and the loading mask.
+   Layout, forms and tables stay in app.css; these are the pieces ui.js drives. */
+
+/* ---------- toast ---------- */
+.ui-toasts {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.ui-toast {
+  pointer-events: auto; max-width: min(460px, calc(100vw - 32px));
+  padding: 9px 16px; border-radius: 6px; border: 1px solid transparent;
+  background: var(--card); box-shadow: 0 6px 24px rgba(15,23,42,.16);
+  font-size: 13px; transition: opacity .3s;
+}
+.ui-toast.out { opacity: 0; }
+.ui-toast-ok { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.ui-toast-err { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.ui-toast-info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+/* ---------- modal dialogs ---------- */
+.ui-dialog-mask {
+  position: fixed; inset: 0; z-index: 100; padding: 16px;
+  background: rgba(15,23,42,.38);
+  display: flex; align-items: center; justify-content: center;
+}
+.ui-dialog {
+  width: 380px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: 0 18px 50px rgba(15,23,42,.28);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ui-dialog-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  font-size: 15px; font-weight: 600; flex: none;
+}
+.ui-dialog-close {
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  font-size: 20px; line-height: 1; padding: 0 2px;
+}
+.ui-dialog-close:hover { color: var(--text); }
+.ui-dialog-body {
+  position: relative; padding: 16px; color: var(--text);
+  overflow-y: auto; flex: 1; min-height: 0;
+}
+.ui-dialog-message .ui-dialog-body { white-space: pre-line; }
+.ui-dialog-body.is-loading { min-height: 120px; }
+.ui-dialog-body .form.card { border: 0; padding: 0; margin: 0; }
+.ui-dialog-body .field > span { white-space: normal; }
+.ui-dialog-msg { margin-bottom: 10px; }
+.ui-dialog-input {
+  width: 100%; border: 1px solid var(--border); border-radius: 4px;
+  padding: 7px 9px; font: inherit; background: #fff; color: var(--text);
+}
+.ui-dialog-input:focus { outline: 2px solid #bfdbfe; border-color: var(--primary); }
+.ui-dialog-foot {
+  display: flex; justify-content: flex-end; gap: 8px; padding: 0 16px 16px;
+  flex: none;
+}
+.ui-dialog-foot:empty { display: none; }
+.ui-dialog-loading {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.6);
+}
+.ui-dialog-flash {
+  margin: 0 0 12px; padding: 8px 12px; border-radius: 4px; font-size: 13px;
+  white-space: pre-line;
+}
+
+/* ---------- select pickers ---------- */
+.ui-picker { position: relative; }
+.ui-picker-native {
+  position: absolute; inset: 0; width: 100% !important; height: 100% !important;
+  opacity: 0; pointer-events: none;
+}
+.ui-picker-trigger {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  min-height: 36px; padding: 4px 8px; cursor: pointer;
+  border: 1px solid #dcdfe6; border-radius: 4px; background: #fff;
+}
+.ui-picker-trigger:hover { border-color: var(--primary); }
+.ui-picker-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+  flex: 1; min-width: 0;
+}
+.ui-picker-placeholder { color: var(--muted); font-size: 13px; }
+.ui-picker-tag {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  padding: 2px 8px; border-radius: 4px;
+  background: #ecf5ff; color: var(--primary); font-size: 12px;
+}
+.ui-picker-tag > span {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-picker-tag-close {
+  border: 0; background: none; color: inherit; cursor: pointer;
+  padding: 0; font-size: 14px; line-height: 1; opacity: .7;
+}
+.ui-picker-tag-close:hover { opacity: 1; }
+.ui-picker-btn { flex: none; }
+.ui-picker-list {
+  display: flex; flex-direction: column; max-height: 360px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 4px;
+}
+.ui-picker-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.ui-picker-row:last-child { border-bottom: 0; }
+.ui-picker-row:hover { background: var(--bg); }
+.ui-picker-row input { width: auto; flex: none; margin: 0; }
+.ui-picker-option { font-size: 13px; }
+.ui-picker-empty { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ---------- loading mask ---------- */
+.ui-mask {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(241,245,249,.6); border-radius: var(--radius);
+}
+.ui-spinner {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 3px solid var(--border); border-top-color: var(--primary);
+  animation: ui-spin .8s linear infinite;
+}
+@keyframes ui-spin { to { transform: rotate(360deg); } }

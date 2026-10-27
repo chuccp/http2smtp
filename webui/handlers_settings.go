@@ -83,7 +83,7 @@ func settingsFromForm(req *web.Request) *model.Config {
 }
 
 // settingsSave persists without restarting; the ports only take effect through the
-// restart button, same as the Vue page's plain save.
+// save-and-restart button.
 func (p *Pages) settingsSave(req *web.Request) (any, error) {
 	if _, ok := p.requireAdmin(req); !ok {
 		return nil, nil
