@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="toolbar">
-  <button type="button" class="btn btn-primary" data-form-dialog="/tokens/form" data-success="{{.L.T "common.success"}}">{{.L.T "token.generateToken"}}</button>
+  <button type="button" class="btn btn-primary" data-form-dialog="/tokens/form" data-dialog-width="860px" data-success="{{.L.T "common.success"}}">{{.L.T "token.generateToken"}}</button>
   <form class="filter-bar" method="get" action="/tokens">
     <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "token.tokenName"}}">
     {{if .User.IsAdmin}}
@@ -41,8 +41,8 @@
       {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
       <td class="muted">{{fmtTime .CreateTime}}</td>
       <td class="col-actions">
-        <button type="button" class="btn btn-sm" data-page-dialog="/tokens/send/{{.Id}}">{{$.L.T "token.sendTestMail"}}</button>
-        <button type="button" class="btn btn-sm" data-form-dialog="/tokens/form/{{.Id}}" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
+        <button type="button" class="btn btn-sm" data-page-dialog="/tokens/send/{{.Id}}" data-dialog-width="640px">{{$.L.T "token.sendTestMail"}}</button>
+        <button type="button" class="btn btn-sm" data-form-dialog="/tokens/form/{{.Id}}" data-dialog-width="860px" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "token.deleteConfirm"}}" data-href="/api/token/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
       </td>
     </tr>

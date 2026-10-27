@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="toolbar">
-  <button type="button" class="btn btn-primary" data-form-dialog="/mail/form" data-success="{{.L.T "common.success"}}">{{.L.T "mail.addRecipient"}}</button>
+  <button type="button" class="btn btn-primary" data-form-dialog="/mail/form" data-dialog-width="600px" data-success="{{.L.T "common.success"}}">{{.L.T "mail.addRecipient"}}</button>
   <form class="filter-bar" method="get" action="/mail">
     <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "mail.recipientName"}}">
     <input type="text" name="mail" value="{{.MailAddr}}" placeholder="{{.L.T "mail.emailAddress"}}">
@@ -31,7 +31,7 @@
       {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
       <td class="muted">{{fmtTime .CreateTime}}</td>
       <td class="col-actions">
-        <button type="button" class="btn btn-sm" data-form-dialog="/mail/form/{{.Id}}" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
+        <button type="button" class="btn btn-sm" data-form-dialog="/mail/form/{{.Id}}" data-dialog-width="600px" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "mail.deleteConfirm"}}" data-href="/api/mail/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
       </td>
     </tr>

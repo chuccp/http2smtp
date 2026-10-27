@@ -161,7 +161,7 @@ a:hover { text-decoration: underline; }
 /* ---------- language switch ---------- */
 .lang-form, .bare-lang { flex: none; }
 .lang-select {
-  border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px;
+  border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px;
   background: var(--card); color: var(--text); font: inherit;
 }
 .bare-lang { position: fixed; top: 12px; right: 12px; }
@@ -173,9 +173,9 @@ a:hover { text-decoration: underline; }
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 28px; box-shadow: 0 8px 30px rgba(15,23,42,.08);
 }
-/* The setup wizard's database step has six MySQL fields and two ports; in the login
-   card's 360px they stack into a column taller than most viewports. */
-.bare-card-wide { width: 560px; }
+/* The setup wizard's database step has six MySQL fields and two ports; a wider card
+   keeps its two-column horizontal field rows readable. */
+.bare-card-wide { width: 760px; }
 .login-head { text-align: center; margin-bottom: 18px; }
 .login-brand { font-size: 20px; font-weight: 700; color: var(--primary); }
 .login-head h1 { font-size: 16px; margin: 6px 0 0; color: var(--muted); font-weight: 500; }
@@ -188,7 +188,7 @@ a:hover { text-decoration: underline; }
 
 /* ---------- flash ---------- */
 .flash {
-  margin: 12px 16px 0; padding: 10px 14px; border-radius: 6px; font-size: 13px;
+  margin: 12px 16px 0; padding: 10px 14px; border-radius: 8px; font-size: 13px;
   border: 1px solid transparent;
 }
 .bare-card .flash { margin: 0 0 16px; }
@@ -197,7 +197,7 @@ a:hover { text-decoration: underline; }
 
 /* ---------- cards / page header ---------- */
 .card {
-  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
   padding: 16px; margin-bottom: 16px;
 }
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -295,44 +295,100 @@ table.table { width: 100%; border-collapse: collapse; }
 
 /* ---------- forms ---------- */
 .form { display: flex; flex-direction: column; gap: 14px; }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field > span { color: var(--muted); font-size: 13px; }
-.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
-/* Always two per row, regardless of the auto-fill minimum — used by the wizard's
-   MySQL block and port fieldset inside the wide bare card. */
-.form-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Horizontal form item: the label occupies the left column and every control (input,
+   select, textarea, password/copy wrapper, picker) sits in the right column. Hints
+   stay under their control; a field without a label (the template editor) spans both
+   columns. */
+.field {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: start;
+}
+.field > span:first-child {
+  padding-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+.field > span:first-child::after { content: ":"; }
+html[lang^="zh"] .field > span:first-child::after { content: "："; }
+.field > .hint { grid-column: 2; }
+.field > :first-child:not(span) { grid-column: 1 / -1; }
+.field > :first-child:not(span) ~ .hint { grid-column: 1 / -1; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+/* A block that carries a single record-like field (the SQLite file) keeps the full
+   row instead of half of the two-column grid. */
+.form-grid-single { grid-template-columns: 1fr; }
 .form textarea {
-  border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit;
-  min-height: 90px; resize: vertical;
+  border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font: inherit;
+  min-height: 90px; resize: vertical; background: #fbfcfe;
+  transition: background .15s, border-color .15s, box-shadow .15s;
 }
 .form-actions { display: flex; gap: 10px; margin-top: 6px; }
-select, input[type=text], input[type=password], input[type=number], input[type=url] {
-  border: 1px solid #dcdfe6; border-radius: 4px; padding: 7px 9px;
-  font: inherit; background: #fff; color: var(--text); width: 100%;
+.form-actions .btn { min-height: 38px; }
+/* Simple forms (few controls) use one column like the login page, centered in the
+   dialog/card instead of the two-column .form-grid. */
+.form-simple { width: 100%; max-width: 520px; margin-left: auto; margin-right: auto; }
+/* Settings page: cards inside the form share the form gap instead of adding their
+   own bottom margin; the save and restart actions sit at the card's right edge. */
+.form > .card { margin-bottom: 0; }
+#settings-form { margin-bottom: 16px; }
+#settings-form > .form-actions,
+#restart-form .form-actions { justify-content: flex-end; }
+.card-title { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+.card-danger { border-color: #fecaca; background: #fffafa; }
+.card-danger .card-title { color: var(--danger); }
+/* Dialog footers read as a separate row: secondary/test actions, Cancel, then the
+   primary save on the right. */
+.ui-dialog .form-actions {
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
+.ui-dialog .form-actions .btn:not(.btn-primary):not(.js-dialog-cancel) { order: 1; }
+.ui-dialog .form-actions .js-dialog-cancel { order: 2; }
+.ui-dialog .form-actions .btn-primary { order: 3; }
+/* A form-level note lines up with the control column, not the label column. */
+.ui-dialog .form > .hint { margin-left: 132px; }
+@media (max-width: 700px) {
+  .ui-dialog .form > .hint { margin-left: 0; }
+}
+select, input[type=text], input[type=password], input[type=number], input[type=url] {
+  border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px;
+  font: inherit; background: #fbfcfe; color: var(--text); width: 100%;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+select { padding-right: 32px; }
 select[multiple] { padding: 4px; }
 select[multiple] option { padding: 4px 6px; border-radius: 4px; }
-input:focus, select:focus, textarea:focus { outline: 2px solid #bfdbfe; border-color: var(--primary); }
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--primary); background: #fff;
+  box-shadow: 0 0 0 3px rgba(64,158,255,.15);
+}
 /* Read-only values (wizard ports, Docker-locked ports) must read as display, not as
    inputs waiting for a click. */
 input[readonly] { background: var(--bg); color: var(--muted); cursor: not-allowed; }
-input[readonly]:focus { outline: none; border-color: var(--border); }
-/* Password fields with an eye toggle: the button sits over the input's right edge, so
-   the text is padded clear of it. app.js swaps the two icons via aria-pressed. */
-.password-wrap { position: relative; }
-.password-wrap input { padding-right: 38px; }
-.pw-toggle {
+input[readonly]:focus { outline: none; border-color: var(--border); box-shadow: none; background: var(--bg); }
+/* Password fields with an eye toggle and the token copy button: the action sits over
+   the input's right edge, so the text is padded clear of it. app.js swaps the two
+   password icons via aria-pressed and flashes a checkmark on the copy button. */
+.password-wrap, .copy-wrap { position: relative; }
+.password-wrap input, .copy-wrap input { padding-right: 38px; }
+.pw-toggle, .copy-btn {
   position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
   display: flex; align-items: center; border: 0; padding: 4px; border-radius: 4px;
   background: none; color: var(--muted); cursor: pointer;
 }
-.pw-toggle:hover { color: var(--text); }
-.pw-toggle svg { width: 18px; height: 18px; }
+.pw-toggle:hover, .copy-btn:hover { color: var(--text); }
+.pw-toggle svg, .copy-btn svg { width: 18px; height: 18px; }
 .pw-toggle .pw-icon-hide { display: none; }
 .pw-toggle[aria-pressed="true"] .pw-icon-show { display: none; }
 .pw-toggle[aria-pressed="true"] .pw-icon-hide { display: block; }
 .hint { color: var(--muted); font-size: 12px; }
-fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 0; }
+fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 0; }
 legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
 .header-rows { display: flex; flex-direction: column; gap: 6px; }
 .header-row { display: flex; gap: 6px; }
@@ -350,12 +406,14 @@ legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
 /* ---------- buttons ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  border: 1px solid #dcdfe6; border-radius: 4px; padding: 7px 14px;
+  border: 1px solid #dcdfe6; border-radius: 8px; padding: 7px 14px;
   background: #fff; color: var(--text); cursor: pointer; font: inherit;
 }
 .btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
-.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff;
+  box-shadow: 0 6px 14px rgba(64,158,255,.18); }
+.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff;
+  box-shadow: 0 8px 18px rgba(64,158,255,.24); }
 .btn-danger { color: var(--danger); border-color: #fbc4c4; }
 .btn-danger:hover { background: #fef0f0; border-color: var(--danger); color: var(--danger); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
@@ -411,10 +469,94 @@ legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
   .stats-row, .quick-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 576px) {
-  .stats-row { grid-template-columns: 1fr; }
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 576px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .field { grid-template-columns: 92px minmax(0, 1fr); column-gap: 8px; }
+  .field > span:first-child { padding-top: 10px; font-size: 12px; }
+}
+
+/* The dialog itself is the card for embedded form pages; do not nest a second one. */
+.ui-dialog .form.card { border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+
+/* ---------- login ---------- */
+.login-page {
+  background:
+    radial-gradient(900px 520px at 8% 0%, rgba(64,158,255,.16), transparent 62%),
+    radial-gradient(760px 520px at 100% 100%, rgba(99,102,241,.14), transparent 62%),
+    linear-gradient(160deg, #f8fbff 0%, #eef4fb 55%, #f7f9fc 100%);
+}
+.login-card {
+  width: 420px;
+  padding: 34px 36px 32px;
+  border-radius: 16px;
+  border-color: rgba(15,23,42,.06);
+  box-shadow: 0 28px 70px rgba(15,23,42,.14), 0 2px 8px rgba(15,23,42,.04);
+}
+.login-card .login-head { margin-bottom: 24px; }
+.login-logo {
+  width: 54px; height: 54px; margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 15px; color: #fff;
+  background: linear-gradient(135deg, #5aa9ff 0%, #2f6fed 100%);
+  box-shadow: 0 12px 26px rgba(64,158,255,.32);
+}
+.login-logo svg { width: 27px; height: 27px; }
+.login-card .login-brand { font-size: 22px; letter-spacing: .02em; }
+.login-card .login-head h1 { margin: 5px 0 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.login-form { gap: 16px; width: 100%; max-width: 288px; margin: 0 auto; }
+/* The label column stays left, the control fills the row, and the compact button
+   shares the control column so its left edge lines up with the input. */
+.login-field,
+.login-actions {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+}
+.login-field > span {
+  color: var(--muted); font-size: 13px; font-weight: 500; text-align: right;
+}
+.login-input { grid-column: 2; position: relative; }
+.login-card .login-input input {
+  height: 42px; padding-left: 42px; border-radius: 8px;
+  background: #fbfcfe; transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.login-card .login-input input:focus { background: #fff; }
+.login-card .login-input.password-wrap input { padding-right: 42px; }
+.login-input-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  width: 18px; height: 18px; color: #9aa7b8; pointer-events: none;
+}
+.login-input .pw-toggle { right: 8px; }
+/* Compact primary action: the button starts at the same x as the input, keeping the
+   same size; the form block itself is centered in the card. */
+.login-submit {
+  grid-column: 2;
+  justify-self: start;
+  min-width: 140px;
+  height: 40px;
+  padding: 0 28px;
+  margin-top: 4px;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 8px 18px rgba(64,158,255,.22);
+}
+.login-page .bare-lang { top: 20px; right: 24px; }
+.login-page .lang-select {
+  background: rgba(255,255,255,.72);
+  border-color: rgba(15,23,42,.1);
+  border-radius: 999px;
+  padding: 5px 10px;
+  backdrop-filter: blur(8px);
+}
+.login-card .flash { border-radius: 8px; }
 @media (max-width: 480px) {
-  .form-grid-2 { grid-template-columns: 1fr; }
+  .login-card { width: 100%; padding: 28px 22px; }
+  .login-field,
+  .login-actions { grid-template-columns: 60px minmax(0, 1fr); column-gap: 8px; }
+  .login-page .bare-lang { top: 12px; right: 12px; }
 }

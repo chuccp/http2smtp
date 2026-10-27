@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="toolbar">
-  <button type="button" class="btn btn-primary" data-form-dialog="/users/form" data-success="{{.L.T "common.success"}}">{{.L.T "common.add"}}</button>
+  <button type="button" class="btn btn-primary" data-form-dialog="/users/form" data-dialog-width="600px" data-success="{{.L.T "common.success"}}">{{.L.T "common.add"}}</button>
 </div>
 
 <div class="table-wrap">
@@ -30,7 +30,7 @@
         {{if .IsAdmin}}
         <span class="muted">—</span>
         {{else}}
-        <button type="button" class="btn btn-sm" data-form-dialog="/users/form/{{.Id}}" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
+        <button type="button" class="btn btn-sm" data-form-dialog="/users/form/{{.Id}}" data-dialog-width="600px" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "user.deleteConfirm"}}" data-href="/api/user/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
         {{end}}
       </td>

@@ -8,7 +8,7 @@
   </dl>
 </div>
 
-<form class="form card" id="smtp-send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
+<form class="form card form-simple" id="smtp-send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
   <input type="hidden" name="smtpId" value="{{.Id}}">
   <label class="field">
     <span>{{.L.T "mail.recipientName"}}</span>
@@ -19,17 +19,9 @@
       {{range .Recipients}}<option value="{{.Mail}}">{{.Name}} &lt;{{.Mail}}&gt;</option>{{end}}
     </select>
   </label>
-  <label class="field">
-    <span>{{.L.T "token.subject"}}</span>
-    <input type="text" name="subject" value="{{.Subject}}" required>
-  </label>
-  <label class="field">
-    <span>{{.L.T "log.content"}}</span>
-    <textarea name="content" required>{{.L.T "smtp.testEmailContent"}}</textarea>
-  </label>
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary">{{.L.T "smtp.sendTestMail"}}</button>
-  </div>
+  {{template "field" (dict "L" .L "label" "token.subject" "name" "subject" "value" .Subject "required" true)}}
+  {{template "textareaField" (dict "L" .L "label" "log.content" "name" "content" "value" (.L.T "smtp.testEmailContent") "required" true)}}
+  {{template "formActions" (dict "L" .L "saveKey" "smtp.sendTestMail")}}
 </form>
 
 <script>
@@ -57,13 +49,15 @@
     }).then(function (x) {
       btn.disabled = false;
       if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
-      var msg = form.getAttribute('data-success') || 'OK';
-      if (btn.closest('.ui-dialog-mask')) {
-        UI.dialogDone(btn, msg);
-      } else {
-        UI.toast(msg, 'ok');
-        location.href = '/smtp';
-      }
+      // Alert first; only after the user acknowledges it, close the test dialog
+      // (dialogDone with an empty message refreshes the list without a toast).
+      UI.alert(form.getAttribute('data-success') || 'OK').then(function () {
+        if (btn.closest('.ui-dialog-mask')) {
+          UI.dialogDone(btn, '');
+        } else {
+          location.href = '/smtp';
+        }
+      });
     }).catch(function () {
       btn.disabled = false;
       UI.alert('failed');

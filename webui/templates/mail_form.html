@@ -4,18 +4,10 @@
   <a class="btn" href="/mail">← {{.L.T "layout.sidebar.mail"}}</a>
 </div>
 
-<form method="post" action="/mail/save" class="form card" style="max-width:480px">
+<form method="post" action="/mail/save" class="form card form-simple">
   <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
-  <label class="field">
-    <span>{{.L.T "mail.recipientName"}}</span>
-    <input type="text" name="name" value="{{.Name}}" required>
-  </label>
-  <label class="field">
-    <span>{{.L.T "mail.emailAddress"}}</span>
-    <input type="text" name="mail" value="{{.Mail}}" required>
-  </label>
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary">{{.L.T "common.save"}}</button>
-  </div>
+  {{template "field" (dict "L" .L "label" "mail.recipientName" "name" "name" "value" .Name "required" true)}}
+  {{template "field" (dict "L" .L "label" "mail.emailAddress" "name" "mail" "value" .Mail "required" true)}}
+  {{template "formActions" (dict "L" .L "saveKey" "common.save")}}
 </form>
 {{end}}

@@ -17,19 +17,11 @@
   </dl>
 </div>
 
-<form class="form card" id="send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
+<form class="form card form-simple" id="send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
   <input type="hidden" name="tokenId" value="{{.TokenId}}">
-  <label class="field">
-    <span>{{.L.T "token.subject"}}</span>
-    <input type="text" name="subject" value="{{.Subject}}">
-  </label>
-  <label class="field">
-    <span>{{.L.T "log.content"}}</span>
-    <textarea name="content"></textarea>
-  </label>
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary">{{.L.T "token.sendTestMail"}}</button>
-  </div>
+  {{template "field" (dict "L" .L "label" "token.subject" "name" "subject" "value" .Subject)}}
+  {{template "textareaField" (dict "L" .L "label" "log.content" "name" "content")}}
+  {{template "formActions" (dict "L" .L "saveKey" "token.sendTestMail")}}
 </form>
 
 <script>
@@ -54,13 +46,15 @@
     }).then(function (x) {
       btn.disabled = false;
       if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
-      var msg = form.getAttribute('data-success') || 'OK';
-      if (btn.closest('.ui-dialog-mask')) {
-        UI.dialogDone(btn, msg);
-      } else {
-        UI.toast(msg, 'ok');
-        location.href = '/tokens';
-      }
+      // Alert first; only after the user acknowledges it, close the test dialog
+      // (dialogDone with an empty message refreshes the list without a toast).
+      UI.alert(form.getAttribute('data-success') || 'OK').then(function () {
+        if (btn.closest('.ui-dialog-mask')) {
+          UI.dialogDone(btn, '');
+        } else {
+          location.href = '/tokens';
+        }
+      });
     }).catch(function () {
       btn.disabled = false;
       UI.alert('failed');

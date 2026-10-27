@@ -7,38 +7,23 @@
 <form method="post" action="/schedule/save" class="form card" id="schedule-form">
   <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
-    <label class="field">
-      <span>{{.L.T "schedule.taskName"}}</span>
-      <input type="text" name="name" value="{{.Name}}" required>
-    </label>
-    <label class="field">
-      <span>{{.L.T "schedule.associatedToken"}}</span>
-      <select name="tokenId" required data-picker
-        data-title="{{.L.T "schedule.associatedToken"}}"
-        data-placeholder="{{.L.T "schedule.associatedToken"}}">
-        <option value="">—</option>
-        {{range .TokenOptions}}
-        <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
-        {{end}}
-      </select>
-    </label>
-    <label class="field">
-      <span>{{.L.T "schedule.cronExpression"}}</span>
-      <input type="text" name="cron" value="{{.Cron}}" class="mono" required>
-      <span class="hint">{{.L.T "schedule.cronHelp"}} — {{.L.T "schedule.exampleCron"}}</span>
-    </label>
-    <label class="field">
-      <span>{{.L.T "schedule.requestUrl"}}</span>
-      <input type="url" name="url" value="{{.Url}}" required>
-    </label>
+    {{template "field" (dict "L" .L "label" "schedule.taskName" "name" "name" "value" .Name "required" true)}}
+    {{template "selectField" (dict "L" .L "label" "schedule.associatedToken" "name" "tokenId" "options" .TokenOptions "required" true "picker" true "titleKey" "schedule.associatedToken" "placeholderKey" "schedule.associatedToken" "placeholder" "—")}}
+    {{template "field" (dict "L" .L "label" "schedule.cronExpression" "name" "cron" "value" .Cron "inputClass" "mono" "required" true "placeholderKey" "schedule.exampleCron")}}
+    {{template "field" (dict "L" .L "label" "schedule.requestUrl" "name" "url" "type" "url" "value" .Url "required" true)}}
   </div>
 
   <fieldset>
     <legend>{{.L.T "schedule.requestMethod"}}</legend>
-    <label class="check"><input type="radio" name="method" value="GET" {{if eq .Method "GET"}}checked{{end}}> GET</label>
+    {{template "checkField" (dict "L" .L "type" "radio" "name" "method" "value" "GET" "checked" (eq .Method "GET") "label" "GET")}}
     &nbsp;
-    <label class="check"><input type="radio" name="method" value="POST" {{if eq .Method "POST"}}checked{{end}}> POST</label>
+    {{template "checkField" (dict "L" .L "type" "radio" "name" "method" "value" "POST" "checked" (eq .Method "POST") "label" "POST")}}
   </fieldset>
+
+  <label class="field" id="body-field" {{if ne .Method "POST"}}hidden{{end}}>
+    <span>{{.L.T "schedule.requestBody"}}</span>
+    <textarea name="body" {{if eq .Method "POST"}}required{{end}}>{{.Body}}</textarea>
+  </label>
 
   <fieldset>
     <legend>{{.L.T "schedule.requestHeaders"}}</legend>
@@ -54,42 +39,40 @@
     <button type="button" class="btn btn-sm" id="add-header" style="margin-top:6px">+</button>
   </fieldset>
 
-  {{if eq .Method "POST"}}
-  <label class="field">
-    <span>{{.L.T "schedule.requestBody"}}</span>
-    <textarea name="body">{{.Body}}</textarea>
-  </label>
-  {{else}}
-  <input type="hidden" name="body" value="{{.Body}}">
-  {{end}}
-
   <fieldset>
     <legend>{{.L.T "schedule.useTemplate"}}</legend>
-    <label class="check">
-      <input type="checkbox" name="useTemplate" id="use-template" {{if .UseTemplate}}checked{{end}}>
-      {{.L.T "schedule.useTemplate"}} — {{.L.T "schedule.templateHelp"}}
-    </label>
+    {{template "checkField" (dict "L" .L "name" "useTemplate" "id" "use-template" "checked" .UseTemplate "label" (printf "%s — %s" (.L.T "schedule.useTemplate") (.L.T "schedule.templateHelp")))}}
     <label class="field" id="template-field" style="margin-top:8px" {{if not .UseTemplate}}hidden{{end}}>
-      <textarea name="template" class="mono" rows="6">{{.Template}}</textarea>
-      <span class="hint">{{.L.T "schedule.templatePlaceholder"}}</span>
+      <textarea name="template" class="mono" rows="6" placeholder="{{.L.T "schedule.templatePlaceholder"}}">{{.Template}}</textarea>
     </label>
   </fieldset>
 
   <fieldset>
     <legend>{{.L.T "schedule.status"}}</legend>
-    <label class="check"><input type="checkbox" name="onlyByError" {{if .OnlyByError}}checked{{end}}> {{.L.T "schedule.onlySendByError"}} — {{.L.T "schedule.onlySendByErrorHelp"}}</label>
+    {{template "checkField" (dict "L" .L "name" "onlyByError" "checked" .OnlyByError "label" (printf "%s — %s" (.L.T "schedule.onlySendByError") (.L.T "schedule.onlySendByErrorHelp")))}}
     <br>
-    <label class="check"><input type="checkbox" name="isUse" {{if .IsUse}}checked{{end}}> {{.L.T "schedule.enabled"}}</label>
+    {{template "checkField" (dict "L" .L "name" "isUse" "checked" .IsUse "labelKey" "schedule.enabled")}}
   </fieldset>
 
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary">{{.L.T "common.save"}}</button>
-    <button type="button" class="btn" id="schedule-test">{{.L.T "schedule.testSchedule"}}</button>
-  </div>
+  {{template "formActions" (dict "L" .L "saveKey" "common.save" "testID" "schedule-test" "testKey" "schedule.testSchedule")}}
 </form>
 
 <script>
 (function () {
+  var form = document.getElementById('schedule-form');
+  var bodyField = document.getElementById('body-field');
+  var bodyInput = bodyField ? bodyField.querySelector('[name=body]') : null;
+  function syncBody() {
+    var checked = form.querySelector('[name=method]:checked');
+    var post = !!checked && checked.value === 'POST';
+    if (bodyField) bodyField.hidden = !post;
+    if (bodyInput) bodyInput.required = post;
+  }
+  form.querySelectorAll('[name=method]').forEach(function (radio) {
+    radio.addEventListener('change', syncBody);
+  });
+  syncBody();
+
   var rows = document.getElementById('header-rows');
   document.getElementById('add-header').addEventListener('click', function () {
     var i = rows.querySelectorAll('.header-row').length;

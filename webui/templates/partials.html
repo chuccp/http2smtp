@@ -1,0 +1,101 @@
+{{/* Shared page partials, parsed with both the bare and the app layouts. */}}
+
+{{/* The eye button for a .password-wrap input; app.js flips the input type and swaps
+     the two icons through aria-pressed. */}}
+{{define "passwordToggle"}}
+<button type="button" class="pw-toggle" data-password-toggle
+        data-show-label="{{.L.T "common.showPassword"}}" data-hide-label="{{.L.T "common.hidePassword"}}"
+        aria-label="{{.L.T "common.showPassword"}}" title="{{.L.T "common.showPassword"}}" aria-pressed="false">
+  <svg class="pw-icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+  <svg class="pw-icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+</button>
+{{end}}
+
+{{/* ---------- form components ----------
+     Each takes a map built with the dict template function. Keys:
+     L (the request translator, always required), label (i18n key), name, value,
+     required, readonly, autofocus, autocomplete,
+     placeholder / placeholderKey (single-line input hints),
+     hint / hintKey (a note below the control), type (input), minlength, inputClass, class (label),
+     copyLabelKey (copyField), options ([]SelectOption), multiple, picker, titleKey,
+     placeholder (also the select's empty option text), rows. Optional keys may simply
+     be omitted. */}}
+
+{{define "field"}}{{$L := .L}}
+<label class="field{{with .class}} {{.}}{{end}}">
+  <span>{{$L.T .label}}</span>
+  <input type="{{with .type}}{{.}}{{else}}text{{end}}" name="{{.name}}" value="{{with .value}}{{.}}{{end}}"
+    {{if .placeholder}}placeholder="{{.placeholder}}"{{else}}{{with .placeholderKey}}placeholder="{{$L.T .}}"{{end}}{{end}}
+    {{with .autocomplete}}autocomplete="{{.}}"{{end}}
+    {{if .autofocus}}autofocus{{end}}
+    {{if .required}}required{{end}}
+    {{if .readonly}}readonly tabindex="-1"{{end}}
+    {{with .minlength}}minlength="{{.}}"{{end}}
+    {{with .inputClass}}class="{{.}}"{{end}}>
+  {{if .hint}}<span class="hint">{{.hint}}</span>{{else}}{{with .hintKey}}<span class="hint">{{$L.T .}}</span>{{end}}{{end}}
+</label>
+{{end}}
+
+{{define "passwordField"}}{{$L := .L}}
+<label class="field{{with .class}} {{.}}{{end}}">
+  <span>{{$L.T .label}}</span>
+  <div class="password-wrap">
+    <input type="password" name="{{.name}}" value="{{with .value}}{{.}}{{end}}"
+      {{with .autocomplete}}autocomplete="{{.}}"{{end}}
+      {{if .required}}required{{end}}
+      {{with .minlength}}minlength="{{.}}"{{end}}
+      {{if .keepHint}}placeholder="{{$L.T "settings.passwordKeepHint"}}"{{end}}>
+    {{template "passwordToggle" .}}
+  </div>
+  {{with .hintKey}}<span class="hint">{{$L.T .}}</span>{{end}}
+</label>
+{{end}}
+
+{{define "copyField"}}{{$L := .L}}
+<label class="field{{with .class}} {{.}}{{end}}">
+  <span>{{$L.T .label}}</span>
+  <div class="copy-wrap">
+    <input type="{{with .type}}{{.}}{{else}}text{{end}}" name="{{.name}}" value="{{with .value}}{{.}}{{end}}"
+      {{if .required}}required{{end}}
+      {{with .inputClass}}class="{{.}}"{{end}}>
+    <button type="button" class="copy-btn" data-copy-input
+      data-ok="✓" data-fail="{{$L.T "common.copyFailed"}}"
+      aria-label="{{$L.T .copyLabelKey}}" title="{{$L.T .copyLabelKey}}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+    </button>
+  </div>
+  {{with .hintKey}}<span class="hint">{{$L.T .}}</span>{{end}}
+</label>
+{{end}}
+
+{{define "selectField"}}{{$L := .L}}
+<label class="field{{with .class}} {{.}}{{end}}">
+  <span>{{$L.T .label}}</span>
+  <select name="{{.name}}"
+    {{if .required}}required{{end}}
+    {{if .multiple}}multiple{{end}}
+    {{if .picker}}data-picker data-title="{{$L.T .titleKey}}" data-placeholder="{{$L.T .placeholderKey}}"{{end}}>
+    {{if .placeholder}}<option value="">{{if .placeholderKey}}{{$L.T .placeholderKey}}{{else}}{{.placeholder}}{{end}}</option>{{end}}
+    {{range .options}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}
+  </select>
+</label>
+{{end}}
+
+{{define "textareaField"}}{{$L := .L}}
+<label class="field{{with .class}} {{.}}{{end}}">
+  <span>{{$L.T .label}}</span>
+  <textarea name="{{.name}}"{{with .inputClass}} class="{{.}}"{{end}}{{with .rows}} rows="{{.}}"{{end}}{{if .required}} required{{end}}>{{with .value}}{{.}}{{end}}</textarea>
+  {{with .hintKey}}<span class="hint">{{$L.T .}}</span>{{end}}
+</label>
+{{end}}
+
+{{define "checkField"}}{{$L := .L}}
+<label class="check"><input type="{{with .type}}{{.}}{{else}}checkbox{{end}}" name="{{.name}}"{{with .value}} value="{{.}}"{{end}}{{with .id}} id="{{.}}"{{end}}{{if .checked}} checked{{end}}> {{if .labelKey}}{{$L.T .labelKey}}{{else}}{{.label}}{{end}}</label>
+{{end}}
+
+{{define "formActions"}}{{$L := .L}}
+<div class="form-actions">
+  <button type="submit" class="btn btn-primary">{{$L.T .saveKey}}</button>
+  {{if .testID}}<button type="button" class="btn" id="{{.testID}}">{{$L.T .testKey}}</button>{{end}}
+</div>
+{{end}}

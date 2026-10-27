@@ -7,52 +7,21 @@
 <form method="post" action="/tokens/save" class="form card">
   <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
-    <label class="field">
-      <span>{{.L.T "token.tokenName"}}</span>
-      <input type="text" name="name" value="{{.Name}}" required>
-    </label>
-    <label class="field">
-      <span>{{.L.T "token.tokenValue"}}</span>
-      <input type="text" name="token" value="{{.TokenValue}}" class="mono" required>
-      <span class="hint">{{.L.T "token.tokenGenerated" .TokenValue}}</span>
-    </label>
-    <label class="field">
-      <span>{{.L.T "token.subject"}}</span>
-      <input type="text" name="subject" value="{{.Subject}}" placeholder="{{.L.T "token.subjectPlaceholder"}}">
-    </label>
-    <label class="field">
-      <span>{{.L.T "token.associatedSMTP"}}</span>
-      <select name="smtpId" required data-picker
-        data-title="{{.L.T "token.associatedSMTP"}}"
-        data-placeholder="{{.L.T "token.pleaseSelectSMTP"}}">
-        <option value="">—</option>
-        {{range .SmtpOptions}}
-        <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
-        {{end}}
-      </select>
-    </label>
+    {{template "field" (dict "L" .L "label" "token.tokenName" "name" "name" "value" .Name "required" true)}}
+    {{template "copyField" (dict "L" .L "label" "token.tokenValue" "name" "token" "value" .TokenValue "inputClass" "mono" "required" true "copyLabelKey" "token.copyToken")}}
+    {{template "field" (dict "L" .L "label" "token.subject" "name" "subject" "value" .Subject "placeholderKey" "token.subjectPlaceholder")}}
+    {{template "selectField" (dict "L" .L "label" "token.associatedSMTP" "name" "smtpId" "options" .SmtpOptions "required" true "picker" true "titleKey" "token.associatedSMTP" "placeholderKey" "token.pleaseSelectSMTP" "placeholder" "—")}}
   </div>
 
-  <label class="field">
-    <span>{{.L.T "token.allowedRecipients"}}</span>
-    <select name="receiveEmailIds" multiple required data-picker
-      data-title="{{.L.T "token.allowedRecipients"}}"
-      data-placeholder="{{.L.T "token.pleaseSelectRecipients"}}">
-      {{range .MailOptions}}
-      <option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>
-      {{end}}
-    </select>
-  </label>
+  {{template "selectField" (dict "L" .L "label" "token.allowedRecipients" "name" "receiveEmailIds" "options" .MailOptions "required" true "multiple" true "picker" true "titleKey" "token.allowedRecipients" "placeholderKey" "token.pleaseSelectRecipients")}}
 
   <fieldset>
     <legend>{{.L.T "token.status"}}</legend>
-    <label class="check"><input type="radio" name="state" value="on" {{if not .State}}checked{{end}}> {{.L.T "token.inUse"}}</label>
+    {{template "checkField" (dict "L" .L "type" "radio" "name" "state" "value" "on" "checked" (not .State) "labelKey" "token.inUse")}}
     &nbsp;
-    <label class="check"><input type="radio" name="state" value="off" {{if .State}}checked{{end}}> {{.L.T "token.userDisabled"}}</label>
+    {{template "checkField" (dict "L" .L "type" "radio" "name" "state" "value" "off" "checked" .State "labelKey" "token.userDisabled")}}
   </fieldset>
 
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary">{{.L.T "common.save"}}</button>
-  </div>
+  {{template "formActions" (dict "L" .L "saveKey" "common.save")}}
 </form>
 {{end}}

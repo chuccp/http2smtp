@@ -94,12 +94,47 @@ JSON is embedded in every build.
   checkbox (multiple) rows. The native select stays in the form — invisible but
   focusable — so required validation and FormData still work. Used by the token form
   (SMTP, recipients), the schedule form (token) and the SMTP send dialog (recipient).
+- **Form components** live in `webui/templates/partials.html`: `field`,
+  `passwordField`, `copyField`, `selectField`, `textareaField`, `checkField` and
+  `formActions`. Call
+  one with a map built by the `dict` helper, always passing the request translator:
+  `{{template "field" (dict "L" .L "label" "smtp.host" "name" "host" "value" .Host)}}`.
+  The partial translates labels/hints at execution; `dict` only assembles the map, so
+  this does not reintroduce parse-time translation. A picker is a `selectField` with
+  `picker=true`, `titleKey` and `placeholderKey`; the native select keeps
+  `required`/`multiple`. Admin form password inputs go through `passwordField` (it
+  carries the eye toggle); the login page has its own login field markup but reuses the
+  shared `passwordToggle`. `TestEveryPasswordFieldHasToggle` enforces the eye in both.
+  `formActions` is the
+  save/test button row; `testID`/`testKey` add the optional test button, and the form
+  dialog appends Cancel. The outer `<form>`, custom fieldsets and the setup wizard's
+  literal-option select and two submit buttons stay inline. Form fields are horizontal:
+  `.field` is a two-column grid (right-aligned label and colon on the left, control on
+  the right). Larger forms use `.form-grid` (two fields per row, stacking below 700px;
+  single-field blocks such as the SQLite file use `.form-grid-single`); forms with only
+  a few controls (mail, users, password, SMTP/token send, setup admin) use
+  `.form-simple` — one control per row in a centered 520px form. The SMTP, token and
+  schedule dialogs open at 860px; the simple dialogs open at 600px (mail/users/password)
+  or 640px (SMTP/token send). Controls share the login's visual language — 40px,
+  8px radius, a faint background and a blue focus ring; picker triggers and buttons
+  match, and a form embedded in a dialog drops its own card chrome. Dialog actions are
+  right-aligned as secondary/test, Cancel, primary save. Login is a dedicated card
+  (`bodyClass login-page`, `cardClass login-card`): a centered 288px form with label
+  and input on one row; the compact submit shares the input column and is left-aligned
+  with the input. Input icons and the shared eye toggle stay, and it does not use the
+  shared `.field` grid. Single-line input hints belong in
+  `placeholder`/`placeholderKey` — the cron field shows just the example expression —
+  not in a hint line under the control. The schedule form always renders the request
+  body field; the method radios reveal it and mark it required for POST, and the save
+  handler rejects an empty POST body.
 - Add/edit forms are the existing server-rendered form pages opened through
   `data-form-dialog`: the page head is dropped, Cancel is appended to the form actions,
-  a redirect means saved (close + toast + refresh the list), and a 400 re-render is
-  shown inside the dialog. Read-only/action pages (token send, SMTP send, log detail)
+  a redirect means saved (alert the success text, then close + refresh the list), and a
+  400 re-render is shown inside the dialog. Read-only/action pages (token send, SMTP send, log detail)
   open through `data-page-dialog`; their scripts call `UI.dialogDone(btn, msg)` on
-  success. The same form URLs still render standalone.
+  success. The test-send pages alert the result and call it with an empty message after
+  the user confirms, so the dialog closes without a toast. The same form URLs still
+  render standalone.
 - `app.js` wires the shell — fixed viewport, collapsible sidebar (mobile off-canvas),
   breadcrumb, tab bar (localStorage, keyed by path; closing the active tab lands on a
   neighbour), nav highlight, logout confirmation, password visibility, clipboard

@@ -236,6 +236,9 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 	if st.Name == "" {
 		return fail("common.failed")
 	}
+	if st.Method == "POST" && st.Body == "" {
+		return fail("request body is required")
+	}
 	if err := util.ValidateURL(st.Url); err != nil {
 		return fail(err.Error())
 	}

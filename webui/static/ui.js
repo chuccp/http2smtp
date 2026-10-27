@@ -26,6 +26,11 @@ window.UI = (function () {
   }
 
   function pageTitle(doc) {
+    var heading = doc.querySelector('.page-head h1');
+    if (heading) {
+      var text = heading.textContent.trim();
+      if (text) return text;
+    }
     return (doc.title || '').replace(/\s*-\s*HTTP2SMTP\s*$/, '');
   }
 
@@ -452,8 +457,8 @@ window.UI = (function () {
      Load a server-rendered page into a dialog. It is the same markup the page would
      serve standalone: the page head (back link) is dropped and a Cancel button is
      added to the form actions, if any. A page script reports success with
-     UI.dialogDone(button, message), which closes the dialog, toasts and refreshes the
-     list underneath — the Vue-dialog behaviour. */
+     UI.dialogDone(button, message), which closes the dialog, toasts (unless message is
+     empty) and refreshes the list underneath — the Vue-dialog behaviour. */
   function prepareDialogContent(content, dlg) {
     var head = content.querySelector('.page-head');
     if (head) head.remove();
@@ -463,7 +468,7 @@ window.UI = (function () {
       cancel.type = 'button';
       cancel.textContent = label('cancel', 'Cancel');
       cancel.addEventListener('click', function () { dlg.close(); });
-      actions.insertBefore(cancel, actions.firstChild);
+      actions.appendChild(cancel);
     }
     return content;
   }
@@ -519,8 +524,8 @@ window.UI = (function () {
   /* ---------- form dialogs ----------
      The add/edit forms stay ordinary server-rendered pages; loading one into a
      dialog gives the Vue-style interaction. Submitting posts the same form with
-     fetch: a redirect means the save succeeded (close, toast, refresh the list),
-     a 400 re-render means validation failed (show it inside the dialog). */
+     fetch: a redirect means the save succeeded (alert, then close and refresh the
+     list), a 400 re-render means validation failed (show it inside the dialog). */
   function formDialog(opts) {
     var dlg = modal({ width: opts.width || '640px' });
     var url = opts.url;
@@ -567,10 +572,13 @@ window.UI = (function () {
         var doc = parsePage(r.text);
         if (!doc.querySelector('.app')) { location.href = r.resp.url || url; return; }
         if (r.resp.redirected) {
-          dlg.close();
-          if (successText) toast(successText, 'ok');
-          if (opts.onSaved) opts.onSaved();
-          else refresh();
+          var done = function () {
+            dlg.close();
+            if (opts.onSaved) opts.onSaved();
+            else refresh();
+          };
+          if (successText) alert(successText).then(done);
+          else done();
           return;
         }
         var content = doc.querySelector('.content');
@@ -641,8 +649,8 @@ window.UI = (function () {
       var content = doc.querySelector('.content');
       if (!content || !doc.querySelector('.app')) { location.href = r.resp.url || location.href; return; }
       if (r.resp.redirected) {
-        if (successText) toast(successText, 'ok');
-        refresh();
+        if (successText) alert(successText).then(refresh);
+        else refresh();
         return;
       }
       var current = document.querySelector('.content');

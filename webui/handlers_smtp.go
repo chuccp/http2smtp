@@ -67,7 +67,7 @@ func (p *Pages) smtpForm(req *web.Request) (any, error) {
 	if !ok {
 		return nil, nil
 	}
-	data := &SmtpFormData{Base: p.base(req, user, "smtp.addSMTP", false), Port: 587}
+	data := &SmtpFormData{Base: p.base(req, user, "smtp.addSMTP", false), Port: 25}
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
@@ -168,7 +168,7 @@ func (p *Pages) smtpSave(req *web.Request) (any, error) {
 			Password: password,
 		}
 		if row.Port == 0 {
-			row.Port = 587
+			row.Port = 25
 		}
 		if password == "" {
 			return formErr(data, "password is required")
@@ -234,7 +234,7 @@ func (p *Pages) smtpTest(req *web.Request) (any, error) {
 	}
 	st.Port, _ = strconv.Atoi(req.GetFormParam("port"))
 	if st.Port == 0 {
-		st.Port = 587
+		st.Port = 25
 	}
 	if _, err := mail.ParseAddress(st.Mail); err != nil {
 		return nil, err

@@ -1,6 +1,6 @@
 {{define "content"}}
 <div class="toolbar">
-  <button type="button" class="btn btn-primary" data-form-dialog="/smtp/form" data-success="{{.L.T "common.success"}}">{{.L.T "smtp.addSMTP"}}</button>
+  <button type="button" class="btn btn-primary" data-form-dialog="/smtp/form" data-dialog-width="860px" data-success="{{.L.T "common.success"}}">{{.L.T "smtp.addSMTP"}}</button>
   <form class="filter-bar" method="get" action="/smtp">
     <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "smtp.smtpName"}}">
     <input type="text" name="host" value="{{.Host}}" placeholder="{{.L.T "smtp.host"}}">
@@ -38,8 +38,8 @@
       {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
       <td class="muted">{{fmtTime .CreateTime}}</td>
       <td class="col-actions">
-        {{if eq .UserId $.User.Id}}<button type="button" class="btn btn-sm" data-page-dialog="/smtp/send/{{.Id}}">{{$.L.T "smtp.sendTestMail"}}</button>{{end}}
-        <button type="button" class="btn btn-sm" data-form-dialog="/smtp/form/{{.Id}}" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
+        {{if eq .UserId $.User.Id}}<button type="button" class="btn btn-sm" data-page-dialog="/smtp/send/{{.Id}}" data-dialog-width="640px">{{$.L.T "smtp.sendTestMail"}}</button>{{end}}
+        <button type="button" class="btn btn-sm" data-form-dialog="/smtp/form/{{.Id}}" data-dialog-width="860px" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "smtp.deleteConfirm"}}" data-href="/api/smtp/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
       </td>
     </tr>

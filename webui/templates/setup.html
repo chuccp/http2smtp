@@ -1,5 +1,5 @@
-{{/* The database step carries six MySQL fields plus two ports; at the login card's
-     360px they all stack and the page outgrows the viewport. */}}
+{{/* The database step carries six MySQL fields plus two ports; the wide card gives
+     each horizontal field row room to breathe. */}}
 {{define "cardClass"}} bare-card-wide{{end}}
 {{define "content"}}
 <div class="login-head">
@@ -22,43 +22,24 @@
     </select>
   </label>
 
-  <div id="sqlite-fields" class="form-grid" {{if ne .DbType "sqlite"}}hidden{{end}}>
-    <label class="field">
-      <span>{{.L.T "setup.sqliteFile"}}</span>
-      <input type="text" name="sqliteFile" value="{{.SqliteFile}}" placeholder="http2smtp.db">
-    </label>
+  <div id="sqlite-fields" class="form-grid form-grid-single" {{if ne .DbType "sqlite"}}hidden{{end}}>
+    {{template "field" (dict "L" .L "label" "setup.sqliteFile" "name" "sqliteFile" "value" .SqliteFile "placeholder" "http2smtp.db")}}
   </div>
 
-  <div id="mysql-fields" class="form-grid form-grid-2" {{if ne .DbType "mysql"}}hidden{{end}}>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlHost"}}</span>
-      <input type="text" name="mysqlHost" value="{{.MysqlHost}}">
-    </label>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlPort"}}</span>
-      <input type="number" name="mysqlPort" value="{{if .MysqlPort}}{{.MysqlPort}}{{else}}3306{{end}}">
-    </label>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlDatabase"}}</span>
-      <input type="text" name="mysqlDbname" value="{{.MysqlDbname}}">
-    </label>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlCharset"}}</span>
-      <input type="text" name="mysqlCharset" value="{{if .MysqlCharset}}{{.MysqlCharset}}{{else}}utf8mb4{{end}}">
-    </label>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlUser"}}</span>
-      <input type="text" name="mysqlUsername" value="{{.MysqlUsername}}">
-    </label>
-    <label class="field">
-      <span>{{.L.T "setup.mysqlPassword"}}</span>
-      <input type="password" name="mysqlPassword" value="">
-    </label>
+  <div id="mysql-fields" class="form-grid" {{if ne .DbType "mysql"}}hidden{{end}}>
+    {{template "field" (dict "L" .L "label" "setup.mysqlHost" "name" "mysqlHost" "value" .MysqlHost)}}
+    {{$mysqlPort := .MysqlPort}}{{if not $mysqlPort}}{{$mysqlPort = 3306}}{{end}}
+    {{template "field" (dict "L" .L "label" "setup.mysqlPort" "name" "mysqlPort" "type" "number" "value" $mysqlPort)}}
+    {{template "field" (dict "L" .L "label" "setup.mysqlDatabase" "name" "mysqlDbname" "value" .MysqlDbname)}}
+    {{$mysqlCharset := .MysqlCharset}}{{if not $mysqlCharset}}{{$mysqlCharset = "utf8mb4"}}{{end}}
+    {{template "field" (dict "L" .L "label" "setup.mysqlCharset" "name" "mysqlCharset" "value" $mysqlCharset)}}
+    {{template "field" (dict "L" .L "label" "setup.mysqlUser" "name" "mysqlUsername" "value" .MysqlUsername)}}
+    {{template "passwordField" (dict "L" .L "label" "setup.mysqlPassword" "name" "mysqlPassword")}}
   </div>
 
   <fieldset>
     <legend>{{.L.T "setup.portConfig"}}</legend>
-    <div class="form-grid form-grid-2">
+    <div class="form-grid">
       <label class="field">
         <span>{{.L.T "setup.webPort"}}</span>
         <input type="text" value="{{.WebPort}}" readonly tabindex="-1">
@@ -86,25 +67,14 @@
 </div>
 {{end}}
 
-<form method="post" action="/setup/admin" class="form">
-  <label class="field">
-    <span>{{.L.T "setup.adminUsername"}}</span>
-    <input type="text" name="username" value="{{.AdminUsername}}" autocomplete="username" required>
-  </label>
-  <label class="field">
-    <span>{{if .HasAdmin}}{{.L.T "setup.newPasswordPlaceholder"}}{{else}}{{.L.T "setup.adminPassword"}}{{end}}</span>
-    <div class="password-wrap">
-      <input type="password" name="password" autocomplete="new-password" required minlength="8">
-      {{template "passwordToggle" .}}
-    </div>
-  </label>
-  <label class="field">
-    <span>{{.L.T "setup.confirmPassword"}}</span>
-    <div class="password-wrap">
-      <input type="password" name="confirm" autocomplete="new-password" required minlength="8">
-      {{template "passwordToggle" .}}
-    </div>
-  </label>
+<form method="post" action="/setup/admin" class="form form-simple">
+  {{template "field" (dict "L" .L "label" "setup.adminUsername" "name" "username" "value" .AdminUsername "autocomplete" "username" "required" true)}}
+  {{if .HasAdmin}}
+  {{template "passwordField" (dict "L" .L "label" "setup.newPasswordPlaceholder" "name" "password" "autocomplete" "new-password" "required" true "minlength" 8)}}
+  {{else}}
+  {{template "passwordField" (dict "L" .L "label" "setup.adminPassword" "name" "password" "autocomplete" "new-password" "required" true "minlength" 8)}}
+  {{end}}
+  {{template "passwordField" (dict "L" .L "label" "setup.confirmPassword" "name" "confirm" "autocomplete" "new-password" "required" true "minlength" 8)}}
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">{{if .HasAdmin}}{{.L.T "setup.resetAdmin"}}{{else}}{{.L.T "setup.initialize"}}{{end}}</button>
   </div>

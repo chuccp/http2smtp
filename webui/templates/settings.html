@@ -3,19 +3,13 @@
   {{if .IsDocker}}<input type="hidden" name="isDocker" value="1">{{end}}
 
   <div class="card">
-    <h2 style="margin:0 0 10px;font-size:15px">{{.L.T "settings.generalSettings"}}</h2>
+    <h2 class="card-title">{{.L.T "settings.generalSettings"}}</h2>
     {{if .IsDocker}}
     <div class="flash flash-err">{{.L.T "settings.portLockedByDocker"}}</div>
     {{end}}
     <div class="form-grid">
-      <label class="field">
-        <span>{{.L.T "settings.managementPort"}}</span>
-        <input type="number" name="webPort" value="{{.WebPort}}" {{if .IsDocker}}readonly{{end}}>
-      </label>
-      <label class="field">
-        <span>{{.L.T "settings.apiPort"}}</span>
-        <input type="number" name="apiPort" value="{{.ApiPort}}" {{if .IsDocker}}readonly{{end}}>
-      </label>
+      {{template "field" (dict "L" .L "label" "settings.managementPort" "name" "webPort" "type" "number" "value" .WebPort "readonly" .IsDocker)}}
+      {{template "field" (dict "L" .L "label" "settings.apiPort" "name" "apiPort" "type" "number" "value" .ApiPort "readonly" .IsDocker)}}
     </div>
     {{if not .IsDocker}}
     <div class="hint">{{.L.T "setup.portHint"}}</div>
@@ -23,8 +17,8 @@
   </div>
 
   <div class="card">
-    <h2 style="margin:0 0 10px;font-size:15px">{{.L.T "settings.databaseConfig"}}</h2>
-    <label class="field" style="max-width:240px">
+    <h2 class="card-title">{{.L.T "settings.databaseConfig"}}</h2>
+    <label class="field" style="max-width:360px">
       <span>{{.L.T "settings.databaseType"}}</span>
       <select name="dbType" onchange="settingsToggleDbType(this.value)">
         <option value="sqlite" {{if eq .DbType "sqlite"}}selected{{end}}>{{.L.T "settings.sqlite"}}</option>
@@ -32,47 +26,25 @@
       </select>
     </label>
 
-    <div id="sqlite-fields" class="form-grid" style="margin-top:10px" {{if ne .DbType "sqlite"}}hidden{{end}}>
-      <label class="field">
-        <span>{{.L.T "settings.sqliteFile"}}</span>
-        <input type="text" name="sqliteFile" value="{{.SqliteFile}}">
-      </label>
+    <div id="sqlite-fields" class="form-grid form-grid-single" style="margin-top:10px" {{if ne .DbType "sqlite"}}hidden{{end}}>
+      {{template "field" (dict "L" .L "label" "settings.sqliteFile" "name" "sqliteFile" "value" .SqliteFile)}}
     </div>
 
     <div id="mysql-fields" class="form-grid" style="margin-top:10px" {{if ne .DbType "mysql"}}hidden{{end}}>
-      <label class="field">
-        <span>{{.L.T "settings.mysqlHost"}}</span>
-        <input type="text" name="mysqlHost" value="{{.MysqlHost}}">
-      </label>
-      <label class="field">
-        <span>{{.L.T "settings.mysqlPort"}}</span>
-        <input type="number" name="mysqlPort" value="{{.MysqlPort}}">
-      </label>
-      <label class="field">
-        <span>{{.L.T "settings.mysqlDatabase"}}</span>
-        <input type="text" name="mysqlDbname" value="{{.MysqlDbname}}">
-      </label>
-      <label class="field">
-        <span>{{.L.T "settings.mysqlUser"}}</span>
-        <input type="text" name="mysqlUsername" value="{{.MysqlUsername}}">
-      </label>
-      <label class="field">
-        <span>{{.L.T "settings.mysqlPassword"}}</span>
-        <input type="password" name="mysqlPassword" value="" autocomplete="new-password" placeholder="{{.L.T "settings.passwordKeepHint"}}">
-      </label>
-      <label class="field">
-        <span>{{.L.T "settings.mysqlCharset"}}</span>
-        <input type="text" name="mysqlCharset" value="{{.MysqlCharset}}">
-      </label>
+      {{template "field" (dict "L" .L "label" "settings.mysqlHost" "name" "mysqlHost" "value" .MysqlHost)}}
+      {{template "field" (dict "L" .L "label" "settings.mysqlPort" "name" "mysqlPort" "type" "number" "value" .MysqlPort)}}
+      {{template "field" (dict "L" .L "label" "settings.mysqlDatabase" "name" "mysqlDbname" "value" .MysqlDbname)}}
+      {{template "field" (dict "L" .L "label" "settings.mysqlUser" "name" "mysqlUsername" "value" .MysqlUsername)}}
+      {{template "passwordField" (dict "L" .L "label" "settings.mysqlPassword" "name" "mysqlPassword" "autocomplete" "new-password" "keepHint" true)}}
+      {{template "field" (dict "L" .L "label" "settings.mysqlCharset" "name" "mysqlCharset" "value" .MysqlCharset)}}
     </div>
   </div>
 
-  <div class="form-actions">
-    <button type="submit" class="btn btn-primary">{{.L.T "settings.saveSettings"}}</button>
-  </div>
+  {{template "formActions" (dict "L" .L "saveKey" "settings.saveSettings")}}
 </form>
 
-<form method="post" action="/settings/restart" class="form card" id="restart-form" style="max-width:640px">
+<form method="post" action="/settings/restart" class="form card card-danger" id="restart-form">
+  <h2 class="card-title">{{.L.T "settings.restartSystem"}}</h2>
   <div class="hint">{{.L.T "settings.restartConfirm"}}</div>
   <div class="form-actions">
     <button type="submit" class="btn btn-danger">{{.L.T "settings.saveAndRestart"}}</button>

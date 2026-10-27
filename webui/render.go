@@ -107,6 +107,16 @@ var templateFuncs = template.FuncMap{
 		return s
 	},
 	"flashText": flashText,
+	// dict builds the option map the form partials take. It only assembles data;
+	// labels are translated inside the partial with the request's .L.T, so this is
+	// not the parse-time translation the templates must avoid.
+	"dict": func(values ...any) map[string]any {
+		m := make(map[string]any, len(values)/2)
+		for i := 0; i+1 < len(values); i += 2 {
+			m[fmt.Sprint(values[i])] = values[i+1]
+		}
+		return m
+	},
 }
 
 // layoutFor maps a page template onto the skeleton it renders inside: the full app
@@ -140,7 +150,7 @@ func parseTemplates() (map[string]*template.Template, error) {
 	tmpls := make(map[string]*template.Template, len(pages))
 	for _, name := range pages {
 		t, err := template.New(name).Funcs(templateFuncs).
-			ParseFS(templatesFS, "templates/"+layoutFor(name), "templates/"+name+".html")
+			ParseFS(templatesFS, "templates/"+layoutFor(name), "templates/partials.html", "templates/"+name+".html")
 		if err != nil {
 			return nil, fmt.Errorf("parsing template %s: %w", name, err)
 		}
@@ -181,7 +191,7 @@ func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bo
 func (p *Pages) templateFor(name string) (*template.Template, error) {
 	if devMode {
 		return template.New(name).Funcs(templateFuncs).
-			ParseFS(os.DirFS(devTemplatesDir), layoutFor(name), name+".html")
+			ParseFS(os.DirFS(devTemplatesDir), layoutFor(name), "partials.html", name+".html")
 	}
 	tmpl, ok := p.tmpls[name]
 	if !ok {

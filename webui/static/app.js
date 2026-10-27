@@ -324,14 +324,25 @@
   }
 
   document.addEventListener('click', function (ev) {
-    var el = ev.target.closest('[data-copy]');
+    var el = ev.target.closest('[data-copy], [data-copy-input]');
     if (!el) return;
     var text = el.getAttribute('data-copy');
+    if (el.hasAttribute('data-copy-input')) {
+      var wrap = el.closest('.copy-wrap');
+      var input = wrap && wrap.querySelector('input');
+      text = input ? input.value : '';
+    }
     var ok = el.getAttribute('data-ok') || 'OK';
     function flash() {
-      var old = el.textContent;
+      // Remember the original markup once: the field button is an icon, so restoring
+      // textContent (the old implementation) would erase it, and a second click while
+      // the checkmark shows must not capture the checkmark as the original.
+      if (el._copyOriginal == null) el._copyOriginal = el.innerHTML;
       el.textContent = ok;
-      setTimeout(function () { el.textContent = old; }, 1500);
+      clearTimeout(el._copyTimer);
+      el._copyTimer = setTimeout(function () {
+        el.innerHTML = el._copyOriginal;
+      }, 1500);
     }
     function failed() {
       UI.alert(el.getAttribute('data-fail') || 'copy failed');
