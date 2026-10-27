@@ -116,29 +116,35 @@ func (p *Pages) mailSave(req *web.Request) (any, error) {
 		req.Response().WriteStatus(http.StatusBadRequest)
 		return p.render(req, "mail_form", data)
 	}
+	// Resolve the row before validating, so a failed edit re-renders with its id
+	// instead of turning into a create form.
+	var existing *model.Mail
+	if idStr := req.GetFormParam("id"); idStr != "" {
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			return fail("invalid id")
+		}
+		existing, err = p.mailOwnedBy(uint(id), user)
+		if err != nil {
+			return fail(err.Error())
+		}
+		if existing == nil {
+			return fail("mail not found")
+		}
+		data.Id = existing.Id
+		data.Title = translatorFor(data.Lang).T("mail.editRecipient")
+	}
 	if data.Name == "" {
 		return fail("common.failed")
 	}
 	if _, err := mail.ParseAddress(data.Mail); err != nil {
 		return fail(err.Error())
 	}
-	if idStr := req.GetFormParam("id"); idStr != "" {
-		id, err := strconv.ParseUint(idStr, 10, 32)
-		if err != nil {
-			return fail("invalid id")
-		}
-		exist, err := p.mailOwnedBy(uint(id), user)
-		if err != nil {
-			return fail(err.Error())
-		}
-		if exist == nil {
-			return fail("mail not found")
-		}
-		data.Id = exist.Id
-		exist.Name = data.Name
-		exist.Mail = data.Mail
-		exist.UpdateTime = time.Now()
-		if err := p.mailModel.Save(exist); err != nil {
+	if existing != nil {
+		existing.Name = data.Name
+		existing.Mail = data.Mail
+		existing.UpdateTime = time.Now()
+		if err := p.mailModel.Save(existing); err != nil {
 			return fail(err.Error())
 		}
 	} else {

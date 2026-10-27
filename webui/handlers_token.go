@@ -87,6 +87,9 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 		SelectedMails: map[uint]bool{},
 	}
 	var selectedSmtp uint
+	// A token belongs to its owner, not to whoever edits it: an admin editing another
+	// user's token must see (and may only pick) that user's servers and contacts.
+	ownerId := user.Id
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
@@ -103,23 +106,29 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 		data.State = row.State
 		data.IsNew = false
 		selectedSmtp = row.SMTPId
+		// user_id = 0 predates token ownership; keep it editable with the caller's
+		// resources rather than stranding the row with no options at all.
+		ownerId = row.UserId
+		if ownerId == 0 {
+			ownerId = user.Id
+		}
 		for _, id := range util.StringToUintIds(row.ReceiveEmailIds) {
 			data.SelectedMails[id] = true
 		}
 		data.Title = translatorFor(data.Lang).T("token.editToken")
 	}
 
-	if err := p.fillTokenFormOptions(data, user, selectedSmtp); err != nil {
+	if err := p.fillTokenFormOptions(data, ownerId, selectedSmtp); err != nil {
 		return p.renderErr(req, 0, "common.failed", err.Error())
 	}
 	return p.render(req, "token_form", data)
 }
 
-// fillTokenFormOptions lists the caller's own servers and contacts — the API enforces the
-// same ownership, the form just never offers what would be refused. Both the form and
-// a failed save (which re-renders it) need this.
-func (p *Pages) fillTokenFormOptions(data *TokenFormData, user *model.User, selectedSmtp uint) error {
-	smtps, err := p.smtpModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
+// fillTokenFormOptions lists the token owner's servers and contacts — the API enforces
+// the same ownership, the form just never offers what would be refused. Both the form
+// and a failed save (which re-renders it) need this.
+func (p *Pages) fillTokenFormOptions(data *TokenFormData, ownerId uint, selectedSmtp uint) error {
+	smtps, err := p.smtpModel.Query().Where("user_id = ?", ownerId).Order("id desc").All()
 	if err != nil {
 		return err
 	}
@@ -130,7 +139,7 @@ func (p *Pages) fillTokenFormOptions(data *TokenFormData, user *model.User, sele
 			Selected: s.Id == selectedSmtp,
 		})
 	}
-	mails, err := p.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
+	mails, err := p.mailModel.Query().Where("user_id = ?", ownerId).Order("id desc").All()
 	if err != nil {
 		return err
 	}
@@ -199,53 +208,70 @@ func (p *Pages) tokenSave(req *web.Request) (any, error) {
 			data.SelectedMails[uint(n)] = true
 		}
 	}
+	// The selected server and contacts must belong to the token's owner, not to the
+	// caller: an admin editing someone else's token must not silently re-point it at
+	// the admin's own resources. For a create the owner is the caller; for a legacy
+	// user_id = 0 row it stays the caller too, so the row remains editable.
+	ownerId := user.Id
 	fail := func(msg string) (any, error) {
 		data.Flash = Flash{Err: msg}
-		if err := p.fillTokenFormOptions(data, user, smtpId); err != nil {
+		if err := p.fillTokenFormOptions(data, ownerId, smtpId); err != nil {
 			return p.renderErr(req, 0, "common.failed", err.Error())
 		}
 		req.Response().WriteStatus(http.StatusBadRequest)
 		return p.render(req, "token_form", data)
 	}
 
+	// Resolve the row before validating anything, so a failed edit keeps its id and
+	// re-renders as an edit, and so the owner is known when the selections are checked.
+	var existing *model.Token
+	if idStr := req.GetFormParam("id"); idStr != "" {
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			return fail("invalid id")
+		}
+		existing, err = p.tokenOwnedBy(uint(id), user)
+		if err != nil || existing == nil {
+			return fail("token not found")
+		}
+		data.Id = existing.Id
+		data.IsNew = false
+		data.Title = translatorFor(data.Lang).T("token.editToken")
+		ownerId = existing.UserId
+		if ownerId == 0 {
+			ownerId = user.Id
+		}
+	}
+
 	if data.Name == "" || data.TokenValue == "" || smtpId == 0 {
 		return fail("common.failed")
 	}
-	// Pointing at a server the caller does not hold would send through someone else's
-	// credentials — the same rule the API applies.
-	owned, err := p.smtpModel.Query().Where("id = ? AND user_id = ?", smtpId, user.Id).One()
+	// The API enforces the same ownership; pointing at a server the owner does not
+	// hold would send through someone else's credentials.
+	owned, err := p.smtpModel.Query().Where("id = ? AND user_id = ?", smtpId, ownerId).One()
 	if err != nil || owned == nil {
 		return fail("smtp not found")
 	}
 	for _, n := range idsDedup {
 		mid, _ := strconv.ParseUint(n, 10, 32)
-		m, err := p.mailModel.Query().Where("id = ? AND user_id = ?", uint(mid), user.Id).One()
+		m, err := p.mailModel.Query().Where("id = ? AND user_id = ?", uint(mid), ownerId).One()
 		if err != nil || m == nil {
 			return fail("mail not found")
 		}
 	}
 	recvIds := strings.Join(idsDedup, ",")
 
-	if idStr := req.GetFormParam("id"); idStr != "" {
-		id, err := strconv.ParseUint(idStr, 10, 32)
-		if err != nil {
-			return fail("invalid id")
+	if existing != nil {
+		existing.Name = data.Name
+		existing.Subject = data.Subject
+		existing.SMTPId = smtpId
+		existing.ReceiveEmailIds = util.DeduplicateIds(recvIds)
+		if data.TokenValue != existing.Token {
+			existing.Token = data.TokenValue
 		}
-		exist, err := p.tokenOwnedBy(uint(id), user)
-		if err != nil || exist == nil {
-			return fail("token not found")
-		}
-		data.Id = exist.Id
-		exist.Name = data.Name
-		exist.Subject = data.Subject
-		exist.SMTPId = smtpId
-		exist.ReceiveEmailIds = util.DeduplicateIds(recvIds)
-		if data.TokenValue != exist.Token {
-			exist.Token = data.TokenValue
-		}
-		exist.State = resolveTokenState(state, exist.State, user.IsAdmin)
-		exist.UpdateTime = time.Now()
-		if err := p.tokenModel.Save(exist); err != nil {
+		existing.State = resolveTokenState(state, existing.State, user.IsAdmin)
+		existing.UpdateTime = time.Now()
+		if err := p.tokenModel.Save(existing); err != nil {
 			return fail(err.Error())
 		}
 	} else {

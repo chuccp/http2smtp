@@ -116,6 +116,24 @@ func (p *Pages) smtpSave(req *web.Request) (any, error) {
 
 	data := &SmtpFormData{Base: p.base(req, user, "smtp.addSMTP", false)}
 	fill(data)
+	// Resolve the row before validating, so a failed edit re-renders with its id
+	// instead of turning into a create form.
+	var existing *model.SMTP
+	if idStr := req.GetFormParam("id"); idStr != "" {
+		id, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			return formErr(data, "invalid id")
+		}
+		existing, err = p.smtpOwnedBy(uint(id), user)
+		if err != nil {
+			return formErr(data, err.Error())
+		}
+		if existing == nil {
+			return formErr(data, "smtp not found")
+		}
+		data.Id = existing.Id
+		data.Title = translatorFor(data.Lang).T("smtp.editSMTP")
+	}
 	if data.Name == "" || data.Host == "" || data.Mail == "" {
 		return formErr(data, "common.failed")
 	}
@@ -124,31 +142,19 @@ func (p *Pages) smtpSave(req *web.Request) (any, error) {
 	}
 	password := req.GetFormParam("password")
 
-	if idStr := req.GetFormParam("id"); idStr != "" {
-		id, err := strconv.ParseUint(idStr, 10, 32)
-		if err != nil {
-			return formErr(data, "invalid id")
-		}
-		exist, err := p.smtpOwnedBy(uint(id), user)
-		if err != nil {
-			return formErr(data, err.Error())
-		}
-		if exist == nil {
-			return formErr(data, "smtp not found")
-		}
-		data.Id = exist.Id
-		exist.Name = data.Name
-		exist.Host = data.Host
-		exist.Port = data.Port
-		exist.Mail = data.Mail
-		exist.Username = data.Username
+	if existing != nil {
+		existing.Name = data.Name
+		existing.Host = data.Host
+		existing.Port = data.Port
+		existing.Mail = data.Mail
+		existing.Username = data.Username
 		// Blank means keep: the API's PUT overwrites with whatever it is given, but a
 		// form that simply did not echo the password must not wipe it.
 		if password != "" {
-			exist.Password = password
+			existing.Password = password
 		}
-		exist.UpdateTime = time.Now()
-		if err := p.smtpModel.Save(exist); err != nil {
+		existing.UpdateTime = time.Now()
+		if err := p.smtpModel.Save(existing); err != nil {
 			return formErr(data, err.Error())
 		}
 	} else {
