@@ -1,18 +1,20 @@
 {{define "content"}}
-<form class="filter-bar search-bar" method="get" action="/logs">
-  <input type="text" name="searchKey" value="{{.SearchKey}}" placeholder="{{.L.T "log.searchKeyword"}}">
-  {{if .User.IsAdmin}}
-  <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "log.adminCreated"}}</label>
-  {{end}}
-  <button class="btn" type="submit">{{.L.T "common.search"}}</button>
-  <a class="btn" href="/logs">{{.L.T "common.reset"}}</a>
-  <span class="spacer"></span>
+<div class="toolbar">
   <button type="button" class="btn btn-danger" id="cleanup-btn"
     data-title="{{.L.T "log.cleanup"}}"
     data-days-label="{{.L.T "log.cleanupDays"}}"
     data-hint="{{.L.T "log.cleanupDaysHint"}}"
     data-done="{{.L.T "log.cleanupDone"}}">{{.L.T "log.cleanup"}}</button>
-</form>
+  <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
+  <form class="filter-bar" method="get" action="/logs">
+    <input type="text" name="searchKey" value="{{.SearchKey}}" placeholder="{{.L.T "log.searchKeyword"}}">
+    {{if .User.IsAdmin}}
+    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}} data-auto-submit> {{.L.T "log.adminCreated"}}</label>
+    {{end}}
+    <button class="btn" type="submit">{{.L.T "common.search"}}</button>
+    <a class="btn" href="/logs">{{.L.T "common.reset"}}</a>
+  </form>
+</div>
 
 <div class="table-wrap">
 <table class="table">

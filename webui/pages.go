@@ -83,7 +83,6 @@ func (p *Pages) Init(ctx *core.Context) error {
 			ReloadPath(devStaticDir),
 	)
 	ctx.Get("/favicon.svg", p.staticFile("favicon.svg", "image/svg+xml"))
-	ctx.Get("/icons.svg", p.staticFile("icons.svg", "image/svg+xml"))
 
 	ctx.GetTemplate("/", p.home, templateOption)
 	ctx.GetTemplate("/login", p.loginGet, templateOption)

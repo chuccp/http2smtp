@@ -131,6 +131,7 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	exist.Url = st.Url
 	exist.Method = st.Method
 	exist.Body = st.Body
+	exist.ContentType = st.ContentType
 	exist.UseTemplate = st.UseTemplate
 	exist.Template = st.Template
 	exist.IsUse = st.IsUse
@@ -220,6 +221,38 @@ func (schedule *Schedule) scheduleTestApi(req *web.Request) (any, error) {
 	return params, nil
 }
 
+// toggleOne flips a schedule's enabled flag. The row is read straight from the model
+// (not GetOne) so a schedule whose token has since been deleted can still be switched
+// off; ownership follows the trigger route, where admins reach every user's rows.
+func (schedule *Schedule) toggleOne(req *web.Request) (any, error) {
+	id, err := strconv.Atoi(req.Param("id"))
+	if err != nil {
+		return nil, err
+	}
+	user, err := auth.User(req, schedule.context)
+	if user == nil {
+		return nil, err
+	}
+	query := schedule.scheduleModel.Query().Where("id = ?", uint(id))
+	if !user.IsAdmin {
+		query = query.Where("user_id = ?", user.Id)
+	}
+	st, err := query.One()
+	if err != nil {
+		return nil, err
+	}
+	if st == nil {
+		return nil, errors.New("schedule not found")
+	}
+	st.IsUse = !st.IsUse
+	st.UpdateTime = time.Now()
+	// Save, not UpdateByPK: turning the switch off must persist the zero value.
+	if err := schedule.scheduleModel.Save(st); err != nil {
+		return nil, err
+	}
+	return web.Ok("ok"), nil
+}
+
 func (schedule *Schedule) triggerById(req *web.Request) (any, error) {
 	id := req.Param("id")
 	atoi, err := strconv.Atoi(id)
@@ -262,8 +295,12 @@ func (schedule *Schedule) Init(context *core.Context) error {
 	context.Post("/api/schedule", schedule.postOne).WithMeta(auth2.WithLogin())
 	context.Put("/api/schedule", schedule.putOne).WithMeta(auth2.WithLogin())
 	context.Post("/api/schedule/trigger/:id", schedule.triggerById).WithMeta(auth2.WithLogin())
+	context.Post("/api/schedule/toggle/:id", schedule.toggleOne).WithMeta(auth2.WithLogin())
 	context.Post("/api/sendMailBySchedule", schedule.sendMail).WithMeta(auth2.WithLogin())
-	context.Any("/api/scheduleTestApi", schedule.scheduleTestApi).WithMeta(auth2.WithLogin())
+	// Deliberately unauthenticated: a schedule calls this echo from the server itself,
+	// without a browser session, so a login check would make the test link answer 403
+	// every time. It only reflects the caller's own request and touches no stored data.
+	context.Any("/api/scheduleTestApi", schedule.scheduleTestApi)
 	schedule.scheduleService = wf.GetService[*service.ScheduleService](schedule.context)
 	schedule.tokenService = wf.GetService[*service.TokenService](schedule.context)
 	schedule.scheduleModel = wf.GetModel[*model.ScheduleModel](schedule.context)

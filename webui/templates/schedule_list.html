@@ -1,10 +1,11 @@
 {{define "content"}}
 <div class="toolbar">
   <button type="button" class="btn btn-primary" data-form-dialog="/schedule/form" data-dialog-width="860px" data-success="{{.L.T "common.success"}}">{{.L.T "schedule.addSchedule"}}</button>
+  <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
   <form class="filter-bar" method="get" action="/schedule">
     <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "schedule.taskName"}}">
     {{if .User.IsAdmin}}
-    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "schedule.adminCreated"}}</label>
+    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}} data-auto-submit> {{.L.T "schedule.adminCreated"}}</label>
     {{end}}
     <button class="btn" type="submit">{{.L.T "common.search"}}</button>
     <a class="btn" href="/schedule">{{.L.T "common.reset"}}</a>
@@ -37,8 +38,9 @@
       {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
       <td class="muted">{{fmtTime .CreateTime}}</td>
       <td class="col-actions">
-        <button type="button" class="btn btn-sm" data-method="POST" data-href="/api/schedule/trigger/{{.Id}}" data-flash="{{$.L.T "schedule.triggered"}}">{{$.L.T "schedule.triggerNow"}}</button>
+        <button type="button" class="btn btn-sm" data-method="POST" data-href="/api/schedule/trigger/{{.Id}}" data-alert="{{$.L.T "schedule.triggered"}}">{{$.L.T "schedule.triggerNow"}}</button>
         <button type="button" class="btn btn-sm" data-form-dialog="/schedule/form/{{.Id}}" data-dialog-width="860px" data-success="{{$.L.T "common.success"}}">{{$.L.T "common.edit"}}</button>
+        <button type="button" class="btn btn-sm" data-method="POST" data-href="/api/schedule/toggle/{{.Id}}" data-flash="{{if .IsUse}}{{$.L.T "schedule.disableDone"}}{{else}}{{$.L.T "schedule.enableDone"}}{{end}}">{{if .IsUse}}{{$.L.T "schedule.disableAction"}}{{else}}{{$.L.T "schedule.enableAction"}}{{end}}</button>
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "schedule.deleteConfirm"}}" data-href="/api/schedule/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
       </td>
     </tr>

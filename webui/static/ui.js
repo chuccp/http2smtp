@@ -314,14 +314,147 @@ window.UI = (function () {
           row.appendChild(input);
           row.appendChild(text);
           list.appendChild(row);
-          choices.push({ option: option, input: input });
+          choices.push({ option: option, input: input, row: row });
         });
-        if (!choices.length) {
-          var empty = el('div', 'ui-picker-empty');
-          empty.textContent = label('no-options', 'No options');
-          list.appendChild(empty);
+        var empty = el('div', 'ui-picker-empty');
+        empty.textContent = label('no-options', 'No options');
+        empty.style.display = choices.length ? 'none' : '';
+        list.appendChild(empty);
+
+        var body = el('div');
+        // Multi-select pickers can pin the pending selection above the list, so paging
+        // and searching never hide what has already been checked.
+        var chosenBox = null;
+        if (select.hasAttribute('data-selected-header')) {
+          chosenBox = el('div', 'ui-picker-chosen');
+          body.appendChild(chosenBox);
         }
-        dlg.setBody(list);
+        var search = null;
+        if (select.hasAttribute('data-search')) {
+          var filterBar = el('div', 'ui-picker-filter');
+          search = el('input', 'ui-dialog-input ui-picker-search');
+          search.type = 'search';
+          search.placeholder = select.getAttribute('data-search-placeholder') || label('search', 'Search');
+          filterBar.appendChild(search);
+          body.appendChild(filterBar);
+        }
+        body.appendChild(list);
+
+        var pageSize = parseInt(select.getAttribute('data-page-size') || '0', 10) || 0;
+        var page = 1;
+        var pagerWrap = null;
+        var info = null;
+        var pager = null;
+        if (pageSize > 0) {
+          pagerWrap = el('div', 'ui-picker-pager');
+          info = el('span', 'page-info');
+          pager = el('div', 'pagination');
+          pagerWrap.appendChild(info);
+          pagerWrap.appendChild(pager);
+          body.appendChild(pagerWrap);
+        }
+
+        function renderChosenHeader() {
+          if (!chosenBox) return;
+          chosenBox.innerHTML = '';
+          var picked = choices.filter(function (c) { return c.input.checked; });
+          chosenBox.style.display = picked.length ? '' : 'none';
+          picked.forEach(function (c) {
+            var tag = el('span', 'ui-picker-tag');
+            var text = el('span');
+            text.textContent = c.option.textContent.trim();
+            var close = el('button', 'ui-picker-tag-close');
+            close.type = 'button';
+            close.innerHTML = '&times;';
+            close.addEventListener('click', function (ev) {
+              ev.preventDefault();
+              c.input.checked = false;
+              renderChosenHeader();
+            });
+            tag.appendChild(text);
+            tag.appendChild(close);
+            chosenBox.appendChild(tag);
+          });
+        }
+
+        function visibleChoices() {
+          var q = search ? search.value.trim().toLowerCase() : '';
+          if (!q) return choices;
+          return choices.filter(function (c) {
+            return c.option.textContent.toLowerCase().indexOf(q) >= 0;
+          });
+        }
+
+        function renderPager(total) {
+          if (!pagerWrap) return;
+          var pages = Math.max(1, Math.ceil(total / pageSize));
+          if (page > pages) page = pages;
+          var start = (page - 1) * pageSize;
+          var from = total ? start + 1 : 0;
+          var to = Math.min(start + pageSize, total);
+          var tpl = select.getAttribute('data-page-info') || '{from}-{to} / {total}';
+          info.textContent = String(tpl)
+            .replace('{from}', from).replace('{to}', to).replace('{total}', total);
+          pager.innerHTML = '';
+          var last = 0;
+          function add(label, target, current) {
+            var node;
+            if (current) {
+              node = el('span', 'cur');
+            } else {
+              node = el('a');
+              node.href = '#';
+              node.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                page = target;
+                applyView();
+              });
+            }
+            node.textContent = label;
+            pager.appendChild(node);
+          }
+          if (page > 1) add('‹', page - 1, false);
+          for (var no = 1; no <= pages; no++) {
+            if (!(no === 1 || no === pages || Math.abs(no - page) <= 2)) continue;
+            if (last && no > last + 1) {
+              var gap = el('span', 'gap');
+              gap.textContent = '…';
+              pager.appendChild(gap);
+            }
+            add(String(no), no, no === page);
+            last = no;
+          }
+          if (page < pages) add('›', page + 1, false);
+        }
+
+        function applyView() {
+          var visible = visibleChoices();
+          choices.forEach(function (c) { c.row.style.display = 'none'; });
+          var start = 0;
+          var end = visible.length;
+          if (pageSize > 0) {
+            var pages = Math.max(1, Math.ceil(visible.length / pageSize));
+            if (page > pages) page = pages;
+            start = (page - 1) * pageSize;
+            end = start + pageSize;
+          }
+          visible.slice(start, end).forEach(function (c) { c.row.style.display = ''; });
+          empty.style.display = visible.length ? 'none' : '';
+          renderPager(visible.length);
+          renderChosenHeader();
+        }
+
+        if (search) {
+          search.addEventListener('input', function () {
+            page = 1;
+            applyView();
+          });
+        }
+        choices.forEach(function (c) {
+          c.input.addEventListener('change', renderChosenHeader);
+        });
+
+        dlg.setBody(body);
         dlg.addButton(label('cancel', 'Cancel'), false, function () { dlg.close(); });
         var ok = dlg.addButton(label('ok', 'OK'), true, function () {
           choices.forEach(function (c) { c.option.selected = c.input.checked; });
@@ -336,7 +469,8 @@ window.UI = (function () {
           dlg.close();
         });
         if (!choices.length) ok.disabled = true;
-        dlg.focus(list.querySelector('input:checked') || list.querySelector('input'));
+        applyView();
+        dlg.focus(search || list.querySelector('input:checked') || list.querySelector('input'));
       }
 
       // The select itself is invisible, so surface its validation failure on the
@@ -451,6 +585,69 @@ window.UI = (function () {
   // Reload the current page's content area without touching history.
   function refresh() {
     navigate(location.pathname + location.search + location.hash, false);
+  }
+
+  /* ---------- file attachments ----------
+     A .file-upload block pairs a hidden file input with a button-like trigger and a
+     chip list. fileChips wires the chip rendering and per-file removal; readFiles
+     resolves the selection as base64 data URLs for the JSON send APIs. */
+  function fileBox(scope) {
+    return (scope || document).querySelector('.file-upload');
+  }
+
+  function fileChips(scope) {
+    var box = fileBox(scope);
+    if (!box) return;
+    var input = box.querySelector('input[type=file]');
+    var list = box.querySelector('.file-chips');
+    if (!input || !list) return;
+    var removeLabel = box.getAttribute('data-remove-label') || '×';
+    // Removing one picked file means rebuilding the input's FileList, which needs
+    // DataTransfer; browsers without it show the names but no ×.
+    var canRemove = (function () {
+      try { return !!new DataTransfer(); } catch (e) { return false; }
+    })();
+    function remove(index) {
+      var picked = Array.prototype.slice.call(input.files || []);
+      picked.splice(index, 1);
+      var dt = new DataTransfer();
+      picked.forEach(function (f) { dt.items.add(f); });
+      input.files = dt.files;
+      render();
+    }
+    function render() {
+      list.innerHTML = '';
+      Array.prototype.slice.call(input.files || []).forEach(function (f, idx) {
+        var chip = el('span', 'file-chip');
+        var name = el('span', 'file-chip-name');
+        name.textContent = f.name;
+        chip.appendChild(name);
+        if (canRemove) {
+          var x = el('button', 'file-chip-x');
+          x.type = 'button';
+          x.textContent = '×';
+          x.setAttribute('aria-label', removeLabel);
+          x.addEventListener('click', function () { remove(idx); });
+          chip.appendChild(x);
+        }
+        list.appendChild(chip);
+      });
+    }
+    input.addEventListener('change', render);
+  }
+
+  function readFiles(scope) {
+    var box = fileBox(scope);
+    var input = box && box.querySelector('input[type=file]');
+    var picked = input && input.files ? Array.prototype.slice.call(input.files) : [];
+    return Promise.all(picked.map(function (f) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function () { resolve({ name: f.name, data: String(reader.result) }); };
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+    }));
   }
 
   /* ---------- page dialogs ----------
@@ -732,6 +929,8 @@ window.UI = (function () {
     onNavigate: onNavigate,
     pageDialog: pageDialog,
     formDialog: formDialog,
-    dialogDone: dialogDone
+    dialogDone: dialogDone,
+    fileChips: fileChips,
+    readFiles: readFiles
   };
 })();

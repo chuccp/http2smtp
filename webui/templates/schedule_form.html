@@ -10,7 +10,13 @@
     {{template "field" (dict "L" .L "label" "schedule.taskName" "name" "name" "value" .Name "required" true)}}
     {{template "selectField" (dict "L" .L "label" "schedule.associatedToken" "name" "tokenId" "options" .TokenOptions "required" true "picker" true "titleKey" "schedule.associatedToken" "placeholderKey" "schedule.associatedToken" "placeholder" "—")}}
     {{template "field" (dict "L" .L "label" "schedule.cronExpression" "name" "cron" "value" .Cron "inputClass" "mono" "required" true "placeholderKey" "schedule.exampleCron")}}
-    {{template "field" (dict "L" .L "label" "schedule.requestUrl" "name" "url" "type" "url" "value" .Url "required" true)}}
+    <label class="field field-wide">
+      <span>{{.L.T "schedule.requestUrl"}}</span>
+      <div class="input-suffix">
+        <input type="url" name="url" id="schedule-url" value="{{.Url}}" required>
+        <button type="button" class="btn" id="use-test-url" data-test-url="{{.TestUrl}}" title="{{.L.T "schedule.useTestUrl"}}">{{.L.T "schedule.useTestUrl"}}</button>
+      </div>
+    </label>
   </div>
 
   <fieldset>
@@ -19,6 +25,16 @@
     &nbsp;
     {{template "checkField" (dict "L" .L "type" "radio" "name" "method" "value" "POST" "checked" (eq .Method "POST") "label" "POST")}}
   </fieldset>
+
+  <label class="field" id="content-type-field" {{if ne .Method "POST"}}hidden{{end}}>
+    <span>{{.L.T "schedule.contentType"}}</span>
+    <select name="contentType">
+      <option value="application/json" {{if eq .ContentType "application/json"}}selected{{end}}>{{.L.T "schedule.contentTypeJson"}}</option>
+      <option value="application/x-www-form-urlencoded" {{if eq .ContentType "application/x-www-form-urlencoded"}}selected{{end}}>{{.L.T "schedule.contentTypeForm"}}</option>
+      <option value="text/plain" {{if eq .ContentType "text/plain"}}selected{{end}}>{{.L.T "schedule.contentTypeText"}}</option>
+      <option value="application/xml" {{if eq .ContentType "application/xml"}}selected{{end}}>{{.L.T "schedule.contentTypeXml"}}</option>
+    </select>
+  </label>
 
   <label class="field" id="body-field" {{if ne .Method "POST"}}hidden{{end}}>
     <span>{{.L.T "schedule.requestBody"}}</span>
@@ -62,11 +78,20 @@
   var form = document.getElementById('schedule-form');
   var bodyField = document.getElementById('body-field');
   var bodyInput = bodyField ? bodyField.querySelector('[name=body]') : null;
+  var contentTypeField = document.getElementById('content-type-field');
+  var testUrlBtn = document.getElementById('use-test-url');
+  if (testUrlBtn) testUrlBtn.addEventListener('click', function () {
+    var input = document.getElementById('schedule-url');
+    if (!input) return;
+    input.value = testUrlBtn.getAttribute('data-test-url') || '';
+    input.focus();
+  });
   function syncBody() {
     var checked = form.querySelector('[name=method]:checked');
     var post = !!checked && checked.value === 'POST';
     if (bodyField) bodyField.hidden = !post;
     if (bodyInput) bodyInput.required = post;
+    if (contentTypeField) contentTypeField.hidden = !post;
   }
   form.querySelectorAll('[name=method]').forEach(function (radio) {
     radio.addEventListener('change', syncBody);
@@ -109,6 +134,7 @@
       method: form.querySelector('[name=method]:checked') ? form.querySelector('[name=method]:checked').value : 'GET',
       headers: headers,
       body: val('body'),
+      contentType: val('contentType'),
       useTemplate: document.getElementById('use-template').checked,
       template: val('template'),
       isUse: true,

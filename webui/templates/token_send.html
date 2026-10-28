@@ -21,26 +21,31 @@
   <input type="hidden" name="tokenId" value="{{.TokenId}}">
   {{template "field" (dict "L" .L "label" "token.subject" "name" "subject" "value" .Subject)}}
   {{template "textareaField" (dict "L" .L "label" "log.content" "name" "content")}}
+  {{template "fileField" (dict "L" .L "label" "log.attachments" "name" "files")}}
   {{template "formActions" (dict "L" .L "saveKey" "token.sendTestMail")}}
 </form>
 
 <script>
 (function () {
   var form = document.getElementById('send-form');
+  if (!form) return;
+  UI.fileChips(form);
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
-    var body = {
-      tokenId: Number(form.querySelector('[name=tokenId]').value),
-      subject: form.querySelector('[name=subject]').value,
-      content: form.querySelector('[name=content]').value
-    };
     var btn = form.querySelector('button[type=submit]');
     btn.disabled = true;
-    fetch('/api/sendMailByTokenId', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+    UI.readFiles(form).then(function (files) {
+      return fetch('/api/sendMailByTokenId', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tokenId: Number(form.querySelector('[name=tokenId]').value),
+          subject: form.querySelector('[name=subject]').value,
+          content: form.querySelector('[name=content]').value,
+          files: files
+        })
+      });
     }).then(function (r) {
       return r.json().then(function (b) { return { ok: r.ok, b: b }; });
     }).then(function (x) {

@@ -5,6 +5,7 @@ type SendMail struct {
 	Recipients []string `json:"recipients"`
 	Subject    string   `json:"subject"`
 	Content    string   `json:"content"`
+	Files      []File   `json:"files"`
 }
 
 type SendMailApi struct {
@@ -19,6 +20,7 @@ type SendMailByTokenId struct {
 	Recipients []string `json:"recipients"`
 	Subject    string   `json:"subject"`
 	Content    string   `json:"content"`
+	Files      []File   `json:"files"`
 }
 type File struct {
 	Name string `json:"name"`

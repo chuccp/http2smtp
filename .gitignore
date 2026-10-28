@@ -34,3 +34,6 @@ http2smtp
 /.backup
 /.claude
 .DS_Store
+
+# attachment cache written under the default storage root (./)
+/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/

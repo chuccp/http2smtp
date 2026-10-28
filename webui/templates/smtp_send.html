@@ -10,17 +10,32 @@
 
 <form class="form card form-simple" id="smtp-send-form" data-success="{{.L.T "smtp.testEmailSent"}}">
   <input type="hidden" name="smtpId" value="{{.Id}}">
-  <label class="field">
+  <div class="field">
     <span>{{.L.T "mail.recipientName"}}</span>
-    <select name="toEmail" {{if .Recipients}}required{{end}} data-picker
-      data-title="{{.L.T "mail.recipientName"}}"
-      data-placeholder="{{.L.T "smtp.pleaseSelectRecipient"}}">
-      <option value="">{{.L.T "smtp.pleaseSelectRecipient"}}</option>
-      {{range .Recipients}}<option value="{{.Mail}}">{{.Name}} &lt;{{.Mail}}&gt;</option>{{end}}
-    </select>
-  </label>
+    <div class="mail-selector" id="recipient-picker"
+         data-title="{{.L.T "mail.recipientName"}}"
+         data-empty="{{.L.T "smtp.pleaseSelectRecipient"}}"
+         data-search-placeholder="{{.L.T "common.search"}}"
+         data-admin-label="{{.L.T "mail.adminCreated"}}"
+         data-mine-label="{{.L.T "mail.createdByMe"}}"
+         data-page-info="{{.L.T "common.pageInfo"}}"
+         data-label-name="{{.L.T "mail.recipientName"}}"
+         data-label-mail="{{.L.T "mail.emailAddress"}}"
+         data-label-creator="{{.L.T "common.creator"}}"
+         data-admin="{{if .User.IsAdmin}}1{{else}}0{{end}}"
+         data-user-id="{{.User.Id}}">
+      <div class="ui-picker-trigger" id="recipient-trigger">
+        <div class="ui-picker-tags" id="recipient-tags">
+          <span class="ui-picker-placeholder">{{.L.T "smtp.pleaseSelectRecipient"}}</span>
+        </div>
+        <button type="button" class="btn btn-sm ui-picker-btn" id="recipient-choose">{{.L.T "common.select"}}</button>
+      </div>
+      <input type="hidden" name="toEmail" id="recipient-value">
+    </div>
+  </div>
   {{template "field" (dict "L" .L "label" "token.subject" "name" "subject" "value" .Subject "required" true)}}
   {{template "textareaField" (dict "L" .L "label" "log.content" "name" "content" "value" (.L.T "smtp.testEmailContent") "required" true)}}
+  {{template "fileField" (dict "L" .L "label" "log.attachments" "name" "files")}}
   {{template "formActions" (dict "L" .L "saveKey" "smtp.sendTestMail")}}
 </form>
 
@@ -28,22 +43,330 @@
 (function () {
   var form = document.getElementById('smtp-send-form');
   if (!form) return;
+  UI.fileChips(form);
+
+  /* ---------- recipient picker ----------
+     Multi-select over /api/mail: the dialog pages and searches on the server, keeps the
+     selections across pages, and the chosen recipients render as tags in the field. */
+  var picker = document.getElementById('recipient-picker');
+  var trigger = document.getElementById('recipient-trigger');
+  var valueInput = document.getElementById('recipient-value');
+  var tagsBox = document.getElementById('recipient-tags');
+  var chooseBtn = document.getElementById('recipient-choose');
+  var isAdmin = picker.getAttribute('data-admin') === '1';
+  var myId = Number(picker.getAttribute('data-user-id') || 0);
+  var emptyText = picker.getAttribute('data-empty');
+  var pageInfoTpl = picker.getAttribute('data-page-info') || '{from}-{to} / {total}';
+  var chosen = [];
+
+  function renderChosen() {
+    tagsBox.innerHTML = '';
+    if (!chosen.length) {
+      var ph = document.createElement('span');
+      ph.className = 'ui-picker-placeholder';
+      ph.textContent = emptyText;
+      tagsBox.appendChild(ph);
+      chooseBtn.textContent = document.body.getAttribute('data-ui-select') || 'Select';
+      valueInput.value = '';
+      return;
+    }
+    chosen.forEach(function (c, idx) {
+      var tag = document.createElement('span');
+      tag.className = 'ui-picker-tag';
+      var text = document.createElement('span');
+      text.textContent = c.name + ' <' + c.mail + '>';
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'ui-picker-tag-close';
+      close.innerHTML = '&times;';
+      close.title = '×';
+      close.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        chosen.splice(idx, 1);
+        renderChosen();
+      });
+      tag.appendChild(text);
+      tag.appendChild(close);
+      tagsBox.appendChild(tag);
+    });
+    chooseBtn.textContent = document.body.getAttribute('data-ui-change') || 'Change';
+    valueInput.value = chosen.map(function (c) { return c.mail; }).join(',');
+  }
+
+  function openPicker() {
+    var dlg = UI.modal({ title: picker.getAttribute('data-title') || '', width: '720px', cancelValue: null });
+    var state = { page: 1, pageSize: 10, total: 0, name: '', adminOnly: false, temp: chosen.slice() };
+
+    var body = document.createElement('div');
+    // The dialog header strip repeats the pending selection, so paging and searching
+    // never hide what has already been checked.
+    var chosenBox = document.createElement('div');
+    chosenBox.className = 'mail-picker-chosen';
+    body.appendChild(chosenBox);
+    var bar = document.createElement('div');
+    bar.className = 'mail-picker-bar';
+    var search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'ui-dialog-input mail-picker-search';
+    search.placeholder = picker.getAttribute('data-search-placeholder') || 'Search';
+    bar.appendChild(search);
+    var adminBox = null;
+    if (isAdmin) {
+      var adminWrap = document.createElement('label');
+      adminWrap.className = 'check';
+      adminBox = document.createElement('input');
+      adminBox.type = 'checkbox';
+      adminWrap.appendChild(adminBox);
+      adminWrap.appendChild(document.createTextNode(' ' + (picker.getAttribute('data-admin-label') || '')));
+      bar.appendChild(adminWrap);
+    }
+    body.appendChild(bar);
+
+    var listBox = document.createElement('div');
+    listBox.className = 'mail-picker-list';
+    body.appendChild(listBox);
+
+    var pages = document.createElement('div');
+    pages.className = 'mail-picker-pages';
+    var info = document.createElement('span');
+    info.className = 'page-info';
+    var pager = document.createElement('div');
+    pager.className = 'pagination';
+    pages.appendChild(info);
+    pages.appendChild(pager);
+    body.appendChild(pages);
+    dlg.setBody(body);
+
+    var okBtn;
+    function syncOk() { if (okBtn) okBtn.disabled = !state.temp.length; }
+
+    function isPicked(row) {
+      return state.temp.some(function (c) { return c.mail === row.mail; });
+    }
+
+    function syncChecks() {
+      Array.prototype.forEach.call(listBox.querySelectorAll('input[type=checkbox]'), function (box) {
+        box.checked = state.temp.some(function (c) { return c.mail === box.getAttribute('data-mail'); });
+      });
+    }
+
+    // Selected names ride in the dialog header as removable tags; the tooltip keeps the
+    // full address available.
+    function renderTemp() {
+      chosenBox.innerHTML = '';
+      chosenBox.style.display = state.temp.length ? '' : 'none';
+      state.temp.forEach(function (c, idx) {
+        var tag = document.createElement('span');
+        tag.className = 'ui-picker-tag';
+        tag.title = c.name + ' <' + c.mail + '>';
+        var text = document.createElement('span');
+        text.textContent = c.name || c.mail;
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'ui-picker-tag-close';
+        close.innerHTML = '&times;';
+        close.title = '×';
+        close.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          state.temp.splice(idx, 1);
+          renderTemp();
+          syncChecks();
+        });
+        tag.appendChild(text);
+        tag.appendChild(close);
+        chosenBox.appendChild(tag);
+      });
+      syncOk();
+    }
+
+    function renderPages() {
+      var totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+      if (state.page > totalPages) state.page = totalPages;
+      var from = state.total ? (state.page - 1) * state.pageSize + 1 : 0;
+      var to = Math.min(state.page * state.pageSize, state.total);
+      info.textContent = String(pageInfoTpl)
+        .replace('{from}', from).replace('{to}', to).replace('{total}', state.total);
+      pager.innerHTML = '';
+      var last = 0;
+      function add(label, page, current) {
+        var node;
+        if (current) {
+          node = document.createElement('span');
+          node.className = 'cur';
+        } else {
+          node = document.createElement('a');
+          node.href = '#';
+          node.addEventListener('click', function (ev) { ev.preventDefault(); state.page = page; load(); });
+        }
+        node.textContent = label;
+        pager.appendChild(node);
+      }
+      if (state.page > 1) add('‹', state.page - 1, false);
+      for (var no = 1; no <= totalPages; no++) {
+        if (!(no === 1 || no === totalPages || Math.abs(no - state.page) <= 2)) continue;
+        if (last && no > last + 1) {
+          var gap = document.createElement('span');
+          gap.className = 'gap';
+          gap.textContent = '…';
+          pager.appendChild(gap);
+        }
+        add(String(no), no, no === state.page);
+        last = no;
+      }
+      if (state.page < totalPages) add('›', state.page + 1, false);
+    }
+
+    function renderRows(data) {
+      state.total = data.total || 0;
+      listBox.innerHTML = '';
+      var rows = data.list || [];
+      if (!rows.length) {
+        var empty = document.createElement('div');
+        empty.className = 'ui-picker-empty';
+        empty.textContent = document.body.getAttribute('data-ui-no-options') || '—';
+        listBox.appendChild(empty);
+        renderPages();
+        return;
+      }
+      var table = document.createElement('table');
+      table.className = 'table mail-picker-table';
+      var thead = document.createElement('thead');
+      var htr = document.createElement('tr');
+      ['', picker.getAttribute('data-label-name') || '',
+        picker.getAttribute('data-label-mail') || ''].forEach(function (label) {
+        var th = document.createElement('th');
+        th.textContent = label;
+        htr.appendChild(th);
+      });
+      if (isAdmin) {
+        var thCreator = document.createElement('th');
+        thCreator.textContent = picker.getAttribute('data-label-creator') || '';
+        htr.appendChild(thCreator);
+      }
+      thead.appendChild(htr);
+      table.appendChild(thead);
+
+      var tbody = document.createElement('tbody');
+      rows.forEach(function (row) {
+        var tr = document.createElement('tr');
+        var tdCheck = document.createElement('td');
+        tdCheck.className = 'mail-picker-check';
+        var box = document.createElement('input');
+        box.type = 'checkbox';
+        box.setAttribute('data-mail', row.mail);
+        box.checked = isPicked(row);
+        box.addEventListener('change', function () {
+          if (box.checked) state.temp.push({ name: row.name, mail: row.mail });
+          else state.temp = state.temp.filter(function (c) { return c.mail !== row.mail; });
+          renderTemp();
+        });
+        tdCheck.appendChild(box);
+        tr.appendChild(tdCheck);
+
+        var tdName = document.createElement('td');
+        if (isAdmin && row.userId === myId) {
+          var star = document.createElement('span');
+          star.className = 'admin-star';
+          star.textContent = '★';
+          star.title = picker.getAttribute('data-mine-label') || '';
+          tdName.appendChild(star);
+          tdName.appendChild(document.createTextNode(' '));
+        }
+        tdName.appendChild(document.createTextNode(row.name || ''));
+        tr.appendChild(tdName);
+
+        var tdMail = document.createElement('td');
+        tdMail.textContent = row.mail || '';
+        tr.appendChild(tdMail);
+        if (isAdmin) {
+          var tdOwner = document.createElement('td');
+          tdOwner.textContent = row.userName || '';
+          tr.appendChild(tdOwner);
+        }
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      listBox.appendChild(table);
+      renderPages();
+    }
+
+    var searchTimer = null;
+    search.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        state.name = search.value.trim();
+        state.page = 1;
+        load();
+      }, 300);
+    });
+    if (adminBox) {
+      adminBox.addEventListener('change', function () {
+        state.adminOnly = adminBox.checked;
+        state.page = 1;
+        load();
+      });
+    }
+
+    function load() {
+      var qs = new URLSearchParams();
+      qs.set('pageNo', String(state.page));
+      qs.set('pageSize', String(state.pageSize));
+      if (state.name) qs.set('name', state.name);
+      if (state.adminOnly) qs.set('adminOnly', 'true');
+      var mask = UI.mask(body);
+      fetch('/api/mail?' + qs.toString(), { credentials: 'same-origin' })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
+        .then(function (x) {
+          UI.unmask(mask);
+          if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
+          renderRows((x.b && x.b.data) || { total: 0, list: [] });
+        })
+        .catch(function () { UI.unmask(mask); UI.alert('failed'); });
+    }
+
+    dlg.addButton(document.body.getAttribute('data-ui-cancel') || 'Cancel', false, function () {
+      dlg.close();
+    });
+    okBtn = dlg.addButton(document.body.getAttribute('data-ui-ok') || 'OK', true, function () {
+      chosen = state.temp.slice();
+      renderChosen();
+      dlg.close();
+    });
+    renderTemp();
+    dlg.focus(search);
+    load();
+  }
+
+  trigger.addEventListener('click', function (ev) {
+    if (ev.target.closest('.ui-picker-tag-close')) return;
+    openPicker();
+  });
+  chooseBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    openPicker();
+  });
+  renderChosen();
+
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
-    var select = form.querySelector('[name=toEmail]');
-    if (!select.value) { UI.alert(select.options[select.selectedIndex].text); return; }
+    if (!chosen.length) { UI.alert(emptyText); return; }
     var btn = form.querySelector('button[type=submit]');
     btn.disabled = true;
-    fetch('/api/sendMailBySMTP', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        SMTPId: Number(form.querySelector('[name=smtpId]').value),
-        recipients: [select.value],
-        subject: form.querySelector('[name=subject]').value,
-        content: form.querySelector('[name=content]').value
-      })
+    // Attachments travel as base64 data URLs, the same shape the token API accepts.
+    UI.readFiles(form).then(function (files) {
+      return fetch('/api/sendMailBySMTP', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          SMTPId: Number(form.querySelector('[name=smtpId]').value),
+          recipients: chosen.map(function (c) { return c.mail; }),
+          subject: form.querySelector('[name=subject]').value,
+          content: form.querySelector('[name=content]').value,
+          files: files
+        })
+      });
     }).then(function (r) {
       return r.json().then(function (b) { return { ok: r.ok, b: b }; });
     }).then(function (x) {

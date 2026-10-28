@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -8,6 +9,37 @@ import (
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/util"
 )
+
+// defaultContentType is what a POST schedule sends unless the form picks another one.
+const defaultContentType = "application/json"
+
+// formContentTypes is the set the schedule form offers. A Content-Type header row stays
+// as the escape hatch for any other type.
+var formContentTypes = map[string]bool{
+	"application/json":                  true,
+	"application/x-www-form-urlencoded": true,
+	"text/plain":                        true,
+	"application/xml":                   true,
+}
+
+// normalizeContentType keeps a forged or stale form value from reaching the request.
+func normalizeContentType(value string) string {
+	if formContentTypes[value] {
+		return value
+	}
+	return defaultContentType
+}
+
+// scheduleTestUrl is this instance's request-echo endpoint. A scheduled call is made
+// inside the process, so the instance's own loopback address and management port stay
+// reachable even when the UI is opened through a domain or a Docker port mapping.
+func (p *Pages) scheduleTestUrl() string {
+	port := model.ManagePort
+	if cfg, err := model.GetConfig(p.ctx.GetConfig()); err == nil && cfg.Manage != nil && cfg.Manage.Port > 0 {
+		port = cfg.Manage.Port
+	}
+	return fmt.Sprintf("http://127.0.0.1:%d/api/scheduleTestApi", port)
+}
 
 // ScheduleListData is the scheduled-tasks list page.
 type ScheduleListData struct {
@@ -60,8 +92,10 @@ type ScheduleFormData struct {
 	Name         string
 	Cron         string
 	Url          string
+	TestUrl      string
 	Method       string
 	Body         string
+	ContentType  string
 	UseTemplate  bool
 	Template     string
 	OnlyByError  bool
@@ -76,11 +110,14 @@ func (p *Pages) scheduleForm(view *web.Template) error {
 	if !ok {
 		return nil
 	}
+	testUrl := p.scheduleTestUrl()
 	data := &ScheduleFormData{
-		Base:    p.base(req, user, "schedule.addSchedule", false),
-		Method:  "GET",
-		IsUse:   true,
-		Headers: []*model.Header{{}, {}},
+		Base:        p.base(req, user, "schedule.addSchedule", false),
+		TestUrl:     testUrl,
+		Method:      "GET",
+		ContentType: defaultContentType,
+		IsUse:       true,
+		Headers:     []*model.Header{{}, {}},
 	}
 	var selectedToken uint
 	// A schedule belongs to its owner; an admin editing someone else's schedule must
@@ -103,6 +140,9 @@ func (p *Pages) scheduleForm(view *web.Template) error {
 		data.Url = row.Url
 		data.Method = row.Method
 		data.Body = row.Body
+		if row.ContentType != "" {
+			data.ContentType = row.ContentType
+		}
 		data.UseTemplate = row.UseTemplate
 		data.Template = row.Template
 		data.OnlyByError = row.IsOnlySendByError
@@ -180,6 +220,7 @@ func (p *Pages) scheduleSave(view *web.Template) error {
 		Url:               req.GetFormParam("url"),
 		Method:            req.GetFormParam("method"),
 		Body:              req.GetFormParam("body"),
+		ContentType:       normalizeContentType(req.GetFormParam("contentType")),
 		UseTemplate:       req.GetFormParam("useTemplate") == "on",
 		Template:          req.GetFormParam("template"),
 		IsUse:             req.GetFormParam("isUse") == "on",
@@ -211,8 +252,10 @@ func (p *Pages) scheduleSave(view *web.Template) error {
 			Name:        st.Name,
 			Cron:        st.Cron,
 			Url:         st.Url,
+			TestUrl:     p.scheduleTestUrl(),
 			Method:      st.Method,
 			Body:        st.Body,
+			ContentType: st.ContentType,
 			UseTemplate: st.UseTemplate,
 			Template:    st.Template,
 			OnlyByError: st.IsOnlySendByError,
@@ -265,6 +308,7 @@ func (p *Pages) scheduleSave(view *web.Template) error {
 		existing.Url = st.Url
 		existing.Method = st.Method
 		existing.Body = st.Body
+		existing.ContentType = st.ContentType
 		existing.UseTemplate = st.UseTemplate
 		existing.Template = st.Template
 		existing.IsUse = st.IsUse

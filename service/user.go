@@ -282,3 +282,20 @@ func (s *UserService) FillUserNames(userIds []uint, setUserName func(userId uint
 		}
 	}
 }
+
+// AdminIds reports which of userIds belong to administrators. The list pages use it to
+// mark admin-created rows for an admin viewer.
+func (s *UserService) AdminIds(userIds []uint) map[uint]bool {
+	admins := make(map[uint]bool)
+	if len(userIds) == 0 {
+		return admins
+	}
+	users, err := s.userModel.Query().Where("id IN ? AND is_admin = ?", userIds, true).All()
+	if err != nil {
+		return admins
+	}
+	for _, u := range users {
+		admins[u.Id] = true
+	}
+	return admins
+}

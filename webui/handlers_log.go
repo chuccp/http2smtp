@@ -103,6 +103,11 @@ func (p *Pages) logDetail(view *web.Template) error {
 		return p.renderErr(view, http.StatusNotFound, "common.failed", "log not found")
 	}
 	one.StatusStr = entity.StatusText(one.Status)
+	if user.IsAdmin {
+		p.userService.FillUserNames([]uint{one.UserId}, func(uid uint, name string) {
+			one.UserName = name
+		})
+	}
 
 	data := &LogDetailData{Base: p.base(req, user, "log.logDetail", false), Entry: one}
 	// The stored paths are resolved server-side by /api/download; the page only carries

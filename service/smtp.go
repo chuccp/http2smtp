@@ -61,6 +61,11 @@ func (s *SmtpService) PageForWeb(page *web.Page, userId uint, isAdmin bool, admi
 				}
 			}
 		})
+		// Mark the rows whose owner is an administrator; the list shows a star for them.
+		admins := s.userService.AdminIds(userIds)
+		for _, item := range result.List {
+			item.CreatedByAdmin = admins[item.UserId]
+		}
 	}
 	return result, nil
 }

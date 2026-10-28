@@ -112,6 +112,7 @@ a:hover { text-decoration: underline; }
 }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle;
   border: 0; background: none; color: #606266; cursor: pointer;
   padding: 6px; border-radius: 6px;
 }
@@ -243,19 +244,12 @@ a:hover { text-decoration: underline; }
 
 /* ---------- toolbar / filter ---------- */
 .toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-.spacer { flex: 1; }
 .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .filter-bar input[type=text], .filter-bar input[type=search] { width: 160px; min-width: 0; }
-.filter-bar.search-bar input[type=text], .filter-bar.search-bar input[type=search] { width: 240px; }
 .filter-bar .check { white-space: nowrap; }
 .toolbar .filter-bar {
   margin-left: auto; margin-bottom: 0;
   padding: 8px 12px; background: var(--bg); border-radius: 6px;
-}
-/* Standalone filter row (the log search bar) reads as a card, like the Vue search bar. */
-.filter-bar.search-bar {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; padding: 12px; margin-bottom: 16px;
 }
 label.check { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
 
@@ -318,6 +312,8 @@ html[lang^="zh"] .field > span:first-child::after { content: "："; }
 .field > :first-child:not(span) { grid-column: 1 / -1; }
 .field > :first-child:not(span) ~ .hint { grid-column: 1 / -1; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+/* A field that needs the whole row (the schedule URL plus its quick-fill button). */
+.form-grid .field-wide { grid-column: 1 / -1; }
 /* A block that carries a single record-like field (the SQLite file) keeps the full
    row instead of half of the two-column grid. */
 .form-grid-single { grid-template-columns: 1fr; }
@@ -327,6 +323,8 @@ html[lang^="zh"] .field > span:first-child::after { content: "："; }
   transition: background .15s, border-color .15s, box-shadow .15s;
 }
 .form-actions { display: flex; gap: 10px; margin-top: 6px; }
+/* Wizard actions sit at the card's right edge, like the settings and dialog footers. */
+.form-actions-end { justify-content: flex-end; }
 .form-actions .btn { min-height: 38px; }
 /* Simple forms (few controls) use one column like the login page, centered in the
    dialog/card instead of the two-column .form-grid. */
@@ -338,8 +336,6 @@ html[lang^="zh"] .field > span:first-child::after { content: "："; }
 #settings-form > .form-actions,
 #restart-form .form-actions { justify-content: flex-end; }
 .card-title { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
-.card-danger { border-color: #fecaca; background: #fffafa; }
-.card-danger .card-title { color: var(--danger); }
 /* Dialog footers read as a separate row: secondary/test actions, Cancel, then the
    primary save on the right. */
 .ui-dialog .form-actions {
@@ -355,6 +351,12 @@ html[lang^="zh"] .field > span:first-child::after { content: "："; }
 .ui-dialog .form > .hint { margin-left: 132px; }
 @media (max-width: 700px) {
   .ui-dialog .form > .hint { margin-left: 0; }
+}
+/* A note that describes the fields above it uses the same 120px + 12px inset as their
+   controls, and follows the label column when the fields narrow below 576px. */
+.hint-indent { margin-left: 132px; margin-top: 6px; }
+@media (max-width: 576px) {
+  .hint-indent { margin-left: 100px; }
 }
 select, input[type=text], input[type=password], input[type=number], input[type=url] {
   border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; height: 40px;
@@ -383,6 +385,29 @@ input[readonly]:focus { outline: none; border-color: var(--border); box-shadow: 
   background: none; color: var(--muted); cursor: pointer;
 }
 .pw-toggle:hover, .copy-btn:hover { color: var(--text); }
+/* File input: a button-like trigger fronts the native control, and the chosen names
+   render as chips in the same visual language as the .tag components. */
+.file-upload { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.file-upload input[type=file] {
+  position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none;
+}
+.file-btn { height: 40px; }
+.file-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.file-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 4px 3px 10px; border-radius: 999px;
+  background: #eef2f7; font-size: 12px;
+}
+.file-chip-name { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip-x {
+  width: 18px; height: 18px; border: 0; border-radius: 999px;
+  background: none; color: var(--muted); cursor: pointer; line-height: 1;
+}
+.file-chip-x:hover { background: #dde5ee; color: var(--danger); }
+/* A text input with a trailing action button (the schedule URL test link). */
+.input-suffix { display: flex; gap: 8px; }
+.input-suffix input { flex: 1; min-width: 0; }
+.input-suffix .btn { flex: none; height: 40px; }
 .pw-toggle svg, .copy-btn svg { width: 18px; height: 18px; }
 .pw-toggle .pw-icon-hide { display: none; }
 .pw-toggle[aria-pressed="true"] .pw-icon-show { display: none; }
@@ -410,6 +435,7 @@ legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
   background: #fff; color: var(--text); cursor: pointer; font: inherit;
 }
 .btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+.btn svg { width: 16px; height: 16px; flex: none; }
 .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff;
   box-shadow: 0 6px 14px rgba(64,158,255,.18); }
 .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff;
@@ -418,9 +444,24 @@ legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
 .btn-danger:hover { background: #fef0f0; border-color: var(--danger); color: var(--danger); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 .btn-block { width: 100%; }
-.btn-link { border: 0; background: none; color: var(--primary); cursor: pointer; padding: 0; font: inherit; }
-.btn-link.danger { color: var(--danger); }
 .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* Marks an admin-created row in the admin's SMTP list. */
+.admin-star { color: #f5a623; font-size: 12px; }
+
+/* Recipient picker (SMTP test send): a paged, searchable table over /api/mail. */
+.mail-picker-chosen {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border);
+}
+.mail-picker-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.mail-picker-search { flex: 1; min-width: 0; }
+.mail-picker-list { max-height: 380px; overflow-y: auto; }
+.mail-picker-table th:first-child, .mail-picker-table td:first-child { width: 40px; text-align: center; }
+.mail-picker-check input { width: auto; }
+.mail-picker-pages { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.mail-picker-pages .page-info { color: var(--muted); font-size: 13px; }
+.mail-picker-pages .pagination { margin-top: 0; }
 
 /* ---------- tags ---------- */
 .tag {

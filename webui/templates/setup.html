@@ -13,7 +13,7 @@
 </div>
 
 {{if eq .Step 1}}
-<form method="post" action="/setup/db" class="form">
+<form method="post" action="/setup/db" class="form" id="setup-form">
   <label class="field">
     <span>{{.L.T "setup.databaseType"}}</span>
     <select name="dbType" onchange="setupToggleDbType(this.value)">
@@ -39,7 +39,7 @@
 
   <fieldset>
     <legend>{{.L.T "setup.portConfig"}}</legend>
-    <div class="form-grid">
+    <div class="form-grid form-grid-single">
       <label class="field">
         <span>{{.L.T "setup.webPort"}}</span>
         <input type="text" value="{{.WebPort}}" readonly tabindex="-1">
@@ -49,12 +49,12 @@
         <input type="text" value="{{.ApiPort}}" readonly tabindex="-1">
       </label>
     </div>
-    <div class="hint">{{.L.T "setup.portHint"}}{{if .IsDocker}} · {{.L.T "settings.portLockedByDocker"}}{{end}}</div>
+    <div class="hint hint-indent">{{.L.T "setup.portHint"}}{{if .IsDocker}} · {{.L.T "settings.portLockedByDocker"}}{{end}}</div>
   </fieldset>
 
-  <div class="form-actions">
+  <div class="form-actions form-actions-end">
     <button type="submit" class="btn btn-primary">{{.L.T "setup.nextStep"}}</button>
-    <button type="submit" formaction="/setup/test" formmethod="post" class="btn">{{.L.T "setup.testConnection"}}</button>
+    <button type="button" class="btn" id="setup-test-btn">{{.L.T "setup.testConnection"}}</button>
   </div>
 </form>
 {{end}}
@@ -75,7 +75,7 @@
   {{template "passwordField" (dict "L" .L "label" "setup.adminPassword" "name" "password" "autocomplete" "new-password" "required" true "minlength" 8)}}
   {{end}}
   {{template "passwordField" (dict "L" .L "label" "setup.confirmPassword" "name" "confirm" "autocomplete" "new-password" "required" true "minlength" 8)}}
-  <div class="form-actions">
+  <div class="form-actions form-actions-end">
     <button type="submit" class="btn btn-primary">{{if .HasAdmin}}{{.L.T "setup.resetAdmin"}}{{else}}{{.L.T "setup.initialize"}}{{end}}</button>
   </div>
 </form>
@@ -94,5 +94,21 @@ function setupToggleDbType(v) {
   document.getElementById('sqlite-fields').hidden = v !== 'sqlite';
   document.getElementById('mysql-fields').hidden = v !== 'mysql';
 }
+
+// Test the typed settings without leaving the page; the verdict arrives in a dialog.
+(function () {
+  var btn = document.getElementById('setup-test-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var form = document.getElementById('setup-form');
+    var body = new URLSearchParams(new FormData(form));
+    btn.disabled = true;
+    fetch('/setup/test', { method: 'POST', body: body, credentials: 'same-origin' })
+      .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
+      .then(function (x) { UI.alert(x.ok ? (x.b && x.b.msg) || 'OK' : (x.b && x.b.msg) || 'failed'); })
+      .catch(function () { UI.alert('failed'); })
+      .then(function () { btn.disabled = false; });
+  });
+})();
 </script>
 {{end}}

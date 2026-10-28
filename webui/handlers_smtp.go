@@ -184,14 +184,15 @@ func (p *Pages) smtpSave(view *web.Template) error {
 	return redirect(view, backTo("/smtp", "common.success", "", ""))
 }
 
-// SmtpSendData backs the "send test mail" dialog opened from the SMTP list.
+// SmtpSendData backs the "send test mail" dialog opened from the SMTP list. The
+// recipient picker loads its rows over /api/mail (paged, searchable), so the page
+// itself carries no contact list.
 type SmtpSendData struct {
 	Base
-	Id         uint
-	Name       string
-	Mail       string
-	Subject    string
-	Recipients []*model.Mail
+	Id      uint
+	Name    string
+	Mail    string
+	Subject string
 }
 
 func (p *Pages) smtpSendForm(view *web.Template) error {
@@ -204,22 +205,17 @@ func (p *Pages) smtpSendForm(view *web.Template) error {
 	if err != nil {
 		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 	}
+	// smtpOwnedBy hands admins any row; the send API accepts the same pairing, so an
+	// admin can test another user's server from here.
 	row, err := p.smtpOwnedBy(id, user)
-	if err != nil || row == nil || row.UserId != user.Id {
-		// The send API only lets a caller send through their own SMTP server, so an
-		// admin opening another user's row would get a form that can never send.
+	if err != nil || row == nil {
 		return p.renderErr(view, http.StatusNotFound, "common.failed", "smtp not found")
 	}
-	mails, err := p.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
-	if err != nil {
-		return p.renderErr(view, 0, "common.failed", err.Error())
-	}
 	data := &SmtpSendData{
-		Base:       p.base(req, user, "smtp.sendTestMail", false),
-		Id:         row.Id,
-		Name:       row.Name,
-		Mail:       row.Mail,
-		Recipients: mails,
+		Base: p.base(req, user, "smtp.sendTestMail", false),
+		Id:   row.Id,
+		Name: row.Name,
+		Mail: row.Mail,
 	}
 	data.Subject = data.L.T("smtp.testEmailSubject")
 	view.View("smtp_send").Layout(layoutFor("smtp_send")).Data(data)

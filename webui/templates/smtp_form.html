@@ -8,7 +8,7 @@
   <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
     {{template "field" (dict "L" .L "label" "smtp.smtpName" "name" "name" "value" .Name "required" true)}}
-    {{template "field" (dict "L" .L "label" "smtp.host" "name" "host" "value" .Host "placeholder" "smtp.gmail.com" "required" true)}}
+    {{template "field" (dict "L" .L "label" "smtp.host" "name" "host" "value" .Host "placeholder" "smtp.gmail.com" "required" true "list" "smtp-host-options")}}
     {{template "field" (dict "L" .L "label" "smtp.port" "name" "port" "type" "number" "value" .Port)}}
     {{template "field" (dict "L" .L "label" "smtp.fromAddress" "name" "mail" "value" .Mail "placeholder" "sender@example.com" "required" true)}}
     {{template "field" (dict "L" .L "label" "smtp.username" "name" "username" "value" .Username "autocomplete" "off")}}
@@ -16,6 +16,26 @@
   </div>
   {{template "formActions" (dict "L" .L "saveKey" "common.save" "testID" "smtp-test-btn" "testKey" "smtp.testConnection")}}
 </form>
+
+{{/* Common provider hosts offered while typing; picking one fills the field, the port
+     and the username stay up to the user. */}}
+<datalist id="smtp-host-options">
+  <option value="smtp.gmail.com" label="Gmail"></option>
+  <option value="smtp.qq.com" label="QQ"></option>
+  <option value="smtp.exmail.qq.com" label="Tencent Exmail"></option>
+  <option value="smtp.163.com" label="163"></option>
+  <option value="smtp.126.com" label="126"></option>
+  <option value="smtp.aliyun.com" label="Aliyun"></option>
+  <option value="smtp.qiye.aliyun.com" label="Aliyun Enterprise"></option>
+  <option value="smtp.sina.com" label="Sina"></option>
+  <option value="smtp.139.com" label="139"></option>
+  <option value="smtp.189.cn" label="189"></option>
+  <option value="smtp.outlook.com" label="Outlook"></option>
+  <option value="smtp.office365.com" label="Microsoft 365"></option>
+  <option value="smtp.mail.yahoo.com" label="Yahoo"></option>
+  <option value="smtp.mail.me.com" label="iCloud"></option>
+  <option value="smtp.zoho.com" label="Zoho"></option>
+</datalist>
 
 <script>
 (function () {

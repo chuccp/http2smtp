@@ -12,7 +12,7 @@
       {{template "field" (dict "L" .L "label" "settings.apiPort" "name" "apiPort" "type" "number" "value" .ApiPort "readonly" .IsDocker)}}
     </div>
     {{if not .IsDocker}}
-    <div class="hint">{{.L.T "setup.portHint"}}</div>
+    <div class="hint hint-indent">{{.L.T "setup.portHint"}}</div>
     {{end}}
   </div>
 
@@ -40,14 +40,9 @@
     </div>
   </div>
 
-  {{template "formActions" (dict "L" .L "saveKey" "settings.saveSettings")}}
-</form>
-
-<form method="post" action="/settings/restart" class="form card card-danger" id="restart-form">
-  <h2 class="card-title">{{.L.T "settings.restartSystem"}}</h2>
-  <div class="hint">{{.L.T "settings.restartConfirm"}}</div>
   <div class="form-actions">
-    <button type="submit" class="btn btn-danger">{{.L.T "settings.saveAndRestart"}}</button>
+    <button type="submit" class="btn btn-primary">{{.L.T "settings.saveSettings"}}</button>
+    <button type="button" class="btn btn-danger" id="restart-btn" data-confirm="{{.L.T "settings.restartConfirm"}}">{{.L.T "settings.saveAndRestart"}}</button>
   </div>
 </form>
 
@@ -57,19 +52,19 @@ function settingsToggleDbType(v) {
   document.getElementById('mysql-fields').hidden = v !== 'mysql';
 }
 (function () {
-  // The settings form has to POST its own fields to /settings/restart — a bare form
-  // post would send nothing.
-  var rf = document.getElementById('restart-form');
+  // Save-and-restart posts the settings form's own fields to /settings/restart, so the
+  // pending database changes are persisted before the process goes down; the destructive
+  // action asks first.
+  var btn = document.getElementById('restart-btn');
   var sf = document.getElementById('settings-form');
-  rf.addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    UI.confirm(rf.querySelector('.hint').textContent).then(function (ok) {
+  if (!btn || !sf) return;
+  btn.addEventListener('click', function () {
+    UI.confirm(btn.getAttribute('data-confirm')).then(function (ok) {
       if (!ok) return;
       var fd = new FormData(sf);
       fd.append('webPort', sf.querySelector('[name=webPort]').value);
       fd.append('apiPort', sf.querySelector('[name=apiPort]').value);
       var body = new URLSearchParams(fd);
-      var btn = rf.querySelector('button');
       btn.disabled = true;
       fetch('/settings/restart', { method: 'POST', body: body, credentials: 'same-origin' })
         .then(function (r) { return r.text(); })

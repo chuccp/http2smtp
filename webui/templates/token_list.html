@@ -1,10 +1,11 @@
 {{define "content"}}
 <div class="toolbar">
   <button type="button" class="btn btn-primary" data-form-dialog="/tokens/form" data-dialog-width="860px" data-success="{{.L.T "common.success"}}">{{.L.T "token.generateToken"}}</button>
+  <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
   <form class="filter-bar" method="get" action="/tokens">
     <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "token.tokenName"}}">
     {{if .User.IsAdmin}}
-    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "token.adminCreated"}}</label>
+    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}} data-auto-submit> {{.L.T "token.adminCreated"}}</label>
     {{end}}
     <button class="btn" type="submit">{{.L.T "common.search"}}</button>
     <a class="btn" href="/tokens">{{.L.T "common.reset"}}</a>
@@ -30,7 +31,12 @@
       <td>{{.Name}}</td>
       <td>
         <span class="mono">{{shortToken .Token}}</span>
-        <button type="button" class="btn-link" data-copy="{{.Token}}" data-ok="{{$.L.T "common.copied"}}" data-fail="{{$.L.T "common.copyFailed"}}">{{$.L.T "token.copyToken"}}</button>
+        <button type="button" class="icon-btn" data-copy="{{.Token}}" data-ok="✓" data-fail="{{$.L.T "common.copyFailed"}}" title="{{$.L.T "token.copyToken"}}" aria-label="{{$.L.T "token.copyToken"}}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        </button>
+        <button type="button" class="icon-btn" data-view="{{.Token}}" data-view-title="{{$.L.T "token.tokenValue"}}" title="{{$.L.T "token.viewToken"}}" aria-label="{{$.L.T "token.viewToken"}}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </td>
       <td>{{.Subject}}</td>
       <td>

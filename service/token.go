@@ -233,29 +233,9 @@ func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any,
 			}
 		}
 	}
-	for _, file := range sendMailApi.Files {
-		if len(file.Data) == 0 {
-			continue
-		}
-		fileData, err := util.DecodeFileBase64(file.Data)
-		if err != nil {
-			return nil, err
-		}
-		if len(file.Name) == 0 {
-			file.Name, err = util.CalculateMD5(fileData)
-			if err != nil {
-				return nil, err
-			}
-		}
-		filePath := util.GetCachePath(l.cachePath, file.Name)
-		if err := util.WriteFile(fileData, filePath); err != nil {
-			return nil, err
-		}
-		vFile, err := os.Open(filePath)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, &smtp.File{File: vFile, Name: file.Name, FilePath: filePath})
+	files, err = l.appendBase64Files(files, sendMailApi.Files)
+	if err != nil {
+		return nil, err
 	}
 	// sendMailWithToken always writes the log entry — even for a failed send — and the
 	// entry records these paths, so from here on the log's cleanup owns the files.
@@ -280,7 +260,66 @@ func (l *TokenService) SendMailByTokenId(user *model.User, req *entity.SendMailB
 	if !byToken.IsUse() {
 		return nil, errors.New("token is not use")
 	}
-	return l.sendMailWithToken(byToken, req.Recipients, req.Subject, req.Content, nil)
+	// Attachments are this request's until the log entry records them; a failure before
+	// that point removes them again.
+	files := make([]*smtp.File, 0)
+	logged := false
+	defer func() {
+		if !logged {
+			for _, file := range files {
+				if file != nil && file.FilePath != "" {
+					_ = os.Remove(file.FilePath)
+				}
+			}
+		}
+	}()
+	defer func() {
+		for _, file := range files {
+			if file != nil && file.File != nil {
+				_ = file.File.Close()
+			}
+		}
+	}()
+	files, err = l.appendBase64Files(files, req.Files)
+	if err != nil {
+		return nil, err
+	}
+	// sendMailWithToken always writes the log entry (even for a failed send), and the
+	// entry records these paths, so from here on the log's cleanup owns the files.
+	logged = true
+	return l.sendMailWithToken(byToken, req.Recipients, req.Subject, req.Content, files)
+}
+
+// appendBase64Files writes the base64 attachments of a send request into the cache and
+// appends them to files. On error the files written so far are still returned, so the
+// caller's cleanup can remove them.
+func (l *TokenService) appendBase64Files(files []*smtp.File, specs []entity.File) ([]*smtp.File, error) {
+	for _, spec := range specs {
+		if len(spec.Data) == 0 {
+			continue
+		}
+		data, err := util.DecodeFileBase64(spec.Data)
+		if err != nil {
+			return files, err
+		}
+		name := spec.Name
+		if len(name) == 0 {
+			name, err = util.CalculateMD5(data)
+			if err != nil {
+				return files, err
+			}
+		}
+		filePath := util.GetCachePath(l.cachePath, name)
+		if err := util.WriteFile(data, filePath); err != nil {
+			return files, err
+		}
+		vFile, err := os.Open(filePath)
+		if err != nil {
+			return files, err
+		}
+		files = append(files, &smtp.File{File: vFile, Name: name, FilePath: filePath})
+	}
+	return files, nil
 }
 
 // ownerEnabled reports whether the account a token belongs to may still send. A token is

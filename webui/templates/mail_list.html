@@ -1,11 +1,12 @@
 {{define "content"}}
 <div class="toolbar">
   <button type="button" class="btn btn-primary" data-form-dialog="/mail/form" data-dialog-width="600px" data-success="{{.L.T "common.success"}}">{{.L.T "mail.addRecipient"}}</button>
+  <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
   <form class="filter-bar" method="get" action="/mail">
     <input type="text" name="name" value="{{.Name}}" placeholder="{{.L.T "mail.recipientName"}}">
     <input type="text" name="mail" value="{{.MailAddr}}" placeholder="{{.L.T "mail.emailAddress"}}">
     {{if .User.IsAdmin}}
-    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}}> {{.L.T "mail.adminCreated"}}</label>
+    <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}} data-auto-submit> {{.L.T "mail.adminCreated"}}</label>
     {{end}}
     <button class="btn" type="submit">{{.L.T "common.search"}}</button>
     <a class="btn" href="/mail">{{.L.T "common.reset"}}</a>

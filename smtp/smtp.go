@@ -174,6 +174,18 @@ func SendContentMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString s
 	return SendFilesMsg(smtp, mails, nil, subject, bodyString)
 }
 
+// hasHeader reports whether the header map already sets name. The comparison ignores
+// case because http.Header.Set canonicalises names: "content-type" and "Content-Type"
+// end up as the same header on the wire.
+func hasHeader(headers map[string]string, name string) bool {
+	for k := range headers {
+		if strings.EqualFold(k, name) {
+			return true
+		}
+	}
+	return false
+}
+
 func SendAPIMail(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail) (string, error) {
 	url := schedule.Url
 	Method := schedule.Method
@@ -194,6 +206,11 @@ func SendAPIMail(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail
 		for _, header := range schedule.Headers {
 			dataMap[header.Name] = header.Value
 		}
+	}
+	// The content type has its own form field, but an explicit Content-Type header still
+	// wins: that is the escape hatch for types the picker does not offer.
+	if schedule.ContentType != "" && !hasHeader(dataMap, "Content-Type") {
+		dataMap["Content-Type"] = schedule.ContentType
 	}
 	response, err := request.CallApiForResponse(url, dataMap, Method, []byte(schedule.Body))
 	if err != nil {

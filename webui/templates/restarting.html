@@ -4,6 +4,9 @@
   {{if .PortChanged}}
   <div class="flash flash-err" id="port-msg" style="display:none">{{.Message}}</div>
   <p class="mono" id="new-ports" style="display:none">web={{.ManagePort}} · api={{.ApiPort}}</p>
+  <p class="muted" id="countdown" style="display:none"
+     data-template="{{.L.T "settings.restartCountdown"}}"
+     data-port="{{.ManagePort}}"></p>
   {{else}}
   <p class="muted">{{.L.T "settings.pleaseWait"}}</p>
   {{end}}
@@ -14,6 +17,21 @@
   {{if .PortChanged}}
   document.getElementById('port-msg').style.display = '';
   document.getElementById('new-ports').style.display = '';
+  var countdown = document.getElementById('countdown');
+  countdown.style.display = '';
+  var label = countdown.getAttribute('data-template') || '{seconds}';
+  var left = 10;
+  // The old origin is gone with the port: rebuild the address from the host the page
+  // was served on and the management port the restart reports.
+  var target = location.protocol + '//' + location.hostname + ':' +
+    countdown.getAttribute('data-port') + '/settings';
+  function tick() {
+    countdown.textContent = label.replace('{seconds}', String(left));
+    if (left === 0) { location.href = target; return; }
+    left -= 1;
+    setTimeout(tick, 1000);
+  }
+  tick();
   {{else}}
   // Same port: give the process a moment, then reload this origin.
   setTimeout(function () { location.reload(); }, 3000);

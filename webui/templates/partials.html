@@ -15,17 +15,19 @@
      Each takes a map built with the dict template function. Keys:
      L (the request translator, always required), label (i18n key), name, value,
      required, readonly, autofocus, autocomplete,
-     placeholder / placeholderKey (single-line input hints),
+     placeholder / placeholderKey (single-line input hints), list (datalist id),
      hint / hintKey (a note below the control), type (input), minlength, inputClass, class (label),
      copyLabelKey (copyField), options ([]SelectOption), multiple, picker, titleKey,
-     placeholder (also the select's empty option text), rows. Optional keys may simply
-     be omitted. */}}
+     placeholder (also the select's empty option text), rows, search/searchKey (picker
+     search box), pageSize/pageInfoKey (picker pager), selectedHeader (picker pins the
+     pending selection above its list). Optional keys may simply be omitted. */}}
 
 {{define "field"}}{{$L := .L}}
 <label class="field{{with .class}} {{.}}{{end}}">
   <span>{{$L.T .label}}</span>
   <input type="{{with .type}}{{.}}{{else}}text{{end}}" name="{{.name}}" value="{{with .value}}{{.}}{{end}}"
     {{if .placeholder}}placeholder="{{.placeholder}}"{{else}}{{with .placeholderKey}}placeholder="{{$L.T .}}"{{end}}{{end}}
+    {{with .list}}list="{{.}}"{{end}}
     {{with .autocomplete}}autocomplete="{{.}}"{{end}}
     {{if .autofocus}}autofocus{{end}}
     {{if .required}}required{{end}}
@@ -51,6 +53,23 @@
 </label>
 {{end}}
 
+{{/* A file input fronted by a button-like trigger; ui.js fileChips renders the chosen
+     names as chips and readFiles reads them for the JSON send APIs. A div, not a label:
+     the trigger is itself a label, and labels must not nest. */}}
+{{define "fileField"}}{{$L := .L}}
+<div class="field">
+  <span>{{$L.T .label}}</span>
+  <div class="file-upload" data-remove-label="{{$L.T "common.delete"}}">
+    <label class="btn file-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      {{$L.T "common.chooseFiles"}}
+      <input type="file" name="{{.name}}" multiple>
+    </label>
+    <div class="file-chips"></div>
+  </div>
+</div>
+{{end}}
+
 {{define "copyField"}}{{$L := .L}}
 <label class="field{{with .class}} {{.}}{{end}}">
   <span>{{$L.T .label}}</span>
@@ -74,7 +93,11 @@
   <select name="{{.name}}"
     {{if .required}}required{{end}}
     {{if .multiple}}multiple{{end}}
-    {{if .picker}}data-picker data-title="{{$L.T .titleKey}}" data-placeholder="{{$L.T .placeholderKey}}"{{end}}>
+    {{if .picker}}data-picker data-title="{{$L.T .titleKey}}" data-placeholder="{{$L.T .placeholderKey}}"{{end}}
+    {{if .search}}data-search data-search-placeholder="{{$L.T .searchKey}}"{{end}}
+    {{with .pageSize}}data-page-size="{{.}}"{{end}}
+    {{if .pageInfoKey}}data-page-info="{{$L.T .pageInfoKey}}"{{end}}
+    {{if .selectedHeader}}data-selected-header{{end}}>
     {{if .placeholder}}<option value="">{{if .placeholderKey}}{{$L.T .placeholderKey}}{{else}}{{.placeholder}}{{end}}</option>{{end}}
     {{range .options}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}
   </select>

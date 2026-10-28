@@ -18,7 +18,7 @@ import (
 func (p *Pages) registerPageRoutes(ctx *core.Context, templateOption web.TemplateOption) {
 	ctx.GetTemplate("/setup", p.setupGet, templateOption)
 	ctx.PostTemplate("/setup/db", p.setupDb, templateOption)
-	ctx.PostTemplate("/setup/test", p.setupTest, templateOption)
+	ctx.Post("/setup/test", p.setupTest)
 	ctx.PostTemplate("/setup/admin", p.setupAdmin, templateOption)
 	ctx.PostTemplate("/setup/skip", p.setupSkip, templateOption)
 

@@ -1,6 +1,7 @@
 package webui
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -128,23 +129,17 @@ func (p *Pages) setupRebuild(req *web.Request, data *SetupData) {
 }
 
 // setupTest is the step-1 "test connection" button: probe the typed settings without
-// saving anything, then re-render the form with the verdict.
-func (p *Pages) setupTest(view *web.Template) error {
-	req := view.Request()
+// saving anything and answer the fetch with the verdict, so the page keeps the values
+// and shows the result in a dialog instead of re-rendering.
+func (p *Pages) setupTest(req *web.Request) (any, error) {
 	st := model.CoreState(p.ctx.GetConfig())
 	if st.Init {
-		return redirect(view, "/login")
+		return nil, errors.New("has init")
 	}
-	data := &SetupData{Base: p.newBase(langOf(req), "setup.setupWizard"), Step: 1, HasDbInit: st.DbInit}
-	data.DbType = "sqlite"
-	p.setupRebuild(req, data)
 	if err := configapply.ProbeDb(p.setupDbFromForm(req)); err != nil {
-		data.Flash = Flash{Err: err.Error()}
-	} else {
-		data.Flash = Flash{OK: "setup.connectionSuccess"}
+		return nil, err
 	}
-	view.View("setup").Layout(layoutFor("setup")).Data(data)
-	return nil
+	return web.Ok(translatorFor(langOf(req)).T("setup.connectionSuccess")), nil
 }
 
 // setupDb is step 1's save: persist the database settings and move on to the admin step.

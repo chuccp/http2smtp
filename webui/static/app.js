@@ -1,7 +1,7 @@
 /* HTTP2SMTP management UI behaviour.
    The pages are server-rendered; this file wires the shell to the ui.js component
    library: sidebar collapse, tab bar, nav highlighting, breadcrumb, delete
-   confirmation, password visibility and token copy. Partial navigation (pjax),
+   confirmation, password visibility, token copy and token view. Partial navigation (pjax),
    dialogs, toasts and the loading mask live in ui.js. */
 (function () {
   'use strict';
@@ -133,7 +133,15 @@
   function rememberTab() {
     if (!tabbar || cur.path === HOME.path || excluded(cur.path)) return;
     var tabs = loadTabs();
-    if (!tabs.some(function (t) { return t.path === cur.path; })) {
+    var existing = null;
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].path === cur.path) { existing = tabs[i]; break; }
+    }
+    if (existing) {
+      // The stored title belongs to the language it was recorded in; refresh it so the
+      // fallback below never resurrects the old one after a language switch.
+      existing.title = cur.title;
+    } else {
       tabs.push(cur);
     }
     saveTabs(tabs);
@@ -141,6 +149,19 @@
 
   function allTabs() {
     return [HOME].concat(loadTabs());
+  }
+
+  /* Labels come from the sidebar, which the server rendered in the current language;
+     the title stored with the tab may predate a language switch. Pages without a nav
+     entry keep their stored title. */
+  function navLabel(path) {
+    var items = document.querySelectorAll('.nav-item[data-path]');
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].getAttribute('data-path') !== path) continue;
+      var label = items[i].querySelector('.nav-label');
+      if (label) return label.textContent.trim();
+    }
+    return '';
   }
 
   function renderTabs() {
@@ -151,7 +172,7 @@
       a.className = 'tab' + (t.path === location.pathname ? ' active' : '');
       a.href = t.fullPath;
       a.setAttribute('data-path', t.path);
-      a.textContent = t.title || t.path;
+      a.textContent = navLabel(t.path) || t.title || t.path;
       if (idx > 0) {
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -274,8 +295,12 @@
           }
           return resp.json().then(function (body) {
             if (body && (body.code === 0 || body.code === 200)) {
+              // data-alert is for actions whose outcome deserves a dialog (trigger now);
+              // plain deletes keep the lighter toast.
+              var alertMsg = el.getAttribute('data-alert');
               var flash = el.getAttribute('data-flash');
-              if (flash) UI.toast(flash);
+              if (alertMsg) UI.alert(alertMsg);
+              else if (flash) UI.toast(flash);
               UI.refresh();
             } else {
               UI.alert((body && body.msg) || 'error');
@@ -284,6 +309,27 @@
         })
         .catch(function () { UI.alert('request failed'); });
     });
+  });
+
+  /* ---------- list refresh ----------
+     data-refresh re-fetches the current URL through the partial-navigation path, so
+     the shell, the filters and the tab bar stay put and only the list is replaced. */
+  document.addEventListener('click', function (ev) {
+    var el = ev.target.closest('[data-refresh]');
+    if (!el) return;
+    ev.preventDefault();
+    UI.refresh();
+  });
+
+  /* ---------- filter checkboxes ----------
+     A checkbox marked data-auto-submit applies immediately: requestSubmit fires the
+     regular submit event, so ui.js still turns the GET filter into a partial
+     navigation instead of a full reload. */
+  document.addEventListener('change', function (ev) {
+    var input = ev.target.closest('[data-auto-submit]');
+    if (!input || !input.form) return;
+    if (typeof input.form.requestSubmit === 'function') input.form.requestSubmit();
+    else input.form.submit();
   });
 
   /* ---------- password visibility ----------
@@ -356,5 +402,14 @@
     } else {
       failed();
     }
+  });
+
+  /* ---------- view a truncated value ----------
+     Buttons carry the full value in data-view (the list renders only a prefix); the
+     dialog body uses textContent, so the value is shown verbatim and stays selectable. */
+  document.addEventListener('click', function (ev) {
+    var el = ev.target.closest('[data-view]');
+    if (!el) return;
+    UI.alert(el.getAttribute('data-view'), el.getAttribute('data-view-title') || '');
   });
 })();

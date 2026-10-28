@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/model"
 )
 
 func templateTestBase() Base {
@@ -113,20 +114,35 @@ func TestRecordSelectorsArePickers(t *testing.T) {
 	if !strings.Contains(token, "multiple") {
 		t.Error("recipient select lost the multiple attribute")
 	}
+	// The token form's two pickers page and search; only the multi-select recipient
+	// picker pins the pending selection above the list.
+	for _, want := range []string{`data-search`, `data-page-size="10"`, `data-page-info=`, `data-selected-header`} {
+		if !strings.Contains(token, want) {
+			t.Errorf("token form picker is missing %q", want)
+		}
+	}
+	if strings.Count(token, "data-page-size=") != 2 {
+		t.Error("both token form pickers should be paged")
+	}
 
 	schedule := renderContent(t, "schedule_form", &ScheduleFormData{Base: templateTestBase()})
 	if !strings.Contains(schedule, `name="tokenId"`) || !strings.Contains(schedule, "data-picker") {
 		t.Error("schedule form token select is not a picker")
 	}
 
+	// The test send picker is its own paged multi-select over /api/mail, not a <select>.
 	send := renderContent(t, "smtp_send", &SmtpSendData{Base: templateTestBase()})
-	if !strings.Contains(send, `name="toEmail"`) || !strings.Contains(send, "data-picker") {
-		t.Error("smtp send recipient select is not a picker")
-	}
-	// The placeholder must stay the first option so an add dialog cannot silently send
-	// to the first contact.
-	if !strings.Contains(send, `<option value="">`) {
-		t.Error("smtp send recipient select lost its placeholder option")
+	for _, want := range []string{
+		`name="toEmail"`,
+		`id="recipient-picker"`,
+		`data-page-info=`,
+		`data-search-placeholder=`,
+		`data-admin-label=`,
+		`data-mine-label=`,
+	} {
+		if !strings.Contains(send, want) {
+			t.Errorf("smtp send picker is missing %q", want)
+		}
 	}
 }
 
@@ -166,6 +182,9 @@ func TestFormComponentsKeepFieldAttributes(t *testing.T) {
 	for _, want := range []string{
 		`name="port" value="25"`,
 		`placeholder="smtp.gmail.com"`,
+		`list="smtp-host-options"`,
+		`<datalist id="smtp-host-options">`,
+		`value="smtp.qq.com"`,
 		`id="smtp-test-btn"`,
 		`data-password-toggle`,
 	} {
@@ -362,8 +381,8 @@ func TestSimpleFormsUseOneColumn(t *testing.T) {
 	}
 }
 
-// The schedule method radios reveal the request body and make it required only for
-// POST; the save handler repeats that requirement server-side.
+// The schedule method radios reveal the request body and its content type, and make the
+// body required only for POST; the save handler repeats that requirement server-side.
 func TestSchedulePostRevealsRequiredBody(t *testing.T) {
 	get := renderContent(t, "schedule_form", &ScheduleFormData{Base: templateTestBase(), Method: "GET"})
 	if !strings.Contains(get, `id="body-field" hidden`) {
@@ -372,16 +391,181 @@ func TestSchedulePostRevealsRequiredBody(t *testing.T) {
 	if strings.Contains(get, `name="body" required`) {
 		t.Error("GET schedule should not require a request body")
 	}
-	post := renderContent(t, "schedule_form", &ScheduleFormData{Base: templateTestBase(), Method: "POST"})
+	if !strings.Contains(get, `id="content-type-field" hidden`) {
+		t.Error("GET schedule should hide the content type field")
+	}
+	post := renderContent(t, "schedule_form", &ScheduleFormData{Base: templateTestBase(), Method: "POST", ContentType: "application/json"})
 	if strings.Contains(post, `id="body-field" hidden`) {
 		t.Error("POST schedule should show the request body field")
 	}
 	if !strings.Contains(post, `name="body" required`) {
 		t.Error("POST schedule should require a request body")
 	}
-	for _, want := range []string{"syncBody", "bodyField.hidden = !post", "bodyInput.required = post"} {
+	if strings.Contains(post, `id="content-type-field" hidden`) {
+		t.Error("POST schedule should show the content type field")
+	}
+	if !strings.Contains(post, `<option value="application/json" selected>`) {
+		t.Error("content type field lost its selected JSON option")
+	}
+	for _, want := range []string{"syncBody", "bodyField.hidden = !post", "bodyInput.required = post", "contentTypeField.hidden = !post"} {
 		if !strings.Contains(post, want) {
 			t.Errorf("schedule method script is missing %q", want)
+		}
+	}
+	// The URL field carries the quick-fill button for the instance's request-test echo.
+	if !strings.Contains(post, `id="use-test-url"`) || !strings.Contains(post, `data-test-url=`) {
+		t.Error("schedule URL field lost its test-link button")
+	}
+}
+
+// Triggering a schedule reports through a dialog; the row delete keeps the lighter toast.
+func TestScheduleTriggerReportsViaAlert(t *testing.T) {
+	out := renderContent(t, "schedule_list", &ScheduleListData{
+		Base: templateTestBase(),
+		Rows: []*model.Schedule{{Id: 7, Name: "demo", Cron: "0 0 9 * * *", Url: "http://127.0.0.1:12566/api/scheduleTestApi", Method: "GET", IsUse: true}},
+	})
+	if !strings.Contains(out, `data-alert="任务触发成功"`) {
+		t.Error("trigger-now should report through an alert")
+	}
+	if strings.Contains(out, `data-href="/api/schedule/trigger/7" data-flash`) {
+		t.Error("trigger-now still uses a toast")
+	}
+}
+
+// The SMTP list stars rows owned by an administrator, and only for an admin viewer.
+func TestSmtpListStarsAdminCreatedRows(t *testing.T) {
+	rows := []*model.SMTP{{Id: 1, Name: "corp", Host: "smtp.example.com", CreatedByAdmin: true}}
+	admin := renderContent(t, "smtp_list", &SmtpListData{Base: templateTestBase(), Rows: rows})
+	if !strings.Contains(admin, "admin-star") {
+		t.Error("admin viewer should see the admin-created star")
+	}
+
+	base := templateTestBase()
+	base.User = &NavUser{Id: 2, Name: "bob"}
+	owner := renderContent(t, "smtp_list", &SmtpListData{Base: base, Rows: rows})
+	if strings.Contains(owner, "admin-star") {
+		t.Error("non-admin viewer should not see the admin-created star")
+	}
+}
+
+// Admins can test-send through every row; a regular user only through servers they own.
+func TestSmtpSendButtonFollowsAdmin(t *testing.T) {
+	other := []*model.SMTP{{Id: 5, UserId: 9, Name: "other"}}
+	admin := renderContent(t, "smtp_list", &SmtpListData{Base: templateTestBase(), Rows: other})
+	if !strings.Contains(admin, `/smtp/send/5`) {
+		t.Error("admin should get a send-test button on another user's server")
+	}
+
+	base := templateTestBase()
+	base.User = &NavUser{Id: 2, Name: "bob"}
+	owner := renderContent(t, "smtp_list", &SmtpListData{Base: base, Rows: other})
+	if strings.Contains(owner, `/smtp/send/5`) {
+		t.Error("regular user should not get a send-test button on another user's server")
+	}
+	own := renderContent(t, "smtp_list", &SmtpListData{Base: base, Rows: []*model.SMTP{{Id: 6, UserId: 2, Name: "own"}}})
+	if !strings.Contains(own, `/smtp/send/6`) {
+		t.Error("regular user should get a send-test button on their own server")
+	}
+}
+
+// Both test-send dialogs can attach files; the shared partial and ui.js helpers turn
+// the selection into base64 entries in the JSON body.
+func TestSendDialogsOfferAttachments(t *testing.T) {
+	cases := []struct {
+		page string
+		data any
+	}{
+		{"smtp_send", &SmtpSendData{Base: templateTestBase()}},
+		{"token_send", &TokenSendData{Base: templateTestBase()}},
+	}
+	for _, c := range cases {
+		out := renderContent(t, c.page, c.data)
+		for _, want := range []string{`type="file"`, `name="files"`, `class="file-chips"`, `UI.fileChips`, `UI.readFiles`, `files: files`} {
+			if !strings.Contains(out, want) {
+				t.Errorf("%s is missing %q", c.page, want)
+			}
+		}
+	}
+}
+
+// After a port change the old origin is gone, so the interstitial counts down and then
+// jumps to the same host on the new management port; a same-port restart just reloads.
+func TestRestartingPageCountsDownToNewPort(t *testing.T) {
+	moved := renderContent(t, "restarting", &RestartingData{
+		Base:        templateTestBase(),
+		Message:     "restarted",
+		ManagePort:  12568,
+		ApiPort:     12567,
+		CurrentPort: 12566,
+		PortChanged: true,
+	})
+	for _, want := range []string{
+		`data-port="12568"`,
+		`data-template="`,
+		`{seconds}`,
+		`location.hostname`,
+		`location.href = target`,
+	} {
+		if !strings.Contains(moved, want) {
+			t.Errorf("restarting page is missing %q", want)
+		}
+	}
+
+	same := renderContent(t, "restarting", &RestartingData{
+		Base: templateTestBase(), Message: "restarted", ManagePort: 12566, ApiPort: 12567, PortChanged: false,
+	})
+	if !strings.Contains(same, "location.reload") {
+		t.Error("same-port restart should reload the current origin")
+	}
+	if strings.Contains(same, "countdown") {
+		t.Error("same-port restart should not render a countdown")
+	}
+}
+
+// Every management list can re-fetch its current content without leaving the page, and
+// the admin-only filter checkbox applies on change instead of waiting for Search.
+func TestListPagesOfferRefresh(t *testing.T) {
+	cases := []struct {
+		page   string
+		data   any
+		filter bool
+	}{
+		{"smtp_list", &SmtpListData{Base: templateTestBase()}, true},
+		{"mail_list", &MailListData{Base: templateTestBase()}, true},
+		{"token_list", &TokenListData{Base: templateTestBase()}, true},
+		{"schedule_list", &ScheduleListData{Base: templateTestBase()}, true},
+		{"logs_list", &LogListData{Base: templateTestBase()}, true},
+		{"users_list", &UserListData{Base: templateTestBase()}, false},
+	}
+	for _, c := range cases {
+		out := renderContent(t, c.page, c.data)
+		if !strings.Contains(out, "data-refresh") {
+			t.Errorf("%s has no refresh button", c.page)
+		}
+		if c.filter && !strings.Contains(out, "data-auto-submit") {
+			t.Errorf("%s has no auto-submitting admin filter", c.page)
+		}
+	}
+}
+
+// The row toggle offers the opposite action of the current state, each with its own
+// toast, and hits the dedicated toggle endpoint.
+func TestScheduleListOffersToggle(t *testing.T) {
+	out := renderContent(t, "schedule_list", &ScheduleListData{
+		Base: templateTestBase(),
+		Rows: []*model.Schedule{
+			{Id: 7, Name: "on", Url: "http://example.com/a", IsUse: true},
+			{Id: 8, Name: "off", Url: "http://example.com/b", IsUse: false},
+		},
+	})
+	for _, want := range []string{
+		`data-href="/api/schedule/toggle/7" data-flash="任务已停用"`,
+		`>停用</button>`,
+		`data-href="/api/schedule/toggle/8" data-flash="任务已启用"`,
+		`>启用</button>`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("schedule list toggle is missing %q", want)
 		}
 	}
 }

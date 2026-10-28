@@ -28,6 +28,7 @@ type Schedule struct {
 	HeaderStr         string    `gorm:"column:header_str" json:"headerStr"`
 	Headers           []*Header `gorm:"-" json:"headers"`
 	Body              string    `gorm:"column:body" json:"body"`
+	ContentType       string    `gorm:"column:content_type" json:"contentType"`
 	UseTemplate       bool      `gorm:"column:use_template" json:"useTemplate"`
 	Template          string    `gorm:"column:template" json:"template"`
 	IsUse             bool      `gorm:"column:is_use" json:"isUse"`
@@ -38,7 +39,7 @@ type Schedule struct {
 
 func (schedule *Schedule) Key() string {
 
-	value := fmt.Sprintf("%d#%s#%d#%s#%s#%s#%s#%s#%s#%t#%t#%t",
+	value := fmt.Sprintf("%d#%s#%d#%s#%s#%s#%s#%s#%s#%s#%t#%t#%t",
 		schedule.UserId,
 		schedule.Name,
 		schedule.TokenId,
@@ -47,6 +48,7 @@ func (schedule *Schedule) Key() string {
 		schedule.Method,
 		schedule.HeaderStr,
 		schedule.Body,
+		schedule.ContentType,
 		schedule.Template,
 		schedule.UseTemplate,
 		schedule.IsUse,

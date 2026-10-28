@@ -3,11 +3,14 @@ package rest
 import (
 	"errors"
 	"net/mail"
+	"os"
 	"strconv"
 	"time"
 
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/log"
+	wfutil "github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/entity"
@@ -15,6 +18,7 @@ import (
 	"github.com/chuccp/http2smtp/service"
 	stmp2 "github.com/chuccp/http2smtp/smtp"
 	"github.com/chuccp/http2smtp/util"
+	"go.uber.org/zap"
 )
 
 type Smtp struct {
@@ -22,6 +26,8 @@ type Smtp struct {
 	schedule    *service.ScheduleService
 	smtpModel   *model.SMTPModel
 	smtpService *service.SmtpService
+	logService  *service.LogService
+	cachePath   string
 }
 
 func (smtp *Smtp) getOne(req *web.Request) (any, error) {
@@ -162,7 +168,13 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
-	smtpServer, err := smtp.smtpModel.Query().Where("id = ? AND user_id = ?", sendMail.SMTPId, user.Id).One()
+	// Admins may send through any user's server (the list offers them every row); a
+	// regular caller is limited to servers they own.
+	query := smtp.smtpModel.Query().Where("id = ?", sendMail.SMTPId)
+	if !user.IsAdmin {
+		query = query.Where("user_id = ?", user.Id)
+	}
+	smtpServer, err := query.One()
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +192,61 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 	if len(recipients) == 0 {
 		return nil, errors.New("no valid recipients")
 	}
+	// The attachments are written into the cache before sending. From the moment the log
+	// entry records them its cleanup owns them; until then a failure must not leave
+	// copies behind.
+	files := make([]*stmp2.File, 0)
+	logged := false
+	defer func() {
+		if !logged {
+			for _, f := range files {
+				if f != nil && f.FilePath != "" {
+					_ = os.Remove(f.FilePath)
+				}
+			}
+		}
+	}()
+	for _, file := range sendMail.Files {
+		if file.Data == "" {
+			continue
+		}
+		data, err := wfutil.DecodeFileBase64(file.Data)
+		if err != nil {
+			return nil, err
+		}
+		name := file.Name
+		if name == "" {
+			name, err = wfutil.CalculateMD5(data)
+			if err != nil {
+				return nil, err
+			}
+		}
+		filePath := wfutil.GetCachePath(smtp.cachePath, name)
+		if err := wfutil.WriteFile(data, filePath); err != nil {
+			return nil, err
+		}
+		vFile, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, &stmp2.File{File: vFile, Name: name, FilePath: filePath})
+	}
+	// go-mail reads these readers but never closes them.
+	defer func() {
+		for _, f := range files {
+			if f != nil && f.File != nil {
+				_ = f.File.Close()
+			}
+		}
+	}()
 	// 发送邮件
-	err = stmp2.SendAllMsg(smtpServer, recipients, nil, sendMail.Subject, sendMail.Content)
+	err = stmp2.SendAllMsg(smtpServer, recipients, files, sendMail.Subject, sendMail.Content)
+	logged = true
+	// The log is the instance's send record, so a test send belongs there too, under the
+	// user who ran the test — including an admin testing another user's server.
+	if logErr := smtp.logService.Log(user.Id, smtpServer, recipients, files, "", "", sendMail.Subject, sendMail.Content, err); logErr != nil {
+		log.Error("sendMailBySMTP log error", zap.Error(logErr))
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +276,8 @@ func (smtp *Smtp) Init(context *core.Context) error {
 	smtp.context = context
 	smtp.smtpModel = core.GetModel[*model.SMTPModel](context)
 	smtp.smtpService = core.GetService[*service.SmtpService](context)
+	smtp.logService = core.GetService[*service.LogService](context)
+	smtp.cachePath = context.GetConfig().GetStringOrDefault("core.cachePath", "cache")
 	context.Get("/api/smtp/:id", smtp.getOne).WithMeta(auth2.WithLogin())
 	context.Delete("/api/smtp/:id", smtp.deleteOne).WithMeta(auth2.WithLogin())
 	context.Get("/api/smtp", smtp.getPage).WithMeta(auth2.WithLogin())

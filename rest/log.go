@@ -51,6 +51,11 @@ func (l *Log) getOne(req *web.Request) (any, error) {
 	}
 	if one != nil {
 		one.StatusStr = entity.StatusText(one.Status)
+		if user.IsAdmin {
+			l.userService.FillUserNames([]uint{one.UserId}, func(uid uint, name string) {
+				one.UserName = name
+			})
+		}
 	}
 	return one, nil
 }

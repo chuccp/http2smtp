@@ -44,7 +44,7 @@
   position: relative; padding: 16px; color: var(--text);
   overflow-y: auto; flex: 1; min-height: 0;
 }
-.ui-dialog-message .ui-dialog-body { white-space: pre-line; }
+.ui-dialog-message .ui-dialog-body { white-space: pre-line; overflow-wrap: anywhere; }
 .ui-dialog-body.is-loading { min-height: 120px; }
 .ui-dialog-body .form.card { border: 0; padding: 0; margin: 0; }
 .ui-dialog-body .field > span { white-space: normal; }
@@ -120,6 +120,17 @@
 .ui-picker-row input { width: auto; flex: none; margin: 0; }
 .ui-picker-option { font-size: 13px; }
 .ui-picker-empty { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
+/* Optional picker chrome: a search box, a pager, and (multi-select) a pinned strip of
+   the pending selection so paging does not hide what is already checked. */
+.ui-picker-filter { display: flex; gap: 10px; margin-bottom: 10px; }
+.ui-picker-search { flex: 1; min-width: 0; }
+.ui-picker-chosen {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border);
+}
+.ui-picker-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.ui-picker-pager .pagination { margin-top: 0; }
+.ui-picker-pager .page-info { color: var(--muted); font-size: 13px; }
 
 /* ---------- loading mask ---------- */
 .ui-mask {

@@ -189,10 +189,12 @@ framework and would land on the page routes too. The `/api` prefix lives in the 
 route registrations (`rest/*.go`) instead — the URLs callers see are unchanged, and the
 public API group on its own port is untouched.
 
-Auth split: `/api/*` routes carry `WithLogin` meta as before; page routes skip it (its
-403 JSON is the wrong answer for a browser navigation) and gate in the handler through
-`Pages.requireUser`/`requireAdmin`, redirecting to `/login` or rendering the refusal
-page. A restart re-runs every `Rest.Init` on a fresh engine; the immutable framework
+Auth split: `/api/*` routes carry `WithLogin` meta as before, with one exception — the
+request-test echo `/api/scheduleTestApi` is open because a schedule calls it from the
+server itself, without a session; it only reflects the caller's own request. Page routes
+skip `WithLogin` (its 403 JSON is the wrong answer for a browser navigation) and gate in
+the handler through `Pages.requireUser`/`requireAdmin`, redirecting to `/login` or
+rendering the refusal page. A restart re-runs every `Rest.Init` on a fresh engine; the immutable framework
 template set is loaded once per process and installed on each new server.
 
 ### Backend layout
@@ -234,7 +236,9 @@ editing someone else's row does not take it over. Row-level reads (`GET /smtp/:i
 `/mail/:id`, …) answer `data: null` for a row the caller does not own rather than
 reporting a permission error, so existence does not leak; the list endpoints are what
 admins use to reach other users' rows, and those exclude nothing by default
-(`adminOnly=true` narrows them to admin-owned rows).
+(`adminOnly=true` narrows them to admin-owned rows). An admin may also send a test mail
+through any user's SMTP row (the list's send dialog and `POST /api/sendMailBySMTP`); a
+regular caller stays limited to servers they own.
 
 Two references are checked as well, because resolving them by id alone would hand out
 another account's credentials: a token may only point at the owner's own SMTP server and
@@ -258,8 +262,9 @@ sets one, and any signed-in user can change their own password through `POST /ch
 — the salt rotation ends their other sessions, this browser's included.
 
 Mail logs are per-owner: `LogService.Log` records the `user_id` it is given (the token
-owner for a token send, the schedule owner for a scheduled call), because the log list
-and the attachment download both filter on it. The admin case is the exception — the log
+owner for a token send, the schedule owner for a scheduled call, the caller for a test
+send from the SMTP list — the tester, even when an admin uses someone else's server),
+because the log list and the attachment download both filter on it. The admin case is the exception — the log
 page is the instance's send record, so an admin reads every user's entries (the list
 carries the same `adminOnly` filter as the other lists, and fills the owner name) and can
 fetch their attachments; everyone else gets `data: null` on a row that is not theirs.

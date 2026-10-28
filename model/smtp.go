@@ -9,17 +9,20 @@ import (
 )
 
 type SMTP struct {
-	Id         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	UserId     uint      `gorm:"column:user_id" json:"userId"`
-	UserName   string    `gorm:"-" json:"userName"`
-	Host       string    `gorm:"column:host" json:"host"`
-	Port       int       `gorm:"column:port" json:"port"`
-	Mail       string    `gorm:"column:mail" json:"mail"`
-	Username   string    `gorm:"column:username" json:"username"`
-	Name       string    `gorm:"column:name" json:"name"`
-	Password   string    `gorm:"column:password"  json:"password"`
-	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
-	UpdateTime time.Time `gorm:"column:update_time" json:"updateTime"`
+	Id       uint   `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	UserId   uint   `gorm:"column:user_id" json:"userId"`
+	UserName string `gorm:"-" json:"userName"`
+	// CreatedByAdmin is populated for the admin list view (the row's owner is an admin);
+	// it is not a column.
+	CreatedByAdmin bool      `gorm:"-" json:"createdByAdmin"`
+	Host           string    `gorm:"column:host" json:"host"`
+	Port           int       `gorm:"column:port" json:"port"`
+	Mail           string    `gorm:"column:mail" json:"mail"`
+	Username       string    `gorm:"column:username" json:"username"`
+	Name           string    `gorm:"column:name" json:"name"`
+	Password       string    `gorm:"column:password"  json:"password"`
+	CreateTime     time.Time `gorm:"column:create_time" json:"createTime"`
+	UpdateTime     time.Time `gorm:"column:update_time" json:"updateTime"`
 }
 
 func (smtp *SMTP) SetCreateTime(createTime time.Time) {

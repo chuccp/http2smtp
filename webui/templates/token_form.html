@@ -10,10 +10,10 @@
     {{template "field" (dict "L" .L "label" "token.tokenName" "name" "name" "value" .Name "required" true)}}
     {{template "copyField" (dict "L" .L "label" "token.tokenValue" "name" "token" "value" .TokenValue "inputClass" "mono" "required" true "copyLabelKey" "token.copyToken")}}
     {{template "field" (dict "L" .L "label" "token.subject" "name" "subject" "value" .Subject "placeholderKey" "token.subjectPlaceholder")}}
-    {{template "selectField" (dict "L" .L "label" "token.associatedSMTP" "name" "smtpId" "options" .SmtpOptions "required" true "picker" true "titleKey" "token.associatedSMTP" "placeholderKey" "token.pleaseSelectSMTP" "placeholder" "—")}}
+    {{template "selectField" (dict "L" .L "label" "token.associatedSMTP" "name" "smtpId" "options" .SmtpOptions "required" true "picker" true "titleKey" "token.associatedSMTP" "placeholderKey" "token.pleaseSelectSMTP" "placeholder" "—" "search" true "searchKey" "common.search" "pageSize" 10 "pageInfoKey" "common.pageInfo")}}
   </div>
 
-  {{template "selectField" (dict "L" .L "label" "token.allowedRecipients" "name" "receiveEmailIds" "options" .MailOptions "required" true "multiple" true "picker" true "titleKey" "token.allowedRecipients" "placeholderKey" "token.pleaseSelectRecipients")}}
+  {{template "selectField" (dict "L" .L "label" "token.allowedRecipients" "name" "receiveEmailIds" "options" .MailOptions "required" true "multiple" true "picker" true "titleKey" "token.allowedRecipients" "placeholderKey" "token.pleaseSelectRecipients" "search" true "searchKey" "common.search" "pageSize" 10 "pageInfoKey" "common.pageInfo" "selectedHeader" true)}}
 
   <fieldset>
     <legend>{{.L.T "token.status"}}</legend>
