@@ -16,58 +16,51 @@ import (
 // registerPageRoutes wires the server-rendered pages. Home, logout and language
 // switching redirect without rendering and are registered directly in Init.
 func (p *Pages) registerPageRoutes(ctx *core.Context, templateOption web.TemplateOption) {
-	get := func(relativePath string, handler web.TemplateHandler) {
-		ctx.GetTemplate(relativePath, handler, templateOption)
-	}
-	post := func(relativePath string, handler web.TemplateHandler) {
-		ctx.PostTemplate(relativePath, handler, templateOption)
-	}
+	ctx.GetTemplate("/setup", p.setupGet, templateOption)
+	ctx.PostTemplate("/setup/db", p.setupDb, templateOption)
+	ctx.PostTemplate("/setup/test", p.setupTest, templateOption)
+	ctx.PostTemplate("/setup/admin", p.setupAdmin, templateOption)
+	ctx.PostTemplate("/setup/skip", p.setupSkip, templateOption)
 
-	get("/setup", p.setupGet)
-	post("/setup/db", p.setupDb)
-	post("/setup/test", p.setupTest)
-	post("/setup/admin", p.setupAdmin)
-	post("/setup/skip", p.setupSkip)
+	ctx.GetTemplate("/dashboard", p.dashboard, templateOption)
 
-	get("/dashboard", p.dashboard)
-
-	get("/smtp", p.smtpList)
-	get("/smtp/form", p.smtpForm)
-	get("/smtp/form/:id", p.smtpForm)
-	post("/smtp/save", p.smtpSave)
-	get("/smtp/send/:id", p.smtpSendForm)
+	ctx.GetTemplate("/smtp", p.smtpList, templateOption)
+	ctx.GetTemplate("/smtp/form", p.smtpForm, templateOption)
+	ctx.GetTemplate("/smtp/form/:id", p.smtpForm, templateOption)
+	ctx.PostTemplate("/smtp/save", p.smtpSave, templateOption)
+	ctx.GetTemplate("/smtp/send/:id", p.smtpSendForm, templateOption)
 	ctx.Post("/smtp/test", p.smtpTest)
 
-	get("/mail", p.mailList)
-	get("/mail/form", p.mailForm)
-	get("/mail/form/:id", p.mailForm)
-	post("/mail/save", p.mailSave)
+	ctx.GetTemplate("/mail", p.mailList, templateOption)
+	ctx.GetTemplate("/mail/form", p.mailForm, templateOption)
+	ctx.GetTemplate("/mail/form/:id", p.mailForm, templateOption)
+	ctx.PostTemplate("/mail/save", p.mailSave, templateOption)
 
-	get("/tokens", p.tokenList)
-	get("/tokens/form", p.tokenForm)
-	get("/tokens/form/:id", p.tokenForm)
-	post("/tokens/save", p.tokenSave)
-	get("/tokens/send/:id", p.tokenSendForm)
+	ctx.GetTemplate("/tokens", p.tokenList, templateOption)
+	ctx.GetTemplate("/tokens/form", p.tokenForm, templateOption)
+	ctx.GetTemplate("/tokens/form/:id", p.tokenForm, templateOption)
+	ctx.PostTemplate("/tokens/save", p.tokenSave, templateOption)
+	ctx.GetTemplate("/tokens/send/:id", p.tokenSendForm, templateOption)
 
-	get("/schedule", p.scheduleList)
-	get("/schedule/form", p.scheduleForm)
-	get("/schedule/form/:id", p.scheduleForm)
-	post("/schedule/save", p.scheduleSave)
+	ctx.GetTemplate("/schedule", p.scheduleList, templateOption)
+	ctx.GetTemplate("/schedule/form", p.scheduleForm, templateOption)
+	ctx.GetTemplate("/schedule/form/:id", p.scheduleForm, templateOption)
+	ctx.PostTemplate("/schedule/save", p.scheduleSave, templateOption)
 
-	get("/logs", p.logList)
-	get("/logs/:id", p.logDetail)
+	ctx.GetTemplate("/logs", p.logList, templateOption)
+	ctx.GetTemplate("/logs/:id", p.logDetail, templateOption)
 
-	get("/users", p.userList)
-	get("/users/form", p.userForm)
-	get("/users/form/:id", p.userForm)
-	post("/users/save", p.userSave)
+	ctx.GetTemplate("/users", p.userList, templateOption)
+	ctx.GetTemplate("/users/form", p.userForm, templateOption)
+	ctx.GetTemplate("/users/form/:id", p.userForm, templateOption)
+	ctx.PostTemplate("/users/save", p.userSave, templateOption)
 
-	get("/settings", p.settingsGet)
-	post("/settings/save", p.settingsSave)
-	post("/settings/restart", p.settingsRestart)
+	ctx.GetTemplate("/settings", p.settingsGet, templateOption)
+	ctx.PostTemplate("/settings/save", p.settingsSave, templateOption)
+	ctx.PostTemplate("/settings/restart", p.settingsRestart, templateOption)
 
-	get("/password", p.passwordGet)
-	post("/password", p.passwordPost)
+	ctx.GetTemplate("/password", p.passwordGet, templateOption)
+	ctx.PostTemplate("/password", p.passwordPost, templateOption)
 }
 
 // home routes a first visit: the setup wizard before init, the login page without a
