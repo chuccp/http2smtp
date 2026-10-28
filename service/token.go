@@ -3,6 +3,8 @@ package service
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -19,13 +21,14 @@ import (
 )
 
 type TokenService struct {
-	context    *core.Context
-	mailModel  *model.MailModel
-	smtpModel  *model.SMTPModel
-	tokenModel *model.TokenModel
-	logService *LogService
-	lock       *sync.RWMutex
-	cachePath  string
+	context     *core.Context
+	mailModel   *model.MailModel
+	smtpModel   *model.SMTPModel
+	tokenModel  *model.TokenModel
+	logService  *LogService
+	lock        *sync.RWMutex
+	cachePath   string
+	maxBodySize int64
 }
 
 func (l *TokenService) GetOne(id uint, userId uint) (*model.Token, error) {
@@ -138,22 +141,70 @@ func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 	return errors.New("token is not use")
 }
 
+// limitSendBody applies core.maxBodySize before anything parses the body, so an
+// oversized upload never reaches the cache. The framework applies the same value to
+// JSON, but form and multipart parsing reads the body without a limit — and multipart is
+// exactly how attachments arrive on /sendMail. A negative value means unlimited.
+func (l *TokenService) limitSendBody(req *web.Request) error {
+	limit := l.maxBodySize
+	if limit == 0 {
+		limit = model.DefaultMaxBodySize
+	}
+	if limit < 0 {
+		return nil
+	}
+	r := req.Request()
+	if r == nil {
+		return nil
+	}
+	// Content-Length catches the ordinary case with a clear message; MaxBytesReader
+	// covers a chunked request that declares no length.
+	if r.ContentLength > limit {
+		return fmt.Errorf("request body is too large (limit %s)", model.ByteSize(limit))
+	}
+	if r.Body != nil {
+		r.Body = http.MaxBytesReader(req.GinContext().Writer, r.Body, limit)
+	}
+	return nil
+}
+
+// removeSendFiles closes and deletes attachments that never reached a log entry. The
+// caller assumes the log entry takes ownership of them; a failure before the send
+// starts leaves that assumption false, and the cache would keep the copies forever.
+func removeSendFiles(files []*smtp.File) {
+	for _, file := range files {
+		if file == nil {
+			continue
+		}
+		if file.File != nil {
+			_ = file.File.Close()
+		}
+		if file.FilePath != "" {
+			_ = os.Remove(file.FilePath)
+		}
+	}
+}
+
 func (l *TokenService) sendMailWithToken(byToken *model.Token, recipients []string, subject string, content string, files []*smtp.File) (any, error) {
 	if !l.ownerEnabled(byToken) {
+		removeSendFiles(files)
 		return nil, errors.New("token owner is disabled")
 	}
 	l.supplementToken(byToken)
 	if byToken.SMTP == nil {
+		removeSendFiles(files)
 		return nil, errors.New("SMTP not found")
 	}
 	byToken.ReceiveEmails = MergeRecipients(byToken.ReceiveEmails, recipients)
 	if len(byToken.ReceiveEmails) == 0 {
+		removeSendFiles(files)
 		return nil, errors.New("no recipients: the token has none configured and the request carried none")
 	}
 	// A malformed address is skipped instead of failing the whole send; the remaining
 	// recipients (and the log entry) carry on without it.
 	byToken.ReceiveEmails = smtp.FilterValidMails(byToken.ReceiveEmails)
 	if len(byToken.ReceiveEmails) == 0 {
+		removeSendFiles(files)
 		return nil, errors.New("no valid recipients")
 	}
 	if subject == "" {
@@ -175,6 +226,9 @@ func (l *TokenService) sendMailWithToken(byToken *model.Token, recipients []stri
 func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any, error) {
 	l.lock.Lock()
 	defer l.lock.Unlock()
+	if err := l.limitSendBody(req); err != nil {
+		return nil, err
+	}
 	var sendMailApi entity.SendMailApi
 	files := make([]*smtp.File, 0)
 	// Until the files are recorded in the mail log they belong to this request alone:
@@ -206,6 +260,15 @@ func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any,
 			return nil, err
 		}
 	} else {
+		// GetFormParam swallows parse errors, so an oversized or malformed body would
+		// surface as an empty token; parse explicitly to report what actually went wrong.
+		if req.IsMultipartForm() {
+			if err := req.Request().ParseMultipartForm(32 << 20); err != nil {
+				return nil, err
+			}
+		} else if err := req.Request().ParseForm(); err != nil {
+			return nil, err
+		}
 		sendMailApi.Token = req.GetFormParam("token")
 		sendMailApi.Content = req.GetFormParam("content")
 		sendMailApi.Subject = req.GetFormParam("subject")
@@ -235,13 +298,18 @@ func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any,
 			for _, fileHeader := range fileHeaders {
 				filePath := util.GetCachePath(l.cachePath, fileHeader.Filename)
 				if err := web.SaveUploadedFile(fileHeader, filePath); err != nil {
+					// A failed save can leave a partial file behind; the entry is only
+					// appended on success, so remove it here instead of leaking it.
+					_ = os.Remove(filePath)
 					return nil, err
 				}
+				entry := &smtp.File{Name: fileHeader.Filename, FilePath: filePath}
+				files = append(files, entry)
 				file, err := os.Open(filePath)
 				if err != nil {
 					return nil, err
 				}
-				files = append(files, &smtp.File{File: file, Name: fileHeader.Filename, FilePath: filePath})
+				entry.File = file
 			}
 		}
 	}
@@ -325,11 +393,15 @@ func (l *TokenService) appendBase64Files(files []*smtp.File, specs []entity.File
 		if err := util.WriteFile(data, filePath); err != nil {
 			return files, err
 		}
+		// Append before opening so an open failure still leaves the written file where
+		// the caller's cleanup can find it.
+		entry := &smtp.File{Name: name, FilePath: filePath}
+		files = append(files, entry)
 		vFile, err := os.Open(filePath)
 		if err != nil {
 			return files, err
 		}
-		files = append(files, &smtp.File{File: vFile, Name: name, FilePath: filePath})
+		entry.File = vFile
 	}
 	return files, nil
 }
@@ -384,6 +456,9 @@ func (l *TokenService) supplementToken(st ...*model.Token) {
 func (l *TokenService) Init(context *core.Context) error {
 	l.context = context
 	l.cachePath = context.GetConfig().GetStringOrDefault("core.cachePath", "cache")
+	// Read once per process: the value lives in config.ini and, like the ports, only
+	// changes after a restart re-runs Init.
+	l.maxBodySize = model.CoreState(context.GetConfig()).MaxBodySizeValue()
 	l.lock = new(sync.RWMutex)
 	l.mailModel = core.GetModel[*model.MailModel](l.context)
 	l.smtpModel = core.GetModel[*model.SMTPModel](l.context)

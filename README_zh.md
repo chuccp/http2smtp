@@ -34,6 +34,7 @@
 - 📎 多文件附件支持（Base64编码/表单上传）
 - 🐳 开箱即用的Docker镜像
 - 📊 发送记录查询与统计
+- 🧾 操作日志审计（登录、增删改、清理等，管理员可清理）
 - 📅 支持定时任务，请求链接，发送邮件
 - 📧 支持邮件模板
 
@@ -97,6 +98,7 @@ docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
 [core]
 init      = true   ##初始化开关，初始化配置完成后变为true 
 dbType    = sqlite  ##数据库类型，支持sqlite和mysql
+maxBodySize = 10M  ##请求体上限，支持 K/M/G 后缀，-1 表示不限制
 
 [sqlite]
 filename = d-mail.db  ##数据库路径
@@ -138,6 +140,10 @@ password = 123456      ##数据库密码
 | content    | string   | 是  | 邮件内容    |
 | recipients | []string | 否  | 额外收件人列表 |
 | files      | []File   | 否  | 附件文件列表  |
+
+`recipients` 会追加到令牌上配置的收件人（地址重复只发送一次）。格式非法的地址会被
+跳过，只有在没有可用收件人时请求才会失败。JSON、表单和 multipart 请求体均由
+`core.maxBodySize` 限制（默认 10 MB，支持 K/M/G 后缀，`-1` 表示不限制），修改后需重启生效。
 
 **成功响应**：
 

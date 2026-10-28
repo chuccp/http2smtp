@@ -33,6 +33,7 @@ type OplogListData struct {
 	UserFilter    string
 	ActionFilter  string
 	TargetFilter  string
+	NameFilter    string
 	ActionOptions []SelectOption
 	TargetOptions []SelectOption
 }
@@ -99,6 +100,7 @@ func (p *Pages) oplogList(view *web.Template) error {
 	userFilter := req.Query("user")
 	actionFilter := req.Query("action")
 	targetFilter := req.Query("target")
+	nameFilter := req.Query("targetName")
 
 	query := p.oplogModel.Query()
 	if !user.IsAdmin {
@@ -126,6 +128,9 @@ func (p *Pages) oplogList(view *web.Template) error {
 	if targetFilter != "" {
 		query = query.Where("target_type = ?", targetFilter)
 	}
+	if nameFilter != "" {
+		query = query.Where("target_name LIKE ?", "%"+nameFilter+"%")
+	}
 
 	result, err := query.Order("id desc").PageForWeb(page)
 	if err != nil {
@@ -151,7 +156,7 @@ func (p *Pages) oplogList(view *web.Template) error {
 			Value: t, Label: tr.T(oplogTargetKeys[t]), Selected: t == targetFilter,
 		})
 	}
-	q := queryOf(req, "user", "action", "target", "pageSize")
+	q := queryOf(req, "user", "action", "target", "targetName", "pageSize")
 	data := &OplogListData{
 		Base:          p.base(req, user, "oplog.title", true),
 		Rows:          rows,
@@ -159,6 +164,7 @@ func (p *Pages) oplogList(view *web.Template) error {
 		UserFilter:    userFilter,
 		ActionFilter:  actionFilter,
 		TargetFilter:  targetFilter,
+		NameFilter:    nameFilter,
 		ActionOptions: actionOptions,
 		TargetOptions: targetOptions,
 	}

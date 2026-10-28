@@ -88,12 +88,18 @@ func createAPP() (*wf.WebFrame, error) {
 	// keeps its /api prefix in the route registrations instead of through ContextPath,
 	// which is a server-wide prefix and would also land on the page routes that must
 	// live at the site root (/login, /smtp, ...).
+	// One request-body cap for both servers: the framework applies it to JSON, and
+	// TokenService applies the same value to form/multipart sends.
+	maxBodySize := model.DefaultMaxBodySize
+	if cfg.Core != nil {
+		maxBodySize = cfg.Core.MaxBodySizeValue()
+	}
 	restGroupBuilder := core.NewRestGroupBuilder()
 	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, &rest.Oplog{}, webui.NewPages())
 	restGroupBuilder.Port(webPort)
 	// Both server configs are kept: a restart re-runs these same groups, so the restart
 	// endpoint rewrites the ports here to make a port saved in the UI take effect.
-	manageServerConfig := &web.ServerConfig{Port: webPort}
+	manageServerConfig := &web.ServerConfig{Port: webPort, MaxBodySize: maxBodySize}
 	restGroupBuilder.ServerConfig(manageServerConfig)
 	// No CORS filter: the management UI is same-origin (the pages and the API share
 	// this server), and the framework's default filter answers every Origin with
@@ -109,7 +115,7 @@ func createAPP() (*wf.WebFrame, error) {
 	if apiPort == 0 {
 		apiPort = model.ApiPort
 	}
-	apiServerConfig := &web.ServerConfig{Port: apiPort}
+	apiServerConfig := &web.ServerConfig{Port: apiPort, MaxBodySize: maxBodySize}
 	apiRestGroupBuilder.Port(apiPort)
 	apiRestGroupBuilder.ServerConfig(apiServerConfig)
 	builder.RestGroup(apiRestGroupBuilder.Build())

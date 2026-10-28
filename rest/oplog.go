@@ -109,7 +109,9 @@ func cleanupOplogRows(m *model.OperationLogModel, days int) (int, error) {
 	if len(ids) == 0 {
 		return 0, nil
 	}
-	if err := m.Delete().Where("id IN (?)", ids).Delete(); err != nil {
+	if err := deleteInBatches(ids, func(batch []uint) error {
+		return m.Delete().Where("id IN (?)", batch).Delete()
+	}); err != nil {
 		return 0, err
 	}
 	return len(ids), nil

@@ -126,13 +126,14 @@ func (p *Pages) settingsRestart(view *web.Template) error {
 	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	// Recorded before the restart so the entry lands in the database that is still
-	// attached; the restart is in-process and would otherwise race the write.
-	p.recordOp(req, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	managePort, apiPort, err := wf.GetService[*service.RestartService](p.ctx).Restart()
 	if err != nil {
+		// The settings were saved before the restart was attempted, so audit the save
+		// even though no restart is going to happen.
+		p.recordOp(req, user.Id, entity.OpUpdate, entity.TargetSettings, 0, "")
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
+	p.recordOp(req, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	data := &RestartingData{
 		Base:        p.base(req, user, "settings.restarting", false),
 		ManagePort:  managePort,

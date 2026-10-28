@@ -165,24 +165,30 @@ func (l *Log) cleanUp(req *web.Request) (any, error) {
 		return nil, err
 	}
 	ids := make([]uint, 0, len(rows))
-	files := make([]string, 0, len(rows))
+	filesByID := make(map[uint]string, len(rows))
 	for _, one := range rows {
 		if one == nil {
 			continue
 		}
 		ids = append(ids, one.Id)
-		files = append(files, one.Files)
+		filesByID[one.Id] = one.Files
 	}
 	if len(ids) == 0 {
 		return web.Data(map[string]any{"deleted": 0}), nil
 	}
-	// Rows first: if that fails nothing has been touched yet, and the files of a row that
-	// is still listed must stay on disk.
-	if err := l.logModel.Delete().Where("id IN (?)", ids).Delete(); err != nil {
+	// Rows first: if the delete fails the attachments of a row that is still listed stay
+	// on disk. Attachments go per batch, right after the rows that recorded them.
+	err = deleteInBatches(ids, func(batch []uint) error {
+		if err := l.logModel.Delete().Where("id IN (?)", batch).Delete(); err != nil {
+			return err
+		}
+		for _, id := range batch {
+			removeAttachments(filesByID[id])
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
-	}
-	for _, one := range files {
-		removeAttachments(one)
 	}
 	recordOp(l.context, req, user.Id, entity.OpCleanup, entity.TargetLog, 0, "")
 	return web.Data(map[string]any{"deleted": len(ids)}), nil

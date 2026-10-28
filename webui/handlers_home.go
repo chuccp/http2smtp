@@ -111,8 +111,8 @@ func (p *Pages) loginPost(view *web.Template) error {
 
 	dbUser, err := p.userService.ValidateLogin(username, password)
 	if err != nil {
-		// Failed attempts carry no user id; the attempted name is what audit needs.
-		p.recordOp(req, 0, entity.OpLoginFailed, entity.TargetUser, 0, username)
+		// Failed attempts are not audited: the endpoint is unauthenticated, so recording
+		// them would let anyone write rows into the audit table for free.
 		data := p.loginData(req, next, Flash{Err: err.Error()})
 		return renderPageStatus(view, "login", data, http.StatusUnauthorized)
 	}

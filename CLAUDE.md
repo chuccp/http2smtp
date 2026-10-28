@@ -255,7 +255,11 @@ suggests: the token's list is the *default* and the request's `recipients` are a
 an address in both is sent to once. A malformed address is skipped (`FilterValidMails`)
 rather than failing the whole send, and the log records only the addresses actually
 attempted. Making the list a hard whitelist would be a deliberate change of semantics,
-not a bug fix.
+not a bug fix. A send body is capped by `core.maxBodySize` (default 10 MB; `K`/`M`/`G`
+suffixes accepted, `-1` unlimited), read once per process: JSON through the framework's
+`ServerConfig.MaxBodySize` set in `main.go`, form/multipart through
+`TokenService.limitSendBody` — the framework parses those two without a size limit, and
+multipart is how attachments arrive. Like the ports, a change needs a restart.
 
 Two routes are open until `core.init` is set and admin-only afterwards, because the setup
 wizard needs them before any account exists: `/adminExists` (it returns the administrator's
@@ -274,12 +278,14 @@ fetch their attachments; everyone else gets `data: null` on a row that is not th
 
 Management actions are audited separately from sends: `OperationLogService.Record`
 (best effort — a failed write never fails the action) stores create/update/delete,
-enable/disable, trigger, cleanup, restart, login (success and failure), logout and
-password-change events from both the page handlers and the JSON API, each stamped with
-the caller's IP. The `/oplogs` page lists them translated, with operator/action/target
-filters: admins read every entry and own the cleanup/delete endpoints, while a regular
-user sees only their own entries and gets no maintenance actions. This is not the mail
-log: `t_log` records sends, `t_operation_log` records who changed what.
+enable/disable, trigger, cleanup, restart, login, logout and password-change events from
+both the page handlers and the JSON API, each stamped with the caller's IP. Failed logins
+are deliberately not stored: the endpoint is unauthenticated, so writing a row per
+attempt would let anyone grow the audit table for free. The `/oplogs` page lists entries
+translated, with operator/action/target and target-name filters: admins read every entry
+and own the cleanup/delete endpoints, while a regular user sees only their own entries
+and gets no maintenance actions. This is not the mail log: `t_log` records sends,
+`t_operation_log` records who changed what.
 
 Nothing prunes `t_log` or the attachment cache on its own — cleanup is manual and
 **admin-only** (`DELETE /log/:id` and `POST /log/cleanup`, which takes `days`: 0 clears

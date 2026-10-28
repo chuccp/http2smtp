@@ -34,8 +34,8 @@ func (l *User) signIn(request *web.Request) (any, error) {
 
 	dbUser, err := l.userService.ValidateLogin(u.Username, u.Password)
 	if err != nil {
-		// Failed attempts carry no user id; the attempted name is what audit needs.
-		recordOp(l.context, request, 0, entity.OpLoginFailed, entity.TargetUser, 0, u.Username)
+		// Failed attempts are not audited: the endpoint is unauthenticated, so recording
+		// them would let anyone write rows into the audit table for free.
 		return nil, err
 	}
 

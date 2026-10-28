@@ -20,6 +20,7 @@
       <option value="">{{.L.T "oplog.target"}}</option>
       {{range .TargetOptions}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}
     </select>
+    <input type="text" name="targetName" value="{{.NameFilter}}" placeholder="{{.L.T "oplog.targetName"}}">
     <button class="btn" type="submit">{{.L.T "common.search"}}</button>
     <a class="btn" href="/oplogs">{{.L.T "common.reset"}}</a>
   </form>

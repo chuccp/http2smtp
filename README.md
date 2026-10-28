@@ -35,6 +35,7 @@ A gateway service that converts SMTP protocol to HTTP interfaces, helping develo
 - 📎 Multi-file attachment support (Base64 encoding/form upload)
 - 🐳 Ready-to-use Docker image
 - 📊 Send record query and statistics
+- 🧾 Operation audit log (logins, edits, deletes and cleanups, maintained by admins)
 - 📅 Scheduled task support for requesting links and sending emails
 - 📧 Email template support
 
@@ -97,6 +98,7 @@ After first startup, the configuration file [config.ini](./config.ini) is genera
 [core]
 init      = true   ## Initialization switch, becomes true after initial configuration
 dbType    = sqlite  ## Database type, supports sqlite and mysql
+maxBodySize = 10M  ## Request-body limit; K/M/G suffixes accepted, -1 means unlimited
 
 [sqlite]
 filename = d-mail.db  ## Database path
@@ -140,6 +142,12 @@ keeps the settings page from moving it.
 | content    | string   | Yes      | Email content       |
 | recipients | []string | No       | Additional recipient list |
 | files      | []File   | No       | Attachment file list |
+
+`recipients` are added to the addresses configured on the token; an address present in
+both is sent to once. Malformed addresses are skipped, and the request fails only if no
+usable recipient remains. Request bodies are capped by `core.maxBodySize` (default
+10 MB, K/M/G suffixes accepted, `-1` for no limit) for JSON, form and multipart requests
+alike; a change takes effect after a restart.
 
 **Successful Response**:
 

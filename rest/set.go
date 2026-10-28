@@ -100,11 +100,14 @@ func (set *Set) postRestart(req *web.Request) (any, error) {
 	if !user.IsAdmin {
 		return nil, errors.New("admin access required")
 	}
-	recordOp(set.context, req, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	managePort, apiPort, err := wf.GetService[*service.RestartService](set.context).Restart()
 	if err != nil {
 		return nil, err
 	}
+	// Recorded after the call: Restart validates the ports first and refuses before
+	// scheduling anything, and an entry claiming a restart that never happened would be
+	// worse than the small write-after-schedule window.
+	recordOp(set.context, req, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	return web.Data(map[string]any{"managePort": managePort, "apiPort": apiPort}), nil
 }
 
@@ -244,7 +247,13 @@ func (set *Set) putReSet(req *web.Request) (any, error) {
 	if !user.IsAdmin {
 		return nil, errors.New("admin access required")
 	}
-	return set.applyReSet(req)
+	result, err := set.applyReSet(req)
+	if err != nil {
+		return nil, err
+	}
+	// The settings page records its own save; this endpoint has to do it here.
+	recordOp(set.context, req, user.Id, entity.OpUpdate, entity.TargetSettings, 0, "")
+	return result, nil
 }
 
 // applyReSet is the shared body of putSet (the legacy one-step init, before any account

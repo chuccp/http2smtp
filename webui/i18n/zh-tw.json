@@ -230,6 +230,7 @@
   "oplog.user": "操作人",
   "oplog.action": "操作",
   "oplog.target": "對象",
+  "oplog.targetName": "目標名稱",
   "oplog.actionCreate": "新增",
   "oplog.actionUpdate": "修改",
   "oplog.actionDelete": "刪除",

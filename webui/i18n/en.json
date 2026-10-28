@@ -230,6 +230,7 @@
   "oplog.user": "Operator",
   "oplog.action": "Action",
   "oplog.target": "Target",
+  "oplog.targetName": "Target name",
   "oplog.actionCreate": "Create",
   "oplog.actionUpdate": "Update",
   "oplog.actionDelete": "Delete",
