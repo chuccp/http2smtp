@@ -115,6 +115,8 @@ func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 	}
 	if byToken.IsUse() {
 		l.supplementToken(byToken)
+		// Drop unusable addresses so the log names only the recipients actually tried.
+		byToken.ReceiveEmails = smtp.FilterValidMails(byToken.ReceiveEmails)
 		var body string
 		var err0 error
 		if byToken.SMTP == nil {
@@ -147,6 +149,12 @@ func (l *TokenService) sendMailWithToken(byToken *model.Token, recipients []stri
 	byToken.ReceiveEmails = MergeRecipients(byToken.ReceiveEmails, recipients)
 	if len(byToken.ReceiveEmails) == 0 {
 		return nil, errors.New("no recipients: the token has none configured and the request carried none")
+	}
+	// A malformed address is skipped instead of failing the whole send; the remaining
+	// recipients (and the log entry) carry on without it.
+	byToken.ReceiveEmails = smtp.FilterValidMails(byToken.ReceiveEmails)
+	if len(byToken.ReceiveEmails) == 0 {
+		return nil, errors.New("no valid recipients")
 	}
 	if subject == "" {
 		subject = byToken.Subject

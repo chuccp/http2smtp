@@ -176,7 +176,9 @@ func redirect(view *web.Template, to string) error {
 // safeNext validates a ?next= return target: same-site absolute path only, so a
 // crafted login link cannot bounce the browser off to another origin.
 func safeNext(next string) string {
-	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") {
+	// A backslash is treated as a slash by browsers, so "/\evil.example" would be
+	// resolved as the protocol-relative "//evil.example"; reject it outright.
+	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.Contains(next, "\\") {
 		return "/dashboard"
 	}
 	if _, err := url.ParseRequestURI(next); err != nil {

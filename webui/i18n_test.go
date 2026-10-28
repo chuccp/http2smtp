@@ -75,6 +75,13 @@ func TestPickLang(t *testing.T) {
 		{"", "", "zh-cn"},
 		// q-ordering: the higher q wins even when listed last
 		{"", "en;q=0.5,ja;q=0.8", "ja"},
+		// q=0 marks a language the client does not accept; the tag is skipped.
+		{"", "ja;q=0", "zh-cn"},
+		{"", "en;q=0,ja;q=0.1", "ja"},
+		// Tag names and the q parameter are case-insensitive.
+		{"", "JA;q=0.9, EN;Q=0.5", "ja"},
+		// A wildcard alone carries no language.
+		{"", "*", "zh-cn"},
 	}
 	for _, c := range cases {
 		if got := pickLang(c.cookie, c.header); got != c.want {
@@ -93,6 +100,9 @@ func TestParseAcceptLanguage(t *testing.T) {
 	}
 	if tags := parseAcceptLanguage("*"); len(tags) != 0 {
 		t.Errorf("wildcard produced %v", tags)
+	}
+	if tags := parseAcceptLanguage("en;q=0,ja"); len(tags) != 1 || tags[0] != "ja" {
+		t.Errorf("q=0 tag should be dropped, got %v", tags)
 	}
 }
 

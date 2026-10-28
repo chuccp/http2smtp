@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	netmail "net/mail"
 	"os"
 	"strings"
 
@@ -75,20 +76,26 @@ func SendMail(sendMsg *SendMsg, invalidMails ...string) error {
 		}
 	}
 
-	// A recipient go-mail refuses must fail the request, not vanish: silently skipping
-	// it meant the log listed an address that never received anything while the call
-	// still reported success.
+	// One malformed address must not block the rest of the list: recipients go-mail
+	// refuses are skipped, and the send fails only when nothing usable is left.
+	added := 0
 	for _, email := range sendMsg.ReceiveEmails {
 		if util.EqualsAnyIgnoreCase(email.Mail, invalidMails...) {
 			continue
 		}
+		var err error
 		if len(email.Name) > 0 {
-			if err := msg.AddToFormat(email.Name, email.Mail); err != nil {
-				return fmt.Errorf("invalid recipient %q: %w", email.Mail, err)
-			}
-		} else if err := msg.AddTo(email.Mail); err != nil {
-			return fmt.Errorf("invalid recipient %q: %w", email.Mail, err)
+			err = msg.AddToFormat(email.Name, email.Mail)
+		} else {
+			err = msg.AddTo(email.Mail)
 		}
+		if err != nil {
+			continue
+		}
+		added++
+	}
+	if added == 0 {
+		return errors.New("no valid recipients")
 	}
 	msg.Subject(sendMsg.Subject)
 	msg.SetBodyString(mail.TypeTextPlain, sendMsg.BodyString)
@@ -139,10 +146,27 @@ func SendAllMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, b
 	return SendFilesMsg(smtp, mails, files, subject, bodyString)
 }
 
+// FilterValidMails drops recipients whose address cannot be parsed, so one typo does
+// not block the rest of the list. Callers filter before sending so the mail log records
+// the addresses that were actually attempted.
+func FilterValidMails(mails []*model.Mail) []*model.Mail {
+	valid := make([]*model.Mail, 0, len(mails))
+	for _, m := range mails {
+		if m == nil {
+			continue
+		}
+		if _, err := netmail.ParseAddress(strings.TrimSpace(m.Mail)); err != nil {
+			continue
+		}
+		valid = append(valid, m)
+	}
+	return valid
+}
+
 func SendFilesMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
 	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
 	receiveEmails := make([]*Mail, 0)
-	for _, d := range mails {
+	for _, d := range FilterValidMails(mails) {
 		receiveEmails = append(receiveEmails, &Mail{Name: d.Name, Mail: d.Mail})
 	}
 	if len(receiveEmails) == 0 {

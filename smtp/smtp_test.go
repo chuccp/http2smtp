@@ -24,6 +24,26 @@ func TestHasHeaderIgnoresCase(t *testing.T) {
 	}
 }
 
+// A malformed address is dropped so it cannot block the valid recipients.
+func TestFilterValidMails(t *testing.T) {
+	a := &model.Mail{Name: "A", Mail: "a@example.com"}
+	b := &model.Mail{Name: "B", Mail: "Name <b@example.com>"}
+	mails := []*model.Mail{
+		a,
+		nil,
+		{Name: "", Mail: "bad-address"},
+		{Name: "C", Mail: "c@"},
+		b,
+	}
+	valid := FilterValidMails(mails)
+	if len(valid) != 2 || valid[0] != a || valid[1] != b {
+		t.Errorf("FilterValidMails = %+v, want the two parseable rows", valid)
+	}
+	if got := FilterValidMails(nil); len(got) != 0 {
+		t.Errorf("FilterValidMails(nil) = %+v, want empty", got)
+	}
+}
+
 // SendAPIMail must send the configured body type, let an explicit Content-Type header
 // win, and invent nothing when neither is set. OnlySendByError keeps the probe from
 // trying to deliver the response by SMTP, so no mail server is needed.

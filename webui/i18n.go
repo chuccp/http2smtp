@@ -168,12 +168,13 @@ func parseAcceptLanguage(header string) []string {
 			tag = strings.TrimSpace(part[:i])
 			for _, param := range strings.Split(part[i+1:], ";") {
 				param = strings.TrimSpace(param)
-				if strings.HasPrefix(param, "q=") {
+				if len(param) >= 2 && strings.EqualFold(param[:2], "q=") {
 					fmt.Sscanf(param[2:], "%f", &q)
 				}
 			}
 		}
-		if tag != "" && tag != "*" {
+		// q=0 marks a language the client explicitly does not accept.
+		if tag != "" && tag != "*" && q > 0 {
 			entries = append(entries, entry{strings.ToLower(tag), q})
 		}
 	}

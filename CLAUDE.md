@@ -252,8 +252,10 @@ Rows with `user_id = 0` predate token ownership; they are left alone rather than
 Recipients work the other way round from what the token form's "Allowed Recipients" label
 suggests: the token's list is the *default* and the request's `recipients` are added to it
 (`MergeRecipients`), so a request without recipients still sends to the configured list and
-an address in both is sent to once. Making the list a hard whitelist would be a deliberate
-change of semantics, not a bug fix.
+an address in both is sent to once. A malformed address is skipped (`FilterValidMails`)
+rather than failing the whole send, and the log records only the addresses actually
+attempted. Making the list a hard whitelist would be a deliberate change of semantics,
+not a bug fix.
 
 Two routes are open until `core.init` is set and admin-only afterwards, because the setup
 wizard needs them before any account exists: `/adminExists` (it returns the administrator's
