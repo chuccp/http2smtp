@@ -533,6 +533,7 @@ func TestDashboardShowsAPIAddress(t *testing.T) {
 		"curl -X POST http://example.com:12567/sendMail",
 		`"token":"YOUR_TOKEN"`,
 		"表单（POST）",
+		`-H 'Content-Type: application/x-www-form-urlencoded'`,
 		`-d 'token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'`,
 		"GET 参数",
 		`curl 'http://example.com:12567/sendMail?token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'`,

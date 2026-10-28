@@ -53,6 +53,7 @@
   -d '{"token":"YOUR_TOKEN","subject":"test","content":"hello","recipients":["ops@example.com"]}'</pre>
   <div class="api-usage-title">{{.L.T "dashboard.apiForm"}}</div>
   <pre class="api-sample mono">curl -X POST {{.ApiURL}} \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'</pre>
   <div class="api-usage-title">{{.L.T "dashboard.apiGet"}}</div>
   <pre class="api-sample mono">curl '{{.ApiURL}}?token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'</pre>
