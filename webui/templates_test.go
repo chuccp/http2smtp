@@ -1,30 +1,90 @@
 package webui
 
 import (
-	"bytes"
+	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
+
+	"github.com/chuccp/go-web-frame/web"
 )
 
 func templateTestBase() Base {
-	return Base{Lang: "zh-cn", L: translatorFor("zh-cn")}
+	return Base{
+		Lang: "zh-cn",
+		L:    translatorFor("zh-cn"),
+		User: &NavUser{Id: 1, Name: "tester", IsAdmin: true},
+	}
 }
 
 func renderContent(t *testing.T, page string, data any) string {
 	t.Helper()
-	tmpls, err := parseTemplates()
-	if err != nil {
-		t.Fatalf("parsing templates: %v", err)
+	server := templateTestServer(t, func(view *web.Template) error {
+		view.View(page).Layout(layoutFor(page)).Data(data)
+		return nil
+	})
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("rendering %s: status %d: %s", page, recorder.Code, recorder.Body.String())
 	}
-	tmpl := tmpls[page]
-	if tmpl == nil {
-		t.Fatalf("no template registered for %q", page)
+	return recorder.Body.String()
+}
+
+func templateTestServer(t *testing.T, handler web.TemplateHandler) http.Handler {
+	t.Helper()
+	templatesOnce.Do(func() {
+		templatesForTests, templatesErr = loadTemplates(templatesFS, "templates", false)
+	})
+	if templatesErr != nil {
+		t.Fatalf("loading templates: %v", templatesErr)
 	}
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "content", data); err != nil {
-		t.Fatalf("rendering %s: %v", page, err)
+
+	server := web.DefaultServer()
+	server.SetTemplates(templatesForTests)
+	server.GetTemplate("/", handler)
+	return server.GetHandler()
+}
+
+var (
+	templatesOnce     sync.Once
+	templatesForTests *web.TemplateSet
+	templatesErr      error
+)
+
+func TestRenderPageStatusIsAppliedByConverter(t *testing.T) {
+	server := templateTestServer(t, func(view *web.Template) error {
+		return renderPageStatus(view, "login", &LoginData{Base: templateTestBase()}, http.StatusUnauthorized)
+	})
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusUnauthorized)
 	}
-	return buf.String()
+	if contentType := recorder.Header().Get("Content-Type"); !strings.HasPrefix(contentType, "text/html") {
+		t.Fatalf("Content-Type = %q, want HTML", contentType)
+	}
+	if !strings.Contains(recorder.Body.String(), `class="form login-form"`) {
+		t.Fatal("login template was not rendered")
+	}
+}
+
+func TestTemplateRedirectDoesNotRenderPage(t *testing.T) {
+	server := templateTestServer(t, func(view *web.Template) error {
+		return redirect(view, "/dashboard")
+	})
+	recorder := httptest.NewRecorder()
+	server.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	if recorder.Code != http.StatusFound {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusFound)
+	}
+	if location := recorder.Header().Get("Location"); location != "/dashboard" {
+		t.Fatalf("Location = %q, want /dashboard", location)
+	}
+	if strings.Contains(recorder.Body.String(), "<html") {
+		t.Fatalf("redirect rendered a page: %q", recorder.Body.String())
+	}
 }
 
 // The create form must post an empty id; a nonzero id turns the same POST into an

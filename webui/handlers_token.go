@@ -22,10 +22,11 @@ type TokenListData struct {
 	AdminOnly bool
 }
 
-func (p *Pages) tokenList(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) tokenList(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	page := listPage(req)
 	name := req.Query("name")
@@ -33,11 +34,11 @@ func (p *Pages) tokenList(req *web.Request) (any, error) {
 
 	result, err := p.tokenService.GetPage(page, user.Id, user.IsAdmin, name, adminOnly)
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	pb, ok2 := result.(*web.PageAble[*model.Token])
 	if !ok2 || pb == nil {
-		return p.renderErr(req, 0, "common.failed", "unexpected page result")
+		return p.renderErr(view, 0, "common.failed", "unexpected page result")
 	}
 	if user.IsAdmin {
 		fillNames(p.userService, pb.List,
@@ -52,7 +53,8 @@ func (p *Pages) tokenList(req *web.Request) (any, error) {
 		Name:      name,
 		AdminOnly: adminOnly,
 	}
-	return p.render(req, "token_list", data)
+	view.View("token_list").Layout(layoutFor("token_list")).Data(data)
+	return nil
 }
 
 // SelectOption is one entry of a form <select>.
@@ -76,10 +78,11 @@ type TokenFormData struct {
 	SelectedMails map[uint]bool
 }
 
-func (p *Pages) tokenForm(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) tokenForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &TokenFormData{
 		Base:          p.base(req, user, "token.generateToken", false),
@@ -94,11 +97,11 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
-			return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+			return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 		}
 		row, err := p.tokenOwnedBy(id, user)
 		if err != nil || row == nil {
-			return p.renderErr(req, http.StatusNotFound, "common.failed", "token not found")
+			return p.renderErr(view, http.StatusNotFound, "common.failed", "token not found")
 		}
 		data.Id = row.Id
 		data.Name = row.Name
@@ -117,9 +120,10 @@ func (p *Pages) tokenForm(req *web.Request) (any, error) {
 	}
 
 	if err := p.fillTokenFormOptions(data, ownerId, selectedSmtp); err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	return p.render(req, "token_form", data)
+	view.View("token_form").Layout(layoutFor("token_form")).Data(data)
+	return nil
 }
 
 // fillTokenFormOptions lists the token owner's servers and contacts — the API enforces
@@ -206,14 +210,15 @@ func resolveTokenState(requested uint8, current uint8, isAdmin bool) uint8 {
 	return entity.TokenStateUserDisabled
 }
 
-func (p *Pages) tokenSave(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) tokenSave(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	// The multi-select posts the same field repeatedly; collect them all.
 	if err := req.Request().ParseForm(); err != nil {
-		return nil, err
+		return err
 	}
 	ids := req.Request().Form["receiveEmailIds"]
 	idsDedup := util.RemoveDuplicates(ids)
@@ -244,13 +249,12 @@ func (p *Pages) tokenSave(req *web.Request) (any, error) {
 	// the admin's own resources. For a create the owner is the caller; for a legacy
 	// user_id = 0 row it stays the caller too, so the row remains editable.
 	ownerId := user.Id
-	fail := func(msg string) (any, error) {
+	fail := func(msg string) error {
 		data.Flash = Flash{Err: msg}
 		if err := p.fillTokenFormOptions(data, ownerId, smtpId); err != nil {
-			return p.renderErr(req, 0, "common.failed", err.Error())
+			return p.renderErr(view, 0, "common.failed", err.Error())
 		}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "token_form", data)
+		return renderPageStatus(view, "token_form", data, http.StatusBadRequest)
 	}
 
 	// Resolve the row before validating anything, so a failed edit keeps its id and
@@ -308,7 +312,7 @@ func (p *Pages) tokenSave(req *web.Request) (any, error) {
 			return fail(err.Error())
 		}
 	}
-	return p.redirect(req, backTo("/tokens", "common.success", "", ""))
+	return redirect(view, backTo("/tokens", "common.success", "", ""))
 }
 
 // TokenSendData is the "send test mail with this token" page.
@@ -321,18 +325,19 @@ type TokenSendData struct {
 	Subject    string
 }
 
-func (p *Pages) tokenSendForm(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) tokenSendForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	id, err := idParam(req, "id")
 	if err != nil {
-		return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 	}
 	row, err := p.tokenOwnedBy(id, user)
 	if err != nil || row == nil {
-		return p.renderErr(req, http.StatusNotFound, "common.failed", "token not found")
+		return p.renderErr(view, http.StatusNotFound, "common.failed", "token not found")
 	}
 	data := &TokenSendData{
 		Base:      p.base(req, user, "token.sendTestMail", false),
@@ -348,5 +353,6 @@ func (p *Pages) tokenSendForm(req *web.Request) (any, error) {
 			data.Recipients = append(data.Recipients, m.Mail)
 		}
 	}
-	return p.render(req, "token_send", data)
+	view.View("token_send").Layout(layoutFor("token_send")).Data(data)
+	return nil
 }

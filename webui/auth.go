@@ -20,27 +20,35 @@ func (p *Pages) currentUser(req *web.Request) *model.User {
 // requireUser gates a page on being signed in, redirecting to the login page (with a
 // return target) otherwise. Page routes deliberately do not carry the framework's
 // WithLogin meta: its 403 JSON is the wrong answer for a browser navigation.
-func (p *Pages) requireUser(req *web.Request) (*model.User, bool) {
+func (p *Pages) requireUser(view *web.Template) (*model.User, bool) {
+	req := view.Request()
 	if user := p.currentUser(req); user != nil {
 		return user, true
 	}
+	_ = redirect(view, loginLocation(req))
+	return nil, false
+}
+
+// loginLocation preserves the browser's return target for page navigations and the
+// JSON form's authentication redirect alike.
+func loginLocation(req *web.Request) string {
 	next := req.URL().RequestURI()
 	login := "/login"
 	if next != "" && next != "/" {
 		login += "?next=" + url.QueryEscape(next)
 	}
-	_, _ = p.redirect(req, login)
-	return nil, false
+	return login
 }
 
 // requireAdmin gates a page on the admin flag; a signed-in non-admin gets the
 // not-admin page rather than a silent bounce, so the refusal is visible.
-func (p *Pages) requireAdmin(req *web.Request) (*model.User, bool) {
-	user, ok := p.requireUser(req)
+func (p *Pages) requireAdmin(view *web.Template) (*model.User, bool) {
+	user, ok := p.requireUser(view)
 	if !ok {
 		return nil, false
 	}
 	if !user.IsAdmin {
+		req := view.Request()
 		lang := langOf(req)
 		data := struct {
 			Base
@@ -49,7 +57,7 @@ func (p *Pages) requireAdmin(req *web.Request) (*model.User, bool) {
 			Base:    p.newBase(lang, "auth.noPermission"),
 			Message: translatorFor(lang).T("auth.noPermission"),
 		}
-		_, _ = p.render(req, "notadmin", data)
+		view.View("notadmin").Layout(layoutFor("notadmin")).Data(data)
 		return nil, false
 	}
 	return user, true

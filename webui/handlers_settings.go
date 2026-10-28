@@ -25,15 +25,16 @@ type SettingsData struct {
 	MysqlCharset  string
 }
 
-func (p *Pages) settingsGet(req *web.Request) (any, error) {
-	user, ok := p.requireAdmin(req)
+func (p *Pages) settingsGet(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireAdmin(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &SettingsData{Base: p.base(req, user, "settings.systemSettings", true)}
 	cfg, err := model.GetConfig(p.ctx.GetConfig())
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	data.IsDocker = cfg.Core.IsDocker
 	data.DbType = cfg.Core.DbType
@@ -56,7 +57,8 @@ func (p *Pages) settingsGet(req *web.Request) (any, error) {
 		data.MysqlUsername = cfg.Mysql.Username
 		data.MysqlCharset = cfg.Mysql.Charset
 	}
-	return p.render(req, "settings", data)
+	view.View("settings").Layout(layoutFor("settings")).Data(data)
+	return nil
 }
 
 // settingsFromForm reads the database section of the settings form. A blank MySQL
@@ -84,14 +86,15 @@ func settingsFromForm(req *web.Request) *model.Config {
 
 // settingsSave persists without restarting; the ports only take effect through the
 // save-and-restart button.
-func (p *Pages) settingsSave(req *web.Request) (any, error) {
-	if _, ok := p.requireAdmin(req); !ok {
-		return nil, nil
+func (p *Pages) settingsSave(view *web.Template) error {
+	req := view.Request()
+	if _, ok := p.requireAdmin(view); !ok {
+		return nil
 	}
 	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	return p.redirect(req, backTo("/settings", "settings.settingsSaved", "", ""))
+	return redirect(view, backTo("/settings", "settings.settingsSaved", "", ""))
 }
 
 // RestartingData is the post-restart interstitial. The client's own origin may be gone
@@ -105,9 +108,11 @@ type RestartingData struct {
 	PortChanged bool
 }
 
-func (p *Pages) settingsRestart(req *web.Request) (any, error) {
-	if _, ok := p.requireAdmin(req); !ok {
-		return nil, nil
+func (p *Pages) settingsRestart(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireAdmin(view)
+	if !ok {
+		return nil
 	}
 	// The port this page was served from — captured before ApplyReSet rewrites the
 	// config, which is what tells the interstitial whether reloading can work at all.
@@ -116,19 +121,20 @@ func (p *Pages) settingsRestart(req *web.Request) (any, error) {
 		current = cfg.Manage.Port
 	}
 	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	managePort, apiPort, err := wf.GetService[*service.RestartService](p.ctx).Restart()
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	data := &RestartingData{
-		Base:        p.newBase(langOf(req), "settings.restarting"),
+		Base:        p.base(req, user, "settings.restarting", false),
 		ManagePort:  managePort,
 		ApiPort:     apiPort,
 		CurrentPort: current,
 		PortChanged: managePort != current,
 	}
 	data.Message = translatorFor(data.Lang).T("settings.restartPortChanged", strconv.Itoa(managePort), strconv.Itoa(apiPort))
-	return p.render(req, "restarting", data)
+	view.View("restarting").Layout(layoutFor("restarting")).Data(data)
+	return nil
 }

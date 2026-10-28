@@ -14,10 +14,11 @@ type DashboardData struct {
 	SchedCount int
 }
 
-func (p *Pages) dashboard(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) dashboard(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &DashboardData{Base: p.base(req, user, "dashboard.dashboard", true)}
 
@@ -30,7 +31,7 @@ func (p *Pages) dashboard(req *web.Request) (any, error) {
 		}
 		n, err := q.Count()
 		if err != nil {
-			return p.renderErr(req, 0, "common.failed", err.Error())
+			return p.renderErr(view, 0, "common.failed", err.Error())
 		}
 		data.SmtpCount = n
 	}
@@ -41,7 +42,7 @@ func (p *Pages) dashboard(req *web.Request) (any, error) {
 		}
 		n, err := q.Count()
 		if err != nil {
-			return p.renderErr(req, 0, "common.failed", err.Error())
+			return p.renderErr(view, 0, "common.failed", err.Error())
 		}
 		data.MailCount = n
 	}
@@ -52,7 +53,7 @@ func (p *Pages) dashboard(req *web.Request) (any, error) {
 		}
 		n, err := q.Count()
 		if err != nil {
-			return p.renderErr(req, 0, "common.failed", err.Error())
+			return p.renderErr(view, 0, "common.failed", err.Error())
 		}
 		data.TokenCount = n
 	}
@@ -63,9 +64,10 @@ func (p *Pages) dashboard(req *web.Request) (any, error) {
 		}
 		n, err := q.Count()
 		if err != nil {
-			return p.renderErr(req, 0, "common.failed", err.Error())
+			return p.renderErr(view, 0, "common.failed", err.Error())
 		}
 		data.SchedCount = n
 	}
-	return p.render(req, "dashboard", data)
+	view.View("dashboard").Layout(layoutFor("dashboard")).Data(data)
+	return nil
 }

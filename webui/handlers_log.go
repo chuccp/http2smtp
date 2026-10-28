@@ -21,10 +21,11 @@ type LogListData struct {
 	AdminOnly bool
 }
 
-func (p *Pages) logList(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) logList(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	page := listPage(req)
 	searchKey := req.Query("searchKey")
@@ -43,7 +44,7 @@ func (p *Pages) logList(req *web.Request) (any, error) {
 	}
 	result, err := query.Order("id desc").PageForWeb(page)
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	for _, one := range result.List {
 		if one != nil {
@@ -63,7 +64,8 @@ func (p *Pages) logList(req *web.Request) (any, error) {
 		SearchKey: searchKey,
 		AdminOnly: adminOnly,
 	}
-	return p.render(req, "logs_list", data)
+	view.View("logs_list").Layout(layoutFor("logs_list")).Data(data)
+	return nil
 }
 
 // LogAttachment is one downloadable file recorded on a log entry.
@@ -79,14 +81,15 @@ type LogDetailData struct {
 	Attachments []LogAttachment
 }
 
-func (p *Pages) logDetail(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) logDetail(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	id, err := idParam(req, "id")
 	if err != nil {
-		return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 	}
 	query := p.logModel.Query().Where("id = ?", id)
 	if !user.IsAdmin {
@@ -94,10 +97,10 @@ func (p *Pages) logDetail(req *web.Request) (any, error) {
 	}
 	one, err := query.One()
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	if one == nil {
-		return p.renderErr(req, http.StatusNotFound, "common.failed", "log not found")
+		return p.renderErr(view, http.StatusNotFound, "common.failed", "log not found")
 	}
 	one.StatusStr = entity.StatusText(one.Status)
 
@@ -120,5 +123,6 @@ func (p *Pages) logDetail(req *web.Request) (any, error) {
 			Href: "/api/download?" + v.Encode(),
 		})
 	}
-	return p.render(req, "logs_detail", data)
+	view.View("logs_detail").Layout(layoutFor("logs_detail")).Data(data)
+	return nil
 }

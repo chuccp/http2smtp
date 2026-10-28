@@ -17,19 +17,20 @@ type UserListData struct {
 	Pager *Pager
 }
 
-func (p *Pages) userList(req *web.Request) (any, error) {
-	user, ok := p.requireAdmin(req)
+func (p *Pages) userList(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireAdmin(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	page := listPage(req)
 	result, err := p.userService.GetPage(page)
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	pb, ok2 := result.(*web.PageAble[*model.User])
 	if !ok2 || pb == nil {
-		return p.renderErr(req, 0, "common.failed", "unexpected page result")
+		return p.renderErr(view, 0, "common.failed", "unexpected page result")
 	}
 	q := queryOf(req, "pageSize")
 	data := &UserListData{
@@ -37,7 +38,8 @@ func (p *Pages) userList(req *web.Request) (any, error) {
 		Rows:  pb.List,
 		Pager: newPager(page.PageNo, page.PageSize, pb.Total, "/users", q),
 	}
-	return p.render(req, "users_list", data)
+	view.View("users_list").Layout(layoutFor("users_list")).Data(data)
+	return nil
 }
 
 // UserFormData is the user create/edit form. Password is never echoed; blank on edit
@@ -51,20 +53,21 @@ type UserFormData struct {
 	Self    bool
 }
 
-func (p *Pages) userForm(req *web.Request) (any, error) {
-	user, ok := p.requireAdmin(req)
+func (p *Pages) userForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireAdmin(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &UserFormData{Base: p.base(req, user, "layout.sidebar.users", false), IsUse: true}
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
-			return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+			return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 		}
 		row, err := p.userService.GetOne(id)
 		if err != nil {
-			return p.renderErr(req, http.StatusNotFound, "common.failed", err.Error())
+			return p.renderErr(view, http.StatusNotFound, "common.failed", err.Error())
 		}
 		data.Id = row.Id
 		data.Name = row.Name
@@ -72,13 +75,15 @@ func (p *Pages) userForm(req *web.Request) (any, error) {
 		data.IsUse = row.IsUse
 		data.Self = row.Id == user.Id
 	}
-	return p.render(req, "users_form", data)
+	view.View("users_form").Layout(layoutFor("users_form")).Data(data)
+	return nil
 }
 
-func (p *Pages) userSave(req *web.Request) (any, error) {
-	caller, ok := p.requireAdmin(req)
+func (p *Pages) userSave(view *web.Template) error {
+	req := view.Request()
+	caller, ok := p.requireAdmin(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &UserFormData{
 		Base:    p.base(req, caller, "layout.sidebar.users", false),
@@ -86,10 +91,9 @@ func (p *Pages) userSave(req *web.Request) (any, error) {
 		IsAdmin: req.GetFormParam("isAdmin") == "on",
 		IsUse:   req.GetFormParam("isUse") == "on",
 	}
-	fail := func(msg string) (any, error) {
+	fail := func(msg string) error {
 		data.Flash = Flash{Err: msg}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "users_form", data)
+		return renderPageStatus(view, "users_form", data, http.StatusBadRequest)
 	}
 	password := req.GetFormParam("password")
 
@@ -133,7 +137,7 @@ func (p *Pages) userSave(req *web.Request) (any, error) {
 			return fail(err.Error())
 		}
 	}
-	return p.redirect(req, backTo("/users", "common.success", "", ""))
+	return redirect(view, backTo("/users", "common.success", "", ""))
 }
 
 // PasswordData is the change-own-password page.
@@ -141,27 +145,29 @@ type PasswordData struct {
 	Base
 }
 
-func (p *Pages) passwordGet(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) passwordGet(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
-	return p.render(req, "password", &PasswordData{Base: p.base(req, user, "user.changePassword", false)})
+	view.View("password").Layout(layoutFor("password")).Data(&PasswordData{Base: p.base(req, user, "user.changePassword", false)})
+	return nil
 }
 
-func (p *Pages) passwordPost(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) passwordPost(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &PasswordData{Base: p.base(req, user, "user.changePassword", false)}
 	oldPw := req.GetFormParam("oldPassword")
 	newPw := req.GetFormParam("newPassword")
 	confirm := req.GetFormParam("confirm")
-	fail := func(msgKeyOrText string) (any, error) {
+	fail := func(msgKeyOrText string) error {
 		data.Flash = Flash{Err: msgKeyOrText}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "password", data)
+		return renderPageStatus(view, "password", data, http.StatusBadRequest)
 	}
 	if oldPw == "" || newPw == "" {
 		return fail("common.failed")
@@ -181,5 +187,5 @@ func (p *Pages) passwordPost(req *web.Request) (any, error) {
 	// The salt rotated with the password, so this session is already dead — drop the
 	// cookie rather than leave the browser holding a corpse, and sign in again.
 	req.Cookie().Delete(entity.UserToken)
-	return p.redirect(req, backTo("/login", "auth.passwordChanged", "", ""))
+	return redirect(view, backTo("/login", "auth.passwordChanged", "", ""))
 }

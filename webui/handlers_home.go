@@ -13,67 +13,68 @@ import (
 	"go.uber.org/zap"
 )
 
-// registerPageRoutes wires the rest of the server-rendered pages. It grows with each
-// migration step; home/login/logout/lang are wired directly in Init.
+// registerPageRoutes wires the server-rendered pages. Home, logout and language
+// switching redirect without rendering and are registered directly in Init.
 func (p *Pages) registerPageRoutes(ctx *core.Context) {
-	ctx.Get("/setup", p.setupGet)
-	ctx.Post("/setup/db", p.setupDb)
-	ctx.Post("/setup/test", p.setupTest)
-	ctx.Post("/setup/admin", p.setupAdmin)
-	ctx.Post("/setup/skip", p.setupSkip)
+	ctx.GetTemplate("/setup", p.setupGet)
+	ctx.PostTemplate("/setup/db", p.setupDb)
+	ctx.PostTemplate("/setup/test", p.setupTest)
+	ctx.PostTemplate("/setup/admin", p.setupAdmin)
+	ctx.PostTemplate("/setup/skip", p.setupSkip)
 
-	ctx.Get("/dashboard", p.dashboard)
+	ctx.GetTemplate("/dashboard", p.dashboard)
 
-	ctx.Get("/smtp", p.smtpList)
-	ctx.Get("/smtp/form", p.smtpForm)
-	ctx.Get("/smtp/form/:id", p.smtpForm)
-	ctx.Post("/smtp/save", p.smtpSave)
-	ctx.Get("/smtp/send/:id", p.smtpSendForm)
+	ctx.GetTemplate("/smtp", p.smtpList)
+	ctx.GetTemplate("/smtp/form", p.smtpForm)
+	ctx.GetTemplate("/smtp/form/:id", p.smtpForm)
+	ctx.PostTemplate("/smtp/save", p.smtpSave)
+	ctx.GetTemplate("/smtp/send/:id", p.smtpSendForm)
 	ctx.Post("/smtp/test", p.smtpTest)
 
-	ctx.Get("/mail", p.mailList)
-	ctx.Get("/mail/form", p.mailForm)
-	ctx.Get("/mail/form/:id", p.mailForm)
-	ctx.Post("/mail/save", p.mailSave)
+	ctx.GetTemplate("/mail", p.mailList)
+	ctx.GetTemplate("/mail/form", p.mailForm)
+	ctx.GetTemplate("/mail/form/:id", p.mailForm)
+	ctx.PostTemplate("/mail/save", p.mailSave)
 
-	ctx.Get("/tokens", p.tokenList)
-	ctx.Get("/tokens/form", p.tokenForm)
-	ctx.Get("/tokens/form/:id", p.tokenForm)
-	ctx.Post("/tokens/save", p.tokenSave)
-	ctx.Get("/tokens/send/:id", p.tokenSendForm)
+	ctx.GetTemplate("/tokens", p.tokenList)
+	ctx.GetTemplate("/tokens/form", p.tokenForm)
+	ctx.GetTemplate("/tokens/form/:id", p.tokenForm)
+	ctx.PostTemplate("/tokens/save", p.tokenSave)
+	ctx.GetTemplate("/tokens/send/:id", p.tokenSendForm)
 
-	ctx.Get("/schedule", p.scheduleList)
-	ctx.Get("/schedule/form", p.scheduleForm)
-	ctx.Get("/schedule/form/:id", p.scheduleForm)
-	ctx.Post("/schedule/save", p.scheduleSave)
+	ctx.GetTemplate("/schedule", p.scheduleList)
+	ctx.GetTemplate("/schedule/form", p.scheduleForm)
+	ctx.GetTemplate("/schedule/form/:id", p.scheduleForm)
+	ctx.PostTemplate("/schedule/save", p.scheduleSave)
 
-	ctx.Get("/logs", p.logList)
-	ctx.Get("/logs/:id", p.logDetail)
+	ctx.GetTemplate("/logs", p.logList)
+	ctx.GetTemplate("/logs/:id", p.logDetail)
 
-	ctx.Get("/users", p.userList)
-	ctx.Get("/users/form", p.userForm)
-	ctx.Get("/users/form/:id", p.userForm)
-	ctx.Post("/users/save", p.userSave)
+	ctx.GetTemplate("/users", p.userList)
+	ctx.GetTemplate("/users/form", p.userForm)
+	ctx.GetTemplate("/users/form/:id", p.userForm)
+	ctx.PostTemplate("/users/save", p.userSave)
 
-	ctx.Get("/settings", p.settingsGet)
-	ctx.Post("/settings/save", p.settingsSave)
-	ctx.Post("/settings/restart", p.settingsRestart)
+	ctx.GetTemplate("/settings", p.settingsGet)
+	ctx.PostTemplate("/settings/save", p.settingsSave)
+	ctx.PostTemplate("/settings/restart", p.settingsRestart)
 
-	ctx.Get("/password", p.passwordGet)
-	ctx.Post("/password", p.passwordPost)
+	ctx.GetTemplate("/password", p.passwordGet)
+	ctx.PostTemplate("/password", p.passwordPost)
 }
 
 // home routes a first visit: the setup wizard before init, the login page without a
 // session, the dashboard otherwise.
-func (p *Pages) home(req *web.Request) (any, error) {
+func (p *Pages) home(view *web.Template) error {
+	req := view.Request()
 	st := model.CoreState(p.ctx.GetConfig())
 	if !st.Init {
-		return p.redirect(req, "/setup")
+		return redirect(view, "/setup")
 	}
 	if p.currentUser(req) == nil {
-		return p.redirect(req, "/login")
+		return redirect(view, "/login")
 	}
-	return p.redirect(req, "/dashboard")
+	return redirect(view, "/dashboard")
 }
 
 func (p *Pages) loginData(req *web.Request, next string, flash Flash) *LoginData {
@@ -89,15 +90,18 @@ type LoginData struct {
 	Next string
 }
 
-func (p *Pages) loginGet(req *web.Request) (any, error) {
+func (p *Pages) loginGet(view *web.Template) error {
+	req := view.Request()
 	if p.currentUser(req) != nil {
-		return p.redirect(req, "/dashboard")
+		return redirect(view, "/dashboard")
 	}
 	next := safeNext(req.Query("next"))
-	return p.render(req, "login", p.loginData(req, next, Flash{}))
+	view.View("login").Layout(layoutFor("login")).Data(p.loginData(req, next, Flash{}))
+	return nil
 }
 
-func (p *Pages) loginPost(req *web.Request) (any, error) {
+func (p *Pages) loginPost(view *web.Template) error {
+	req := view.Request()
 	username := req.GetFormParam("username")
 	password := req.GetFormParam("password")
 	next := safeNext(req.GetFormParam("next"))
@@ -105,8 +109,7 @@ func (p *Pages) loginPost(req *web.Request) (any, error) {
 	dbUser, err := p.userService.ValidateLogin(username, password)
 	if err != nil {
 		data := p.loginData(req, next, Flash{Err: err.Error()})
-		req.Response().WriteStatus(http.StatusUnauthorized)
-		return p.render(req, "login", data)
+		return renderPageStatus(view, "login", data, http.StatusUnauthorized)
 	}
 	lu := &entity.LoginUser{
 		Id:       dbUser.Id,
@@ -115,14 +118,15 @@ func (p *Pages) loginPost(req *web.Request) (any, error) {
 		IsAdmin:  dbUser.IsAdmin,
 	}
 	if _, err := p.authFilter.SignIn(lu, req); err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	return p.redirect(req, next)
+	return redirect(view, next)
 }
 
 // logout ends this session everywhere: the salt rotation invalidates every token
 // already issued to the user, so a copied session stops working immediately.
-func (p *Pages) logout(req *web.Request) (any, error) {
+func (p *Pages) logout(view *web.Template) error {
+	req := view.Request()
 	if user := p.currentUser(req); user != nil {
 		if err := p.userService.RotateSalt(user.Id); err != nil {
 			// Signing out must not be blocked by the rotation failing
@@ -130,9 +134,9 @@ func (p *Pages) logout(req *web.Request) (any, error) {
 		}
 	}
 	if _, err := p.authFilter.SignOut(req); err != nil {
-		return nil, err
+		return err
 	}
-	return p.redirect(req, "/login")
+	return redirect(view, "/login")
 }
 
 // lang switches the interface language and returns to where the visitor came from.
@@ -157,5 +161,6 @@ func (p *Pages) lang(req *web.Request) (any, error) {
 	if !strings.HasPrefix(back, "/") || strings.HasPrefix(back, "//") {
 		back = "/"
 	}
-	return p.redirect(req, back)
+	req.Response().Redirect(http.StatusFound, back)
+	return nil, nil
 }

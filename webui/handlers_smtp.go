@@ -22,10 +22,11 @@ type SmtpListData struct {
 	AdminOnly bool
 }
 
-func (p *Pages) smtpList(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) smtpList(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	page := listPage(req)
 	name := req.Query("name")
@@ -35,7 +36,7 @@ func (p *Pages) smtpList(req *web.Request) (any, error) {
 
 	result, err := p.smtpService.PageForWeb(page, user.Id, user.IsAdmin, adminOnly, name, host, username)
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	q := queryOf(req, "name", "host", "username", "adminOnly", "pageSize")
 	data := &SmtpListData{
@@ -47,7 +48,8 @@ func (p *Pages) smtpList(req *web.Request) (any, error) {
 		Username:  username,
 		AdminOnly: adminOnly,
 	}
-	return p.render(req, "smtp_list", data)
+	view.View("smtp_list").Layout(layoutFor("smtp_list")).Data(data)
+	return nil
 }
 
 // SmtpFormData is the create/edit form. Password is never echoed: blank means
@@ -62,20 +64,21 @@ type SmtpFormData struct {
 	Username string
 }
 
-func (p *Pages) smtpForm(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) smtpForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &SmtpFormData{Base: p.base(req, user, "smtp.addSMTP", false), Port: 25}
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
-			return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+			return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 		}
 		row, err := p.smtpOwnedBy(id, user)
 		if err != nil || row == nil {
-			return p.renderErr(req, http.StatusNotFound, "common.failed", "smtp not found")
+			return p.renderErr(view, http.StatusNotFound, "common.failed", "smtp not found")
 		}
 		data.Id = row.Id
 		data.Name = row.Name
@@ -85,7 +88,8 @@ func (p *Pages) smtpForm(req *web.Request) (any, error) {
 		data.Username = row.Username
 		data.Title = translatorFor(data.Lang).T("smtp.editSMTP")
 	}
-	return p.render(req, "smtp_form", data)
+	view.View("smtp_form").Layout(layoutFor("smtp_form")).Data(data)
+	return nil
 }
 
 // smtpOwnedBy loads a row the caller may edit: their own, or any when admin.
@@ -96,15 +100,15 @@ func (p *Pages) smtpOwnedBy(id uint, user *model.User) (*model.SMTP, error) {
 	return p.smtpModel.Query().Where("id = ? AND user_id = ?", id, user.Id).One()
 }
 
-func (p *Pages) smtpSave(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) smtpSave(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
-	formErr := func(data *SmtpFormData, msg string) (any, error) {
+	formErr := func(data *SmtpFormData, msg string) error {
 		data.Flash = Flash{Err: msg}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "smtp_form", data)
+		return renderPageStatus(view, "smtp_form", data, http.StatusBadRequest)
 	}
 	fill := func(data *SmtpFormData) {
 		data.Name = req.GetFormParam("name")
@@ -177,7 +181,7 @@ func (p *Pages) smtpSave(req *web.Request) (any, error) {
 			return formErr(data, err.Error())
 		}
 	}
-	return p.redirect(req, backTo("/smtp", "common.success", "", ""))
+	return redirect(view, backTo("/smtp", "common.success", "", ""))
 }
 
 // SmtpSendData backs the "send test mail" dialog opened from the SMTP list.
@@ -190,24 +194,25 @@ type SmtpSendData struct {
 	Recipients []*model.Mail
 }
 
-func (p *Pages) smtpSendForm(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) smtpSendForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	id, err := idParam(req, "id")
 	if err != nil {
-		return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 	}
 	row, err := p.smtpOwnedBy(id, user)
 	if err != nil || row == nil || row.UserId != user.Id {
 		// The send API only lets a caller send through their own SMTP server, so an
 		// admin opening another user's row would get a form that can never send.
-		return p.renderErr(req, http.StatusNotFound, "common.failed", "smtp not found")
+		return p.renderErr(view, http.StatusNotFound, "common.failed", "smtp not found")
 	}
 	mails, err := p.mailModel.Query().Where("user_id = ?", user.Id).Order("id desc").All()
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	data := &SmtpSendData{
 		Base:       p.base(req, user, "smtp.sendTestMail", false),
@@ -217,12 +222,14 @@ func (p *Pages) smtpSendForm(req *web.Request) (any, error) {
 		Recipients: mails,
 	}
 	data.Subject = data.L.T("smtp.testEmailSubject")
-	return p.render(req, "smtp_send", data)
+	view.View("smtp_send").Layout(layoutFor("smtp_send")).Data(data)
+	return nil
 }
 
 // smtpTest runs the connection probe from the form footer without saving anything.
 func (p *Pages) smtpTest(req *web.Request) (any, error) {
-	if _, ok := p.requireUser(req); !ok {
+	if p.currentUser(req) == nil {
+		req.Response().Redirect(http.StatusFound, loginLocation(req))
 		return nil, nil
 	}
 	st := &model.SMTP{

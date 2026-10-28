@@ -20,10 +20,11 @@ type MailListData struct {
 	AdminOnly bool
 }
 
-func (p *Pages) mailList(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) mailList(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	page := listPage(req)
 	name := req.Query("name")
@@ -46,7 +47,7 @@ func (p *Pages) mailList(req *web.Request) (any, error) {
 	}
 	result, err := query.Order("id desc").PageForWeb(page)
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	if user.IsAdmin {
 		fillNames(p.userService, result.List,
@@ -62,7 +63,8 @@ func (p *Pages) mailList(req *web.Request) (any, error) {
 		MailAddr:  mailAddr,
 		AdminOnly: adminOnly,
 	}
-	return p.render(req, "mail_list", data)
+	view.View("mail_list").Layout(layoutFor("mail_list")).Data(data)
+	return nil
 }
 
 // MailFormData is the recipient create/edit form.
@@ -73,27 +75,29 @@ type MailFormData struct {
 	Mail string
 }
 
-func (p *Pages) mailForm(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) mailForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &MailFormData{Base: p.base(req, user, "mail.addRecipient", false)}
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
-			return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+			return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 		}
 		row, err := p.mailOwnedBy(id, user)
 		if err != nil || row == nil {
-			return p.renderErr(req, http.StatusNotFound, "common.failed", "mail not found")
+			return p.renderErr(view, http.StatusNotFound, "common.failed", "mail not found")
 		}
 		data.Id = row.Id
 		data.Name = row.Name
 		data.Mail = row.Mail
 		data.Title = translatorFor(data.Lang).T("mail.editRecipient")
 	}
-	return p.render(req, "mail_form", data)
+	view.View("mail_form").Layout(layoutFor("mail_form")).Data(data)
+	return nil
 }
 
 func (p *Pages) mailOwnedBy(id uint, user *model.User) (*model.Mail, error) {
@@ -103,18 +107,18 @@ func (p *Pages) mailOwnedBy(id uint, user *model.User) (*model.Mail, error) {
 	return p.mailModel.Query().Where("id = ? AND user_id = ?", id, user.Id).One()
 }
 
-func (p *Pages) mailSave(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) mailSave(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &MailFormData{Base: p.base(req, user, "mail.addRecipient", false)}
 	data.Name = req.GetFormParam("name")
 	data.Mail = req.GetFormParam("mail")
-	fail := func(msg string) (any, error) {
+	fail := func(msg string) error {
 		data.Flash = Flash{Err: msg}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "mail_form", data)
+		return renderPageStatus(view, "mail_form", data, http.StatusBadRequest)
 	}
 	// Resolve the row before validating, so a failed edit re-renders with its id
 	// instead of turning into a create form.
@@ -153,5 +157,5 @@ func (p *Pages) mailSave(req *web.Request) (any, error) {
 			return fail(err.Error())
 		}
 	}
-	return p.redirect(req, backTo("/mail", "common.success", "", ""))
+	return redirect(view, backTo("/mail", "common.success", "", ""))
 }

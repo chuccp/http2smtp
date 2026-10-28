@@ -18,10 +18,11 @@ type ScheduleListData struct {
 	AdminOnly bool
 }
 
-func (p *Pages) scheduleList(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) scheduleList(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	page := listPage(req)
 	name := req.Query("name")
@@ -29,11 +30,11 @@ func (p *Pages) scheduleList(req *web.Request) (any, error) {
 
 	result, err := p.scheduleSvc.GetPage(page, user.Id, user.IsAdmin, name, adminOnly)
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	pb, ok2 := result.(*web.PageAble[*model.Schedule])
 	if !ok2 || pb == nil {
-		return p.renderErr(req, 0, "common.failed", "unexpected page result")
+		return p.renderErr(view, 0, "common.failed", "unexpected page result")
 	}
 	if user.IsAdmin {
 		fillNames(p.userService, pb.List,
@@ -48,7 +49,8 @@ func (p *Pages) scheduleList(req *web.Request) (any, error) {
 		Name:      name,
 		AdminOnly: adminOnly,
 	}
-	return p.render(req, "schedule_list", data)
+	view.View("schedule_list").Layout(layoutFor("schedule_list")).Data(data)
+	return nil
 }
 
 // ScheduleFormData is the scheduled-task create/edit form.
@@ -68,10 +70,11 @@ type ScheduleFormData struct {
 	TokenOptions []SelectOption
 }
 
-func (p *Pages) scheduleForm(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) scheduleForm(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	data := &ScheduleFormData{
 		Base:    p.base(req, user, "schedule.addSchedule", false),
@@ -86,11 +89,11 @@ func (p *Pages) scheduleForm(req *web.Request) (any, error) {
 	if s := req.Param("id"); s != "" {
 		id, err := idParam(req, "id")
 		if err != nil {
-			return p.renderErr(req, http.StatusBadRequest, "common.failed", err.Error())
+			return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
 		}
 		row, err := p.scheduleOwnedBy(id, user)
 		if err != nil || row == nil {
-			return p.renderErr(req, http.StatusNotFound, "common.failed", "schedule not found")
+			return p.renderErr(view, http.StatusNotFound, "common.failed", "schedule not found")
 		}
 		selectedToken = row.TokenId
 		ownerId = resourceOwnerId(row.UserId, user.Id)
@@ -110,9 +113,10 @@ func (p *Pages) scheduleForm(req *web.Request) (any, error) {
 		data.Title = translatorFor(data.Lang).T("schedule.editSchedule")
 	}
 	if err := p.fillTokenOptions(data, ownerId, selectedToken); err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	return p.render(req, "schedule_form", data)
+	view.View("schedule_form").Layout(layoutFor("schedule_form")).Data(data)
+	return nil
 }
 
 // fillTokenOptions loads the schedule owner's enabled tokens into the form's select;
@@ -163,10 +167,11 @@ func collectHeaders(req *web.Request) []*model.Header {
 	return headers
 }
 
-func (p *Pages) scheduleSave(req *web.Request) (any, error) {
-	user, ok := p.requireUser(req)
+func (p *Pages) scheduleSave(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireUser(view)
 	if !ok {
-		return nil, nil
+		return nil
 	}
 	st := &model.Schedule{
 		UserId:            user.Id,
@@ -199,7 +204,7 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 	// offered the admin's tokens nor re-point the schedule at one.
 	ownerId := user.Id
 	var existing *model.Schedule
-	fail := func(msg string) (any, error) {
+	fail := func(msg string) error {
 		data := &ScheduleFormData{
 			Base:        p.base(req, user, "schedule.addSchedule", false),
 			Id:          st.Id,
@@ -222,8 +227,7 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 			data.Headers = []*model.Header{{}, {}}
 		}
 		_ = p.fillTokenOptions(data, ownerId, st.TokenId)
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "schedule_form", data)
+		return renderPageStatus(view, "schedule_form", data, http.StatusBadRequest)
 	}
 	if st.Id != 0 {
 		loaded, err := p.scheduleOwnedBy(st.Id, user)
@@ -274,5 +278,5 @@ func (p *Pages) scheduleSave(req *web.Request) (any, error) {
 			return fail(err.Error())
 		}
 	}
-	return p.redirect(req, backTo("/schedule", "common.success", "", ""))
+	return redirect(view, backTo("/schedule", "common.success", "", ""))
 }

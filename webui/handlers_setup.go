@@ -36,10 +36,11 @@ type SetupData struct {
 	AdminUsername string
 }
 
-func (p *Pages) setupGet(req *web.Request) (any, error) {
+func (p *Pages) setupGet(view *web.Template) error {
+	req := view.Request()
 	st := model.CoreState(p.ctx.GetConfig())
 	if st.Init {
-		return p.redirect(req, "/login")
+		return redirect(view, "/login")
 	}
 	step := 1
 	if st.DbInit {
@@ -55,7 +56,7 @@ func (p *Pages) setupGet(req *web.Request) (any, error) {
 
 	cfg, err := model.GetConfig(p.ctx.GetConfig())
 	if err != nil {
-		return p.renderErr(req, 0, "common.failed", err.Error())
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	data.IsDocker = cfg.Core.IsDocker
 	if cfg.Manage != nil {
@@ -88,7 +89,8 @@ func (p *Pages) setupGet(req *web.Request) (any, error) {
 			data.AdminName, _ = userService.GetAdminUsername()
 		}
 	}
-	return p.render(req, "setup", data)
+	view.View("setup").Layout(layoutFor("setup")).Data(data)
+	return nil
 }
 
 // setupDbFromForm reads the database section of the wizard form into a Config.
@@ -127,10 +129,11 @@ func (p *Pages) setupRebuild(req *web.Request, data *SetupData) {
 
 // setupTest is the step-1 "test connection" button: probe the typed settings without
 // saving anything, then re-render the form with the verdict.
-func (p *Pages) setupTest(req *web.Request) (any, error) {
+func (p *Pages) setupTest(view *web.Template) error {
+	req := view.Request()
 	st := model.CoreState(p.ctx.GetConfig())
 	if st.Init {
-		return p.redirect(req, "/login")
+		return redirect(view, "/login")
 	}
 	data := &SetupData{Base: p.newBase(langOf(req), "setup.setupWizard"), Step: 1, HasDbInit: st.DbInit}
 	data.DbType = "sqlite"
@@ -140,38 +143,39 @@ func (p *Pages) setupTest(req *web.Request) (any, error) {
 	} else {
 		data.Flash = Flash{OK: "setup.connectionSuccess"}
 	}
-	return p.render(req, "setup", data)
+	view.View("setup").Layout(layoutFor("setup")).Data(data)
+	return nil
 }
 
 // setupDb is step 1's save: persist the database settings and move on to the admin step.
-func (p *Pages) setupDb(req *web.Request) (any, error) {
+func (p *Pages) setupDb(view *web.Template) error {
+	req := view.Request()
 	st := model.CoreState(p.ctx.GetConfig())
 	if st.Init {
-		return p.redirect(req, "/login")
+		return redirect(view, "/login")
 	}
 	if err := configapply.ApplyDbInit(p.ctx, p.setupDbFromForm(req)); err != nil {
 		data := &SetupData{Base: p.newBase(langOf(req), "setup.setupWizard"), Step: 1}
 		data.DbType = "sqlite"
 		p.setupRebuild(req, data)
 		data.Flash = Flash{Err: err.Error()}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "setup", data)
+		return renderPageStatus(view, "setup", data, http.StatusBadRequest)
 	}
-	return p.redirect(req, "/setup?step=2")
+	return redirect(view, "/setup?step=2")
 }
 
 // setupAdmin is step 2: create the administrator (or reset the existing one's
 // credentials) and finish setup.
-func (p *Pages) setupAdmin(req *web.Request) (any, error) {
+func (p *Pages) setupAdmin(view *web.Template) error {
+	req := view.Request()
 	st := model.CoreState(p.ctx.GetConfig())
 	if st.Init {
-		return p.redirect(req, "/login")
+		return redirect(view, "/login")
 	}
-	fail := func(msgKey string) (any, error) {
+	fail := func(msgKey string) error {
 		data := p.setupStep2Data(req)
 		data.Flash = Flash{Err: translatorFor(data.Lang).T(msgKey)}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "setup", data)
+		return renderPageStatus(view, "setup", data, http.StatusBadRequest)
 	}
 	username := req.GetFormParam("username")
 	password := req.GetFormParam("password")
@@ -193,25 +197,24 @@ func (p *Pages) setupAdmin(req *web.Request) (any, error) {
 		data := p.setupStep2Data(req)
 		data.AdminUsername = username
 		data.Flash = Flash{Err: err.Error()}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "setup", data)
+		return renderPageStatus(view, "setup", data, http.StatusBadRequest)
 	}
-	return p.redirect(req, "/login?ok=setup.initializationSuccess")
+	return redirect(view, "/login?ok=setup.initializationSuccess")
 }
 
 // setupSkip finishes setup without touching the existing admin account.
-func (p *Pages) setupSkip(req *web.Request) (any, error) {
+func (p *Pages) setupSkip(view *web.Template) error {
+	req := view.Request()
 	st := model.CoreState(p.ctx.GetConfig())
 	if st.Init {
-		return p.redirect(req, "/login")
+		return redirect(view, "/login")
 	}
 	if err := configapply.ApplyAdminInitSkip(p.ctx); err != nil {
 		data := p.setupStep2Data(req)
 		data.Flash = Flash{Err: err.Error()}
-		req.Response().WriteStatus(http.StatusBadRequest)
-		return p.render(req, "setup", data)
+		return renderPageStatus(view, "setup", data, http.StatusBadRequest)
 	}
-	return p.redirect(req, "/login?ok=setup.initializationSuccess")
+	return redirect(view, "/login?ok=setup.initializationSuccess")
 }
 
 func (p *Pages) setupStep2Data(req *web.Request) *SetupData {

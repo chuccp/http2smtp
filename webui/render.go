@@ -1,13 +1,14 @@
 package webui
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/chuccp/go-web-frame/web"
@@ -119,44 +120,51 @@ var templateFuncs = template.FuncMap{
 	},
 }
 
-// layoutFor maps a page template onto the skeleton it renders inside: the full app
-// chrome for signed-in pages, the bare card for login/setup/error. The name is relative
-// to whichever FS is in play — the embedded "templates/" prefix or the dev directory
-// root — so callers add the prefix their FS needs.
+// layoutFor maps a page template onto its skeleton: the full app chrome for signed-in
+// pages, the bare card for login/setup/error.
 func layoutFor(name string) string {
 	switch name {
 	case "login", "setup", "error", "notadmin":
-		return "bare.html"
+		return "bare"
 	default:
-		return "layout.html"
+		return "layout"
 	}
 }
 
-// parseTemplates parses each page together with its skeleton into its own set, so
-// every page can define "content" without colliding with the others' blocks. Parsed
-// once per process: restart re-runs Init and the templates do not change.
-func parseTemplates() (map[string]*template.Template, error) {
-	pages := []string{
-		"login", "setup", "error", "notadmin",
-		"dashboard",
-		"smtp_list", "smtp_form", "smtp_send",
-		"mail_list", "mail_form",
-		"token_list", "token_form", "token_send",
-		"schedule_list", "schedule_form",
-		"logs_list", "logs_detail",
-		"users_list", "users_form",
-		"settings", "password", "restarting",
-	}
-	tmpls := make(map[string]*template.Template, len(pages))
-	for _, name := range pages {
-		t, err := template.New(name).Funcs(templateFuncs).
-			ParseFS(templatesFS, "templates/"+layoutFor(name), "templates/partials.html", "templates/"+name+".html")
-		if err != nil {
-			return nil, fmt.Errorf("parsing template %s: %w", name, err)
+var (
+	templateSetOnce sync.Once
+	loadedTemplates *web.TemplateSet
+	templateSetErr  error
+)
+
+// loadTemplateSet discovers and compiles every page/layout combination once. The
+// returned set is immutable and can be reused when the framework restarts.
+func loadTemplateSet() (*web.TemplateSet, error) {
+	templateSetOnce.Do(func() {
+		var fsys fs.FS = templatesFS
+		root := "templates"
+		if devMode {
+			fsys = os.DirFS(devTemplatesDir)
+			root = "."
 		}
-		tmpls[name] = t
+		loadedTemplates, templateSetErr = loadTemplates(fsys, root, devMode)
+		if templateSetErr != nil && devMode {
+			templateSetErr = fmt.Errorf("development mode serves templates from disk but %s could not be loaded: %w — run the binary from the repository root, or build with -tags release for a self-contained binary (WEBUI_DEV=0 also forces the embedded copies in a dev build)", devTemplatesDir, templateSetErr)
+		}
+	})
+	return loadedTemplates, templateSetErr
+}
+
+func loadTemplates(fsys fs.FS, root string, devReload bool) (*web.TemplateSet, error) {
+	options := []web.TemplateOption{
+		web.WithTemplateFuncs(templateFuncs),
+		web.WithLayouts("layout", "bare"),
+		web.WithPartials("partials"),
 	}
-	return tmpls, nil
+	if devReload {
+		options = append(options, web.WithDevReload(true))
+	}
+	return web.LoadTemplates(fsys, root, options...)
 }
 
 // newBase builds a Base for pages that construct their data by hand (login, errors):
@@ -186,41 +194,14 @@ func (p *Pages) base(req *web.Request, user *model.User, titleKey string, tab bo
 	return b
 }
 
-// templateFor returns the template set for a page: the once-parsed embedded copy, or
-// in dev mode a fresh parse from disk so edits show up on the next request.
-func (p *Pages) templateFor(name string) (*template.Template, error) {
-	if devMode {
-		return template.New(name).Funcs(templateFuncs).
-			ParseFS(os.DirFS(devTemplatesDir), layoutFor(name), "partials.html", name+".html")
-	}
-	tmpl, ok := p.tmpls[name]
-	if !ok {
-		return nil, fmt.Errorf("template %q is not registered", name)
-	}
-	return tmpl, nil
-}
-
-// render executes the named page and writes it as UTF-8 HTML. Returning nil, nil lets
-// the framework's converter leave the response alone — the bytes are already written.
-func (p *Pages) render(req *web.Request, name string, data any) (any, error) {
-	tmpl, err := p.templateFor(name)
-	if err != nil {
-		return nil, err
-	}
-	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "layout", data); err != nil {
-		return nil, err
-	}
-	resp := req.Response()
-	resp.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if _, err := resp.Write(buf.Bytes()); err != nil {
-		return nil, err
-	}
-	return nil, nil
+func renderPageStatus(view *web.Template, name string, data any, status int) error {
+	view.View(name).Layout(layoutFor(name)).Status(status).Data(data)
+	return nil
 }
 
 // renderErr shows the bare error page with a translated headline and the raw detail.
-func (p *Pages) renderErr(req *web.Request, status int, titleKey, detail string) (any, error) {
+func (p *Pages) renderErr(view *web.Template, status int, titleKey, detail string) error {
+	req := view.Request()
 	lang := langOf(req)
 	tr := translatorFor(lang)
 	b := p.newBase(lang, titleKey)
@@ -237,19 +218,16 @@ func (p *Pages) renderErr(req *web.Request, status int, titleKey, detail string)
 	if status == 0 {
 		status = http.StatusInternalServerError
 	}
-	// The status has to be set before the write; the converter sees nil, nil and stops.
-	req.Response().WriteStatus(status)
-	return p.render(req, "error", data)
+	return renderPageStatus(view, "error", data, status)
 }
 
-// redirect answers with a 302. next must be a site-relative path: the caller has
-// validated it, this just refuses anything that drifts off-site in transit.
-func (p *Pages) redirect(req *web.Request, to string) (any, error) {
+// redirect answers with a 302 after validating that the target is site-relative.
+func redirect(view *web.Template, to string) error {
 	if !strings.HasPrefix(to, "/") {
 		to = "/"
 	}
-	req.Response().Redirect(http.StatusFound, to)
-	return nil, nil
+	view.Redirect(http.StatusFound, to)
+	return nil
 }
 
 // safeNext validates a ?next= return target: same-site absolute path only, so a

@@ -2,14 +2,10 @@ package webui
 
 import (
 	"fmt"
-	"html/template"
 	"io/fs"
-	"mime"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	wf "github.com/chuccp/go-web-frame"
@@ -40,11 +36,9 @@ type Pages struct {
 	scheduleModel *model.ScheduleModel
 	logModel      *model.LogModel
 
-	// Templates are parsed once per process: a restart re-runs Init on a fresh engine
-	// and re-registering the routes is cheap, re-parsing is not.
+	// Locale parsing is process-wide; the template set has its own process-wide cache.
 	once    sync.Once
 	loadErr error
-	tmpls   map[string]*template.Template
 }
 
 // NewPages returns the UI rest component for main.go to register.
@@ -64,33 +58,22 @@ func (p *Pages) Init(ctx *core.Context) error {
 	p.logModel = core.GetModel[*model.LogModel](ctx)
 
 	p.once.Do(func() {
-		if err := loadI18n(); err != nil {
-			p.loadErr = err
-			return
-		}
-		tmpls, err := parseTemplates()
-		if err != nil {
-			p.loadErr = err
-			return
-		}
-		p.tmpls = tmpls
+		p.loadErr = loadI18n()
 	})
 	if p.loadErr != nil {
 		return p.loadErr
 	}
-	// In dev mode the templates are re-read per request; fail early and loudly when
-	// the directory is not where the docs say it is (binary started outside the repo).
-	if devMode {
-		if fi, err := os.Stat(devTemplatesDir); err != nil || !fi.IsDir() {
-			return fmt.Errorf("development mode serves templates from disk but %s is not a directory — run the binary from the repository root, or build with -tags release for a self-contained binary (WEBUI_DEV=0 also forces the embedded copies in a dev build)", devTemplatesDir)
-		}
+	templates, err := loadTemplateSet()
+	if err != nil {
+		return fmt.Errorf("load web templates: %w", err)
 	}
+	ctx.Server().SetTemplates(templates)
 
 	// Static assets live in the binary and are served through the route table (not the
 	// NoRoute fallback), so they take part in the same pipeline as everything else.
 	// In dev mode they are read from disk per request, like the templates.
 	if devMode {
-		ctx.Get("/static/*filepath", p.devStatic)
+		ctx.StaticFs("/static", http.Dir(devStaticDir))
 	} else {
 		staticSub, err := fs.Sub(staticFS, "static")
 		if err != nil {
@@ -101,10 +84,10 @@ func (p *Pages) Init(ctx *core.Context) error {
 	ctx.Get("/favicon.svg", p.staticFile("favicon.svg", "image/svg+xml"))
 	ctx.Get("/icons.svg", p.staticFile("icons.svg", "image/svg+xml"))
 
-	ctx.Get("/", p.home)
-	ctx.Get("/login", p.loginGet)
-	ctx.Post("/login", p.loginPost)
-	ctx.Post("/logout", p.logout)
+	ctx.GetTemplate("/", p.home)
+	ctx.GetTemplate("/login", p.loginGet)
+	ctx.PostTemplate("/login", p.loginPost)
+	ctx.PostTemplate("/logout", p.logout)
 	ctx.Any("/lang", p.lang)
 
 	p.registerPageRoutes(ctx)
@@ -130,29 +113,4 @@ func (p *Pages) staticFile(name, contentType string) web.HandlerFunc {
 		_, _ = resp.Write(data)
 		return nil, nil
 	}
-}
-
-// devStatic serves /static/* from the working tree. The path is cleaned and confined
-// to devStaticDir — a traversal attempt must not read the filesystem at large.
-func (p *Pages) devStatic(req *web.Request) (any, error) {
-	clean := path.Clean("/" + req.Param("filepath"))
-	// Clean both sides so the comparison holds on Windows, where Clean rewrites the
-	// forward slashes in devStaticDir to backslashes.
-	base := filepath.Clean(devStaticDir)
-	full := filepath.Join(base, clean)
-	if !strings.HasPrefix(full, base+string(filepath.Separator)) {
-		return nil, os.ErrNotExist
-	}
-	data, err := os.ReadFile(full)
-	if err != nil {
-		return nil, err
-	}
-	contentType := mime.TypeByExtension(filepath.Ext(full))
-	if contentType == "" {
-		contentType = http.DetectContentType(data)
-	}
-	resp := req.Response()
-	resp.Header().Set("Content-Type", contentType)
-	_, _ = resp.Write(data)
-	return nil, nil
 }
