@@ -35,15 +35,20 @@ func renderContent(t *testing.T, page string, data any) string {
 func templateTestServer(t *testing.T, handler web.TemplateHandler) http.Handler {
 	t.Helper()
 	templatesOnce.Do(func() {
-		templatesForTests, templatesErr = loadTemplates(templatesFS, "templates", false)
+		templatesForTests, templatesErr = web.LoadTemplates(
+			templatesFS,
+			"templates",
+			web.WithTemplateFuncs(templateFuncs),
+			web.WithLayouts("layout", "bare"),
+			web.WithPartials("partials"),
+		)
 	})
 	if templatesErr != nil {
 		t.Fatalf("loading templates: %v", templatesErr)
 	}
 
 	server := web.DefaultServer()
-	server.SetTemplates(templatesForTests)
-	server.GetTemplate("/", handler)
+	server.GetTemplate("/", handler, web.WithTemplateSet(templatesForTests))
 	return server.GetHandler()
 }
 

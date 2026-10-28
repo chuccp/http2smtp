@@ -61,11 +61,22 @@ func (p *Pages) Init(ctx *core.Context) error {
 	if p.loadErr != nil {
 		return p.loadErr
 	}
-	templates, err := loadTemplateSet()
+	templates, err := web.LoadTemplates(
+		web.EmbedFs("templates", templatesFS).
+			Reload(devMode).
+			ReloadPath(devTemplatesDir),
+		".",
+		web.WithTemplateFuncs(templateFuncs),
+		web.WithLayouts("layout", "bare"),
+		web.WithPartials("partials"),
+	)
 	if err != nil {
+		if devMode {
+			err = fmt.Errorf("development mode serves templates from disk but %s could not be loaded: %w — run the binary from the repository root, or build with -tags release for a self-contained binary (WEBUI_DEV=0 also forces the embedded copies in a dev build)", devTemplatesDir, err)
+		}
 		return fmt.Errorf("load web templates: %w", err)
 	}
-	ctx.Server().SetTemplates(templates)
+	templateOption := web.WithTemplateSet(templates)
 
 	// Static assets live in the binary and take part in the normal route pipeline.
 	// The framework chooses the embedded copy or the development directory.
@@ -78,13 +89,13 @@ func (p *Pages) Init(ctx *core.Context) error {
 	ctx.Get("/favicon.svg", p.staticFile("favicon.svg", "image/svg+xml"))
 	ctx.Get("/icons.svg", p.staticFile("icons.svg", "image/svg+xml"))
 
-	ctx.GetTemplate("/", p.home)
-	ctx.GetTemplate("/login", p.loginGet)
-	ctx.PostTemplate("/login", p.loginPost)
-	ctx.PostTemplate("/logout", p.logout)
+	ctx.GetTemplate("/", p.home, templateOption)
+	ctx.GetTemplate("/login", p.loginGet, templateOption)
+	ctx.PostTemplate("/login", p.loginPost, templateOption)
+	ctx.PostTemplate("/logout", p.logout, templateOption)
 	ctx.Any("/lang", p.lang)
 
-	p.registerPageRoutes(ctx)
+	p.registerPageRoutes(ctx, templateOption)
 	return nil
 }
 

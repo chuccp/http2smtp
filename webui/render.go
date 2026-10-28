@@ -3,12 +3,10 @@ package webui
 import (
 	"fmt"
 	"html/template"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/chuccp/go-web-frame/web"
@@ -129,42 +127,6 @@ func layoutFor(name string) string {
 	default:
 		return "layout"
 	}
-}
-
-var (
-	templateSetOnce sync.Once
-	loadedTemplates *web.TemplateSet
-	templateSetErr  error
-)
-
-// loadTemplateSet discovers and compiles every page/layout combination once. The
-// returned set is immutable and can be reused when the framework restarts.
-func loadTemplateSet() (*web.TemplateSet, error) {
-	templateSetOnce.Do(func() {
-		var fsys fs.FS = templatesFS
-		root := "templates"
-		if devMode {
-			fsys = os.DirFS(devTemplatesDir)
-			root = "."
-		}
-		loadedTemplates, templateSetErr = loadTemplates(fsys, root, devMode)
-		if templateSetErr != nil && devMode {
-			templateSetErr = fmt.Errorf("development mode serves templates from disk but %s could not be loaded: %w — run the binary from the repository root, or build with -tags release for a self-contained binary (WEBUI_DEV=0 also forces the embedded copies in a dev build)", devTemplatesDir, templateSetErr)
-		}
-	})
-	return loadedTemplates, templateSetErr
-}
-
-func loadTemplates(fsys fs.FS, root string, devReload bool) (*web.TemplateSet, error) {
-	options := []web.TemplateOption{
-		web.WithTemplateFuncs(templateFuncs),
-		web.WithLayouts("layout", "bare"),
-		web.WithPartials("partials"),
-	}
-	if devReload {
-		options = append(options, web.WithDevReload(true))
-	}
-	return web.LoadTemplates(fsys, root, options...)
 }
 
 // newBase builds a Base for pages that construct their data by hand (login, errors):

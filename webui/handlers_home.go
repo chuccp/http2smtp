@@ -15,52 +15,59 @@ import (
 
 // registerPageRoutes wires the server-rendered pages. Home, logout and language
 // switching redirect without rendering and are registered directly in Init.
-func (p *Pages) registerPageRoutes(ctx *core.Context) {
-	ctx.GetTemplate("/setup", p.setupGet)
-	ctx.PostTemplate("/setup/db", p.setupDb)
-	ctx.PostTemplate("/setup/test", p.setupTest)
-	ctx.PostTemplate("/setup/admin", p.setupAdmin)
-	ctx.PostTemplate("/setup/skip", p.setupSkip)
+func (p *Pages) registerPageRoutes(ctx *core.Context, templateOption web.TemplateOption) {
+	get := func(relativePath string, handler web.TemplateHandler) {
+		ctx.GetTemplate(relativePath, handler, templateOption)
+	}
+	post := func(relativePath string, handler web.TemplateHandler) {
+		ctx.PostTemplate(relativePath, handler, templateOption)
+	}
 
-	ctx.GetTemplate("/dashboard", p.dashboard)
+	get("/setup", p.setupGet)
+	post("/setup/db", p.setupDb)
+	post("/setup/test", p.setupTest)
+	post("/setup/admin", p.setupAdmin)
+	post("/setup/skip", p.setupSkip)
 
-	ctx.GetTemplate("/smtp", p.smtpList)
-	ctx.GetTemplate("/smtp/form", p.smtpForm)
-	ctx.GetTemplate("/smtp/form/:id", p.smtpForm)
-	ctx.PostTemplate("/smtp/save", p.smtpSave)
-	ctx.GetTemplate("/smtp/send/:id", p.smtpSendForm)
+	get("/dashboard", p.dashboard)
+
+	get("/smtp", p.smtpList)
+	get("/smtp/form", p.smtpForm)
+	get("/smtp/form/:id", p.smtpForm)
+	post("/smtp/save", p.smtpSave)
+	get("/smtp/send/:id", p.smtpSendForm)
 	ctx.Post("/smtp/test", p.smtpTest)
 
-	ctx.GetTemplate("/mail", p.mailList)
-	ctx.GetTemplate("/mail/form", p.mailForm)
-	ctx.GetTemplate("/mail/form/:id", p.mailForm)
-	ctx.PostTemplate("/mail/save", p.mailSave)
+	get("/mail", p.mailList)
+	get("/mail/form", p.mailForm)
+	get("/mail/form/:id", p.mailForm)
+	post("/mail/save", p.mailSave)
 
-	ctx.GetTemplate("/tokens", p.tokenList)
-	ctx.GetTemplate("/tokens/form", p.tokenForm)
-	ctx.GetTemplate("/tokens/form/:id", p.tokenForm)
-	ctx.PostTemplate("/tokens/save", p.tokenSave)
-	ctx.GetTemplate("/tokens/send/:id", p.tokenSendForm)
+	get("/tokens", p.tokenList)
+	get("/tokens/form", p.tokenForm)
+	get("/tokens/form/:id", p.tokenForm)
+	post("/tokens/save", p.tokenSave)
+	get("/tokens/send/:id", p.tokenSendForm)
 
-	ctx.GetTemplate("/schedule", p.scheduleList)
-	ctx.GetTemplate("/schedule/form", p.scheduleForm)
-	ctx.GetTemplate("/schedule/form/:id", p.scheduleForm)
-	ctx.PostTemplate("/schedule/save", p.scheduleSave)
+	get("/schedule", p.scheduleList)
+	get("/schedule/form", p.scheduleForm)
+	get("/schedule/form/:id", p.scheduleForm)
+	post("/schedule/save", p.scheduleSave)
 
-	ctx.GetTemplate("/logs", p.logList)
-	ctx.GetTemplate("/logs/:id", p.logDetail)
+	get("/logs", p.logList)
+	get("/logs/:id", p.logDetail)
 
-	ctx.GetTemplate("/users", p.userList)
-	ctx.GetTemplate("/users/form", p.userForm)
-	ctx.GetTemplate("/users/form/:id", p.userForm)
-	ctx.PostTemplate("/users/save", p.userSave)
+	get("/users", p.userList)
+	get("/users/form", p.userForm)
+	get("/users/form/:id", p.userForm)
+	post("/users/save", p.userSave)
 
-	ctx.GetTemplate("/settings", p.settingsGet)
-	ctx.PostTemplate("/settings/save", p.settingsSave)
-	ctx.PostTemplate("/settings/restart", p.settingsRestart)
+	get("/settings", p.settingsGet)
+	post("/settings/save", p.settingsSave)
+	post("/settings/restart", p.settingsRestart)
 
-	ctx.GetTemplate("/password", p.passwordGet)
-	ctx.PostTemplate("/password", p.passwordPost)
+	get("/password", p.passwordGet)
+	post("/password", p.passwordPost)
 }
 
 // home routes a first visit: the setup wizard before init, the login page without a

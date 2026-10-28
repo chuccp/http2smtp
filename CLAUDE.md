@@ -77,13 +77,14 @@ JSON is embedded in every build.
   live in `webui/handlers_*.go`. Page routes sit at the site root (`/login`, `/smtp`, …)
   and call `requireUser`/`requireAdmin` themselves — they deliberately do **not** carry the
   framework's `WithLogin` meta, whose 403 JSON is wrong for a browser navigation.
-- Rendering: `webui/render.go` loads one framework `web.TemplateSet` with the `layout`
-  and `bare` layouts plus `partials`, then installs it on the management server. Page
-  handlers are `web.TemplateHandler`s registered through `GetTemplate`/`PostTemplate`;
-  handlers call `View`/`Layout`/`Data` directly, while `renderPageStatus` handles
-  validation re-renders. The framework converter renders atomically after the handler
-  succeeds. Form saves redirect (PRG) with `?ok=<i18n key>` via `Template.Redirect`;
-  failures re-render the form with the values echoed back.
+- Rendering: `Pages.Init` calls framework `web.LoadTemplates` with
+  `web.EmbedFs("templates", templatesFS).Reload(devMode)` and passes the resulting
+  `web.TemplateSet` to each page route through `web.WithTemplateSet`. The framework
+  infers reload behavior from the filesystem. Page handlers call
+  `View`/`Layout`/`Data` directly, while
+  `renderPageStatus` handles validation re-renders. Form saves redirect (PRG) with
+  `?ok=<i18n key>` via `Template.Redirect`; failures re-render the form with the values
+  echoed back.
 - `webui/static/ui.js` is the hand-rolled component library: modal dialogs
   (alert/confirm/prompt), toast, loading mask, partial navigation (pjax), form dialogs
   and page dialogs. Menu/tab/links fetch the target page and swap only `.content`, so
