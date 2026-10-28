@@ -9,13 +9,15 @@ import (
 )
 
 type Mail struct {
-	Id         uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
-	UserId     uint      `gorm:"column:user_id" json:"userId"`
-	UserName   string    `gorm:"-" json:"userName"`
-	Name       string    `gorm:"column:name" json:"name"`
-	Mail       string    `gorm:"column:mail" json:"mail"`
-	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
-	UpdateTime time.Time `gorm:"column:update_time" json:"updateTime"`
+	Id       uint   `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	UserId   uint   `gorm:"column:user_id" json:"userId"`
+	UserName string `gorm:"-" json:"userName"`
+	// CreatedByAdmin marks rows whose owner is an administrator (admin list view only).
+	CreatedByAdmin bool      `gorm:"-" json:"createdByAdmin"`
+	Name           string    `gorm:"column:name" json:"name"`
+	Mail           string    `gorm:"column:mail" json:"mail"`
+	CreateTime     time.Time `gorm:"column:create_time" json:"createTime"`
+	UpdateTime     time.Time `gorm:"column:update_time" json:"updateTime"`
 }
 
 func (mail *Mail) SetCreateTime(createTime time.Time) {

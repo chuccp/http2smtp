@@ -27,7 +27,7 @@
   <tbody>
     {{range .Rows}}
     <tr>
-      <td>{{.Name}}</td>
+      <td>{{.Name}}{{if and $.User.IsAdmin .CreatedByAdmin}} <span class="admin-star" title="{{$.L.T "common.createdByAdmin"}}">★</span>{{end}}</td>
       <td>{{.Mail}}</td>
       {{if $.User.IsAdmin}}<td>{{.UserName}}</td>{{end}}
       <td class="muted">{{fmtTime .CreateTime}}</td>

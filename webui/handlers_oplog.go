@@ -1,6 +1,8 @@
 package webui
 
 import (
+	"net/http"
+
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
@@ -62,6 +64,7 @@ var oplogTargetKeys = map[string]string{
 	entity.TargetUser:     "layout.sidebar.users",
 	entity.TargetLog:      "layout.sidebar.logs",
 	entity.TargetSettings: "layout.sidebar.settings",
+	entity.TargetOplog:    "layout.sidebar.oplogs",
 }
 
 func (p *Pages) oplogList(view *web.Template) error {
@@ -81,20 +84,7 @@ func (p *Pages) oplogList(view *web.Template) error {
 	tr := translatorFor(langOf(req))
 	rows := make([]OplogRow, 0, len(result.List))
 	for _, r := range result.List {
-		actionLabel := r.Action
-		if key, ok := oplogActionKeys[r.Action]; ok {
-			actionLabel = tr.T(key)
-		}
-		targetLabel := r.TargetType
-		if key, ok := oplogTargetKeys[r.TargetType]; ok {
-			targetLabel = tr.T(key)
-		}
-		rows = append(rows, OplogRow{
-			OperationLog: r,
-			ActionLabel:  actionLabel,
-			ActionClass:  oplogActionClasses[r.Action],
-			TargetLabel:  targetLabel,
-		})
+		rows = append(rows, oplogRow(r, tr))
 	}
 	data := &OplogListData{
 		Base:  p.base(req, user, "oplog.title", true),
@@ -102,5 +92,57 @@ func (p *Pages) oplogList(view *web.Template) error {
 		Pager: newPager(page.PageNo, page.PageSize, result.Total, "/oplogs", nil),
 	}
 	view.View("oplog_list").Layout(layoutFor("oplog_list")).Data(data)
+	return nil
+}
+
+// oplogRow translates one entry's action and target for display.
+func oplogRow(r *model.OperationLog, tr *Translator) OplogRow {
+	actionLabel := r.Action
+	if key, ok := oplogActionKeys[r.Action]; ok {
+		actionLabel = tr.T(key)
+	}
+	targetLabel := r.TargetType
+	if key, ok := oplogTargetKeys[r.TargetType]; ok {
+		targetLabel = tr.T(key)
+	}
+	return OplogRow{
+		OperationLog: r,
+		ActionLabel:  actionLabel,
+		ActionClass:  oplogActionClasses[r.Action],
+		TargetLabel:  targetLabel,
+	}
+}
+
+// OplogDetailData is the operation-log detail dialog.
+type OplogDetailData struct {
+	Base
+	Entry OplogRow
+}
+
+func (p *Pages) oplogDetail(view *web.Template) error {
+	req := view.Request()
+	user, ok := p.requireAdmin(view)
+	if !ok {
+		return nil
+	}
+	id, err := idParam(req, "id")
+	if err != nil {
+		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
+	}
+	one, err := p.oplogModel.FindByPK(id)
+	if err != nil {
+		return p.renderErr(view, 0, "common.failed", err.Error())
+	}
+	if one == nil {
+		return p.renderErr(view, http.StatusNotFound, "common.failed", "operation log not found")
+	}
+	fillNames(p.userService, []*model.OperationLog{one},
+		func(r *model.OperationLog) uint { return r.UserId },
+		func(r *model.OperationLog, n string) { r.UserName = n })
+	data := &OplogDetailData{
+		Base:  p.base(req, user, "oplog.detail", false),
+		Entry: oplogRow(one, translatorFor(langOf(req))),
+	}
+	view.View("oplog_detail").Layout(layoutFor("oplog_detail")).Data(data)
 	return nil
 }

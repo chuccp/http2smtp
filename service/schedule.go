@@ -73,6 +73,10 @@ func (l *ScheduleService) GetPage(page *web.Page, userId uint, isAdmin bool, nam
 				}
 			}
 		})
+		admins := userService.AdminIds(userIds)
+		for _, item := range result.List {
+			item.CreatedByAdmin = admins[item.UserId]
+		}
 	}
 	return result, nil
 }

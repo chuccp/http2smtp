@@ -89,7 +89,7 @@ func createAPP() (*wf.WebFrame, error) {
 	// which is a server-wide prefix and would also land on the page routes that must
 	// live at the site root (/login, /smtp, ...).
 	restGroupBuilder := core.NewRestGroupBuilder()
-	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, webui.NewPages())
+	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, &rest.Oplog{}, webui.NewPages())
 	restGroupBuilder.Port(webPort)
 	// Both server configs are kept: a restart re-runs these same groups, so the restart
 	// endpoint rewrites the ports here to make a port saved in the UI take effect.

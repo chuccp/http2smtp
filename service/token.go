@@ -92,6 +92,10 @@ func (l *TokenService) GetPage(page *web.Page, userId uint, isAdmin bool, name s
 				}
 			}
 		})
+		admins := userService.AdminIds(userIds)
+		for _, t := range tokens {
+			t.CreatedByAdmin = admins[t.UserId]
+		}
 	}
 	return web.ToPage[*model.Token](int64(i), tokens), nil
 }

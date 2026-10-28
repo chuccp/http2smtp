@@ -116,6 +116,10 @@ func (m *Mail) getPage(req *web.Request) (any, error) {
 				}
 			}
 		})
+		admins := m.userService.AdminIds(userIds)
+		for _, item := range result.List {
+			item.CreatedByAdmin = admins[item.UserId]
+		}
 	}
 	return result, nil
 }

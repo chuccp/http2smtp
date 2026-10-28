@@ -458,6 +458,41 @@ func TestSmtpListStarsAdminCreatedRows(t *testing.T) {
 	}
 }
 
+// The other admin-visible lists star admin-created rows the same way the SMTP list
+// does; a regular user never sees the marker.
+func TestAdminListsStarAdminCreatedRows(t *testing.T) {
+	adminBase := templateTestBase()
+	cases := []struct {
+		page string
+		data any
+	}{
+		{"mail_list", &MailListData{Base: adminBase, Rows: []*model.Mail{{Id: 1, Name: "a", Mail: "a@example.com", CreatedByAdmin: true}}}},
+		{"token_list", &TokenListData{Base: adminBase, Rows: []*model.Token{{Id: 1, Name: "tok", CreatedByAdmin: true}}}},
+		{"schedule_list", &ScheduleListData{Base: adminBase, Rows: []*model.Schedule{{Id: 1, Name: "job", CreatedByAdmin: true}}}},
+	}
+	for _, c := range cases {
+		if out := renderContent(t, c.page, c.data); !strings.Contains(out, "admin-star") {
+			t.Errorf("%s should star an admin-created row for an admin viewer", c.page)
+		}
+	}
+
+	base := templateTestBase()
+	base.User = &NavUser{Id: 2, Name: "bob"}
+	nonAdmin := []struct {
+		page string
+		data any
+	}{
+		{"mail_list", &MailListData{Base: base, Rows: []*model.Mail{{Id: 1, Name: "a", Mail: "a@example.com", CreatedByAdmin: true}}}},
+		{"token_list", &TokenListData{Base: base, Rows: []*model.Token{{Id: 1, Name: "tok", CreatedByAdmin: true}}}},
+		{"schedule_list", &ScheduleListData{Base: base, Rows: []*model.Schedule{{Id: 1, Name: "job", CreatedByAdmin: true}}}},
+	}
+	for _, c := range nonAdmin {
+		if out := renderContent(t, c.page, c.data); strings.Contains(out, "admin-star") {
+			t.Errorf("%s should not star rows for a regular viewer", c.page)
+		}
+	}
+}
+
 // Admins can test-send through every row; a regular user only through servers they own.
 func TestSmtpSendButtonFollowsAdmin(t *testing.T) {
 	other := []*model.SMTP{{Id: 5, UserId: 9, Name: "other"}}
@@ -512,9 +547,54 @@ func TestOplogListRendersLabels(t *testing.T) {
 			TargetLabel: "定时任务",
 		}},
 	})
-	for _, want := range []string{"删除", "定时任务", "nightly", "111111", "tag-off"} {
+	for _, want := range []string{
+		"删除", "定时任务", "nightly", "111111", "tag-off",
+		`data-page-dialog="/oplogs/1"`,
+		`data-href="/api/oplog/1"`,
+		`id="oplog-cleanup"`,
+	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("operation log page is missing %q", want)
+		}
+	}
+}
+
+// Only admins can delete or clean up mail logs; regular users still open the details.
+func TestLogListMaintenanceIsAdminOnly(t *testing.T) {
+	rows := []*model.Log{{Id: 7, UserId: 1, Subject: "s", StatusStr: "success"}}
+	admin := renderContent(t, "logs_list", &LogListData{Base: templateTestBase(), Rows: rows})
+	if !strings.Contains(admin, `id="cleanup-btn"`) || !strings.Contains(admin, `data-href="/api/log/7"`) {
+		t.Error("admin should get the mail-log delete and cleanup actions")
+	}
+
+	base := templateTestBase()
+	base.User = &NavUser{Id: 2, Name: "bob"}
+	user := renderContent(t, "logs_list", &LogListData{Base: base, Rows: rows})
+	if strings.Contains(user, `id="cleanup-btn"`) || strings.Contains(user, "/api/log/7") {
+		t.Error("regular user should not get the mail-log delete or cleanup actions")
+	}
+	if !strings.Contains(user, "/logs/7") {
+		t.Error("regular user should still open the log detail")
+	}
+}
+
+// The operation-log detail dialog shows the entry's translated fields.
+func TestOplogDetailRendersEntry(t *testing.T) {
+	out := renderContent(t, "oplog_detail", &OplogDetailData{
+		Base: templateTestBase(),
+		Entry: OplogRow{
+			OperationLog: &model.OperationLog{
+				Id: 3, UserId: 1, UserName: "111111",
+				Action: entity.OpDisable, TargetType: entity.TargetSchedule, TargetId: 9, TargetName: "nightly",
+			},
+			ActionLabel: "停用",
+			ActionClass: "tag-off",
+			TargetLabel: "定时任务",
+		},
+	})
+	for _, want := range []string{"停用", "定时任务", "nightly", "111111", "对象 ID", "9"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("operation log detail is missing %q", want)
 		}
 	}
 }

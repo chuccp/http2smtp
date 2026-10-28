@@ -1,5 +1,10 @@
 {{define "content"}}
 <div class="toolbar">
+  <button type="button" class="btn btn-danger" id="oplog-cleanup"
+    data-title="{{.L.T "oplog.cleanup"}}"
+    data-days-label="{{.L.T "oplog.cleanupDays"}}"
+    data-hint="{{.L.T "oplog.cleanupDaysHint"}}"
+    data-done="{{.L.T "oplog.cleanupDone"}}">{{.L.T "oplog.cleanup"}}</button>
   <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
 </div>
 
@@ -12,6 +17,7 @@
       <th>{{.L.T "oplog.action"}}</th>
       <th>{{.L.T "oplog.target"}}</th>
       <th>{{.L.T "common.name"}}</th>
+      <th class="col-actions">{{.L.T "common.operations"}}</th>
     </tr>
   </thead>
   <tbody>
@@ -22,12 +28,95 @@
       <td><span class="tag {{.ActionClass}}">{{.ActionLabel}}</span></td>
       <td>{{.TargetLabel}}</td>
       <td>{{.TargetName}}</td>
+      <td class="col-actions">
+        <button type="button" class="btn btn-sm" data-page-dialog="/oplogs/{{.Id}}" data-dialog-width="600px">{{$.L.T "oplog.detail"}}</button>
+        <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "oplog.deleteConfirm"}}" data-href="/api/oplog/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
+      </td>
     </tr>
     {{else}}
-    <tr><td colspan="5" class="muted">—</td></tr>
+    <tr><td colspan="6" class="muted">—</td></tr>
     {{end}}
   </tbody>
 </table>
 </div>
 {{template "pager" .}}
+
+<script>
+(function () {
+  var btn = document.getElementById('oplog-cleanup');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var dlg = UI.modal({
+      title: btn.getAttribute('data-title'),
+      width: '420px',
+      cancelValue: null
+    });
+    var field = document.createElement('label');
+    field.className = 'field';
+    var label = document.createElement('span');
+    label.textContent = btn.getAttribute('data-days-label');
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.max = '3650';
+    input.value = '30';
+    field.appendChild(label);
+    field.appendChild(input);
+
+    var hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = btn.getAttribute('data-hint');
+
+    var body = document.createElement('div');
+    body.appendChild(field);
+    body.appendChild(hint);
+    dlg.setBody(body);
+
+    var cancel = dlg.addButton(document.body.getAttribute('data-ui-cancel') || 'Cancel', false, function () {
+      dlg.close();
+    });
+    var ok = dlg.addButton(document.body.getAttribute('data-ui-ok') || 'OK', false, function () {
+      var raw = input.value.trim();
+      var days = Number(raw);
+      if (raw === '' || !Number.isFinite(days) || days < 0) {
+        input.focus();
+        return;
+      }
+      var run = function () {
+        ok.disabled = true;
+        fetch('/api/oplog/cleanup', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ days: days })
+        }).then(function (r) {
+          return r.json().then(function (b) { return { ok: r.ok, b: b }; });
+        }).then(function (x) {
+          ok.disabled = false;
+          if (!x.ok) { UI.alert((x.b && x.b.msg) || 'failed'); return; }
+          var n = x.b && x.b.data && x.b.data.deleted || 0;
+          dlg.close();
+          UI.toast(btn.getAttribute('data-done').replace('{count}', n), 'ok');
+          UI.refresh();
+        }).catch(function () {
+          ok.disabled = false;
+          UI.alert('failed');
+        });
+      };
+      // 0 wipes the whole audit trail, so it gets a second confirmation; an emptied
+      // input also maps to 0 and must not slip through as "clear all".
+      if (days === 0) {
+        UI.confirm(btn.getAttribute('data-hint')).then(function (confirmed) {
+          if (confirmed) run();
+        });
+      } else {
+        run();
+      }
+    });
+    ok.classList.add('btn-danger');
+    input.focus();
+    cancel.blur();
+  });
+})();
+</script>
 {{end}}

@@ -1,0 +1,27 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>{{.L.T "oplog.detail"}}</h1>
+  <a class="btn" href="/oplogs">← {{.L.T "layout.sidebar.oplogs"}}</a>
+</div>
+
+<div class="card">
+  <dl class="desc">
+    <dt>{{.L.T "common.createTime"}}</dt>
+    <dd class="muted">{{fmtTime .Entry.CreateTime}}</dd>
+    <dt>{{.L.T "oplog.user"}}</dt>
+    <dd>{{.Entry.UserName}}</dd>
+    <dt>{{.L.T "oplog.action"}}</dt>
+    <dd><span class="tag {{.Entry.ActionClass}}">{{.Entry.ActionLabel}}</span></dd>
+    <dt>{{.L.T "oplog.target"}}</dt>
+    <dd>{{.Entry.TargetLabel}}</dd>
+    {{if .Entry.TargetId}}
+    <dt>{{.L.T "oplog.targetId"}}</dt>
+    <dd class="mono">{{.Entry.TargetId}}</dd>
+    {{end}}
+    {{if .Entry.TargetName}}
+    <dt>{{.L.T "common.name"}}</dt>
+    <dd>{{.Entry.TargetName}}</dd>
+    {{end}}
+  </dl>
+</div>
+{{end}}

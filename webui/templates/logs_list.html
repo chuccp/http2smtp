@@ -1,10 +1,12 @@
 {{define "content"}}
 <div class="toolbar">
+  {{if .User.IsAdmin}}
   <button type="button" class="btn btn-danger" id="cleanup-btn"
     data-title="{{.L.T "log.cleanup"}}"
     data-days-label="{{.L.T "log.cleanupDays"}}"
     data-hint="{{.L.T "log.cleanupDaysHint"}}"
     data-done="{{.L.T "log.cleanupDone"}}">{{.L.T "log.cleanup"}}</button>
+  {{end}}
   <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
   <form class="filter-bar" method="get" action="/logs">
     <input type="text" name="searchKey" value="{{.SearchKey}}" placeholder="{{.L.T "log.searchKeyword"}}">
@@ -46,7 +48,9 @@
       <td class="muted">{{fmtTime .CreateTime}}</td>
       <td class="col-actions">
         <button type="button" class="btn btn-sm" data-page-dialog="/logs/{{.Id}}" data-dialog-width="600px">{{$.L.T "log.logDetail"}}</button>
+        {{if $.User.IsAdmin}}
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "log.deleteConfirm"}}" data-href="/api/log/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
+        {{end}}
       </td>
     </tr>
     {{else}}
@@ -57,6 +61,7 @@
 </div>
 {{template "pager" .}}
 
+{{if .User.IsAdmin}}
 <script>
 (function () {
   var btn = document.getElementById('cleanup-btn');
@@ -135,4 +140,5 @@
   });
 })();
 </script>
+{{end}}
 {{end}}

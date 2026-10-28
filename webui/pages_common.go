@@ -27,6 +27,21 @@ func fillNames[T any](us *service.UserService, rows []T, idOf func(T) uint, set 
 	})
 }
 
+// fillAdminFlags marks the rows whose owner is an administrator, for the admin views
+// that show a star next to admin-created records.
+func fillAdminFlags[T any](us *service.UserService, rows []T, idOf func(T) uint, set func(T, bool)) {
+	ids := make([]uint, 0, len(rows))
+	for _, r := range rows {
+		if idOf(r) > 0 {
+			ids = append(ids, idOf(r))
+		}
+	}
+	admins := us.AdminIds(ids)
+	for _, r := range rows {
+		set(r, admins[idOf(r)])
+	}
+}
+
 // PageLink is one page number in the pager.
 type PageLink struct {
 	Href    string

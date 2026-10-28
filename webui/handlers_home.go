@@ -51,6 +51,7 @@ func (p *Pages) registerPageRoutes(ctx *core.Context, templateOption web.Templat
 	ctx.GetTemplate("/logs/:id", p.logDetail, templateOption)
 
 	ctx.GetTemplate("/oplogs", p.oplogList, templateOption)
+	ctx.GetTemplate("/oplogs/:id", p.oplogDetail, templateOption)
 
 	ctx.GetTemplate("/users", p.userList, templateOption)
 	ctx.GetTemplate("/users/form", p.userForm, templateOption)

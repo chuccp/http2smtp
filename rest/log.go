@@ -110,8 +110,8 @@ func (l *Log) getPage(req *web.Request) (any, error) {
 	return result, nil
 }
 
-// deleteOne removes one entry and the attachments it recorded. Deleting one entry is a
-// deliberate act on a row the list already showed, so an admin may delete any of them.
+// deleteOne removes one entry and the attachments it recorded. Deleting entries is an
+// admin-only cleanup: the page hides the button from everyone else.
 func (l *Log) deleteOne(req *web.Request) (any, error) {
 	id, err := strconv.Atoi(req.Param("id"))
 	if err != nil {
@@ -120,6 +120,9 @@ func (l *Log) deleteOne(req *web.Request) (any, error) {
 	user, err := auth.User(req, l.context)
 	if user == nil {
 		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
 	}
 	query := l.logModel.Query().Where("id = ?", uint(id))
 	if !user.IsAdmin {
@@ -148,6 +151,9 @@ func (l *Log) cleanUp(req *web.Request) (any, error) {
 	user, err := auth.User(req, l.context)
 	if user == nil {
 		return nil, err
+	}
+	if !user.IsAdmin {
+		return nil, errors.New("admin access required")
 	}
 	days := req.GetJsonIntValueOrDefault("days", 0)
 	query := l.logModel.Query().Where("user_id = ?", user.Id)

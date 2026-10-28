@@ -22,4 +22,5 @@ const (
 	TargetUser     = "user"
 	TargetLog      = "log"
 	TargetSettings = "settings"
+	TargetOplog    = "oplog"
 )

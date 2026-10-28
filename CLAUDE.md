@@ -276,11 +276,12 @@ enable/disable, trigger, cleanup, restart and login events from both the page ha
 and the JSON API, and the admin-only `/oplogs` page lists them translated. This is not
 the mail log: `t_log` records sends, `t_operation_log` records who changed what.
 
-Nothing prunes `t_log` or the attachment cache on its own — cleanup is manual
-(`DELETE /log/:id` and `POST /log/cleanup`, which takes `days`: 0 clears everything).
-Both remove the attachments a deleted entry recorded, which is the only thing that keeps
-the cache from growing forever. The bulk cleanup is scoped to the caller's own entries
-even for an admin; deleting a single row is not, since that row was on screen.
+Nothing prunes `t_log` or the attachment cache on its own — cleanup is manual and
+**admin-only** (`DELETE /log/:id` and `POST /log/cleanup`, which takes `days`: 0 clears
+everything); the page hides both actions from regular users. Both remove the attachments
+a deleted entry recorded, which is the only thing that keeps the cache from growing
+forever. The bulk cleanup is scoped to the admin's own entries; deleting a single row is
+not, since that row was on screen.
 
 ### Restart
 

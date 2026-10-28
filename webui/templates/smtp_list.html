@@ -31,7 +31,7 @@
   <tbody>
     {{range .Rows}}
     <tr>
-      <td>{{.Name}}{{if and $.User.IsAdmin .CreatedByAdmin}} <span class="admin-star" title="{{$.L.T "smtp.createdByAdmin"}}">★</span>{{end}}</td>
+      <td>{{.Name}}{{if and $.User.IsAdmin .CreatedByAdmin}} <span class="admin-star" title="{{$.L.T "common.createdByAdmin"}}">★</span>{{end}}</td>
       <td class="mono">{{.Host}}</td>
       <td>{{.Port}}</td>
       <td>{{.Mail}}</td>

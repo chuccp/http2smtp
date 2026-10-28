@@ -54,6 +54,9 @@ func (p *Pages) mailList(view *web.Template) error {
 		fillNames(p.userService, result.List,
 			func(row *model.Mail) uint { return row.UserId },
 			func(row *model.Mail, n string) { row.UserName = n })
+		fillAdminFlags(p.userService, result.List,
+			func(row *model.Mail) uint { return row.UserId },
+			func(row *model.Mail, b bool) { row.CreatedByAdmin = b })
 	}
 	q := queryOf(req, "name", "mail", "adminOnly", "pageSize")
 	data := &MailListData{

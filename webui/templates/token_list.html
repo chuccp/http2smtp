@@ -28,7 +28,7 @@
   <tbody>
     {{range .Rows}}
     <tr>
-      <td>{{.Name}}</td>
+      <td>{{.Name}}{{if and $.User.IsAdmin .CreatedByAdmin}} <span class="admin-star" title="{{$.L.T "common.createdByAdmin"}}">★</span>{{end}}</td>
       <td>
         <span class="mono">{{shortToken .Token}}</span>
         <button type="button" class="icon-btn" data-copy="{{.Token}}" data-ok="✓" data-fail="{{$.L.T "common.copyFailed"}}" title="{{$.L.T "token.copyToken"}}" aria-label="{{$.L.T "token.copyToken"}}">
