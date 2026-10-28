@@ -97,7 +97,7 @@ func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = schedule.ensureTokenOwnedBy(st.TokenId, st.UserId); err != nil {
+	if err = schedule.ensureTokenUsable(st.TokenId, user); err != nil {
 		return nil, err
 	}
 	err = schedule.scheduleService.Save(&st)
@@ -145,7 +145,7 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = schedule.ensureTokenOwnedBy(exist.TokenId, exist.UserId); err != nil {
+	if err = schedule.ensureTokenUsable(exist.TokenId, user); err != nil {
 		return nil, err
 	}
 	err = schedule.scheduleService.Edit(exist)
@@ -153,6 +153,23 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 		return nil, err
 	}
 	return web.Ok("ok"), nil
+}
+
+// ensureTokenUsable enforces the token reference rule: a regular caller may only point
+// a schedule at their own token, while an admin may use anyone's — the admin token list
+// already exposes every token together with the SMTP configuration behind it.
+func (schedule *Schedule) ensureTokenUsable(tokenId uint, user *model.User) error {
+	if !user.IsAdmin {
+		return schedule.ensureTokenOwnedBy(tokenId, user.Id)
+	}
+	byToken, err := schedule.tokenService.GetOneAny(tokenId)
+	if err != nil {
+		return err
+	}
+	if byToken == nil {
+		return errors.New("token not found")
+	}
+	return nil
 }
 
 // ensureTokenOwnedBy rejects a schedule that points at a token the owner does not hold.
@@ -179,7 +196,7 @@ func (schedule *Schedule) sendMail(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
-	if err = schedule.ensureTokenOwnedBy(st.TokenId, user.Id); err != nil {
+	if err = schedule.ensureTokenUsable(st.TokenId, user); err != nil {
 		return nil, err
 	}
 	st.UserId = user.Id

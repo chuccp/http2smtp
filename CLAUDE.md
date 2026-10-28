@@ -242,9 +242,10 @@ regular caller stays limited to servers they own.
 
 Two references are checked as well, because resolving them by id alone would hand out
 another account's credentials: a token may only point at the owner's own SMTP server and
-its own contacts. Schedules follow the same rule — the form lists the schedule owner's
-active tokens (not the admin's when an admin edits someone else's row), and the save
-validates the chosen token against the schedule owner. And a token stops sending once its owner is disabled — the public API
+its own contacts. Schedules follow the same rule for regular users — the form lists the
+schedule owner's active tokens and the save validates the chosen token against that
+owner. An admin may point a schedule at any user's active token (the picker labels each
+option with its owner, and the REST save applies the same rule). And a token stops sending once its owner is disabled — the public API
 has no session, so `TokenService` re-reads the owner (`t_user.is_use`) on every send.
 Rows with `user_id = 0` predate token ownership; they are left alone rather than broken.
 

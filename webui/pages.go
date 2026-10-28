@@ -33,6 +33,7 @@ type Pages struct {
 	tokenModel    *model.TokenModel
 	scheduleModel *model.ScheduleModel
 	logModel      *model.LogModel
+	userModel     *model.UserModel
 
 	// Locale parsing is process-wide; the template set has its own process-wide cache.
 	once    sync.Once
@@ -54,6 +55,7 @@ func (p *Pages) Init(ctx *core.Context) error {
 	p.tokenModel = core.GetModel[*model.TokenModel](ctx)
 	p.scheduleModel = core.GetModel[*model.ScheduleModel](ctx)
 	p.logModel = core.GetModel[*model.LogModel](ctx)
+	p.userModel = core.GetModel[*model.UserModel](ctx)
 
 	p.once.Do(func() {
 		p.loadErr = loadI18n()

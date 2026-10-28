@@ -129,6 +129,15 @@ func TestRecordSelectorsArePickers(t *testing.T) {
 	if !strings.Contains(schedule, `name="tokenId"`) || !strings.Contains(schedule, "data-picker") {
 		t.Error("schedule form token select is not a picker")
 	}
+	// The single-select token picker pages and searches too, but carries no header.
+	for _, want := range []string{`data-search`, `data-page-size="10"`, `data-page-info=`} {
+		if !strings.Contains(schedule, want) {
+			t.Errorf("schedule token picker is missing %q", want)
+		}
+	}
+	if strings.Contains(schedule, "data-selected-header") {
+		t.Error("single-select token picker should not pin a selection header")
+	}
 
 	// The test send picker is its own paged multi-select over /api/mail, not a <select>.
 	send := renderContent(t, "smtp_send", &SmtpSendData{Base: templateTestBase()})

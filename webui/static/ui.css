@@ -118,7 +118,8 @@
 .ui-picker-row:last-child { border-bottom: 0; }
 .ui-picker-row:hover { background: var(--bg); }
 .ui-picker-row input { width: auto; flex: none; margin: 0; }
-.ui-picker-option { font-size: 13px; }
+.ui-picker-option { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-picker-owner { margin-left: auto; color: var(--muted); font-size: 12px; }
 .ui-picker-empty { padding: 16px; text-align: center; color: var(--muted); font-size: 13px; }
 /* Optional picker chrome: a search box, a pager, and (multi-select) a pinned strip of
    the pending selection so paging does not hide what is already checked. */

@@ -19,9 +19,6 @@
          data-admin-label="{{.L.T "mail.adminCreated"}}"
          data-mine-label="{{.L.T "mail.createdByMe"}}"
          data-page-info="{{.L.T "common.pageInfo"}}"
-         data-label-name="{{.L.T "mail.recipientName"}}"
-         data-label-mail="{{.L.T "mail.emailAddress"}}"
-         data-label-creator="{{.L.T "common.creator"}}"
          data-admin="{{if .User.IsAdmin}}1{{else}}0{{end}}"
          data-user-id="{{.User.Id}}">
       <div class="ui-picker-trigger" id="recipient-trigger">
@@ -95,20 +92,20 @@
   }
 
   function openPicker() {
-    var dlg = UI.modal({ title: picker.getAttribute('data-title') || '', width: '720px', cancelValue: null });
+    var dlg = UI.modal({ title: picker.getAttribute('data-title') || '', width: '560px', cancelValue: null });
     var state = { page: 1, pageSize: 10, total: 0, name: '', adminOnly: false, temp: chosen.slice() };
 
     var body = document.createElement('div');
     // The dialog header strip repeats the pending selection, so paging and searching
     // never hide what has already been checked.
     var chosenBox = document.createElement('div');
-    chosenBox.className = 'mail-picker-chosen';
+    chosenBox.className = 'ui-picker-chosen';
     body.appendChild(chosenBox);
     var bar = document.createElement('div');
-    bar.className = 'mail-picker-bar';
+    bar.className = 'ui-picker-filter';
     var search = document.createElement('input');
     search.type = 'search';
-    search.className = 'ui-dialog-input mail-picker-search';
+    search.className = 'ui-dialog-input ui-picker-search';
     search.placeholder = picker.getAttribute('data-search-placeholder') || 'Search';
     bar.appendChild(search);
     var adminBox = null;
@@ -124,11 +121,11 @@
     body.appendChild(bar);
 
     var listBox = document.createElement('div');
-    listBox.className = 'mail-picker-list';
+    listBox.className = 'ui-picker-list';
     body.appendChild(listBox);
 
     var pages = document.createElement('div');
-    pages.className = 'mail-picker-pages';
+    pages.className = 'ui-picker-pager';
     var info = document.createElement('span');
     info.className = 'page-info';
     var pager = document.createElement('div');
@@ -229,29 +226,9 @@
         renderPages();
         return;
       }
-      var table = document.createElement('table');
-      table.className = 'table mail-picker-table';
-      var thead = document.createElement('thead');
-      var htr = document.createElement('tr');
-      ['', picker.getAttribute('data-label-name') || '',
-        picker.getAttribute('data-label-mail') || ''].forEach(function (label) {
-        var th = document.createElement('th');
-        th.textContent = label;
-        htr.appendChild(th);
-      });
-      if (isAdmin) {
-        var thCreator = document.createElement('th');
-        thCreator.textContent = picker.getAttribute('data-label-creator') || '';
-        htr.appendChild(thCreator);
-      }
-      thead.appendChild(htr);
-      table.appendChild(thead);
-
-      var tbody = document.createElement('tbody');
       rows.forEach(function (row) {
-        var tr = document.createElement('tr');
-        var tdCheck = document.createElement('td');
-        tdCheck.className = 'mail-picker-check';
+        var line = document.createElement('label');
+        line.className = 'ui-picker-row';
         var box = document.createElement('input');
         box.type = 'checkbox';
         box.setAttribute('data-mail', row.mail);
@@ -261,33 +238,27 @@
           else state.temp = state.temp.filter(function (c) { return c.mail !== row.mail; });
           renderTemp();
         });
-        tdCheck.appendChild(box);
-        tr.appendChild(tdCheck);
-
-        var tdName = document.createElement('td');
+        var text = document.createElement('span');
+        text.className = 'ui-picker-option';
         if (isAdmin && row.userId === myId) {
           var star = document.createElement('span');
           star.className = 'admin-star';
           star.textContent = '★';
           star.title = picker.getAttribute('data-mine-label') || '';
-          tdName.appendChild(star);
-          tdName.appendChild(document.createTextNode(' '));
+          text.appendChild(star);
+          text.appendChild(document.createTextNode(' '));
         }
-        tdName.appendChild(document.createTextNode(row.name || ''));
-        tr.appendChild(tdName);
-
-        var tdMail = document.createElement('td');
-        tdMail.textContent = row.mail || '';
-        tr.appendChild(tdMail);
+        text.appendChild(document.createTextNode((row.name || '') + ' <' + (row.mail || '') + '>'));
+        line.appendChild(box);
+        line.appendChild(text);
         if (isAdmin) {
-          var tdOwner = document.createElement('td');
-          tdOwner.textContent = row.userName || '';
-          tr.appendChild(tdOwner);
+          var owner = document.createElement('span');
+          owner.className = 'ui-picker-owner';
+          owner.textContent = row.userName || '';
+          line.appendChild(owner);
         }
-        tbody.appendChild(tr);
+        listBox.appendChild(line);
       });
-      table.appendChild(tbody);
-      listBox.appendChild(table);
       renderPages();
     }
 

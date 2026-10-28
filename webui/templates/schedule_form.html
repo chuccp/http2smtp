@@ -8,7 +8,7 @@
   <input type="hidden" name="id" value="{{if .Id}}{{.Id}}{{end}}">
   <div class="form-grid">
     {{template "field" (dict "L" .L "label" "schedule.taskName" "name" "name" "value" .Name "required" true)}}
-    {{template "selectField" (dict "L" .L "label" "schedule.associatedToken" "name" "tokenId" "options" .TokenOptions "required" true "picker" true "titleKey" "schedule.associatedToken" "placeholderKey" "schedule.associatedToken" "placeholder" "—")}}
+    {{template "selectField" (dict "L" .L "label" "schedule.associatedToken" "name" "tokenId" "options" .TokenOptions "required" true "picker" true "titleKey" "schedule.associatedToken" "placeholderKey" "schedule.associatedToken" "placeholder" "—" "search" true "searchKey" "common.search" "pageSize" 10 "pageInfoKey" "common.pageInfo")}}
     {{template "field" (dict "L" .L "label" "schedule.cronExpression" "name" "cron" "value" .Cron "inputClass" "mono" "required" true "placeholderKey" "schedule.exampleCron")}}
     <label class="field field-wide">
       <span>{{.L.T "schedule.requestUrl"}}</span>

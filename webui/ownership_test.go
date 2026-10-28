@@ -44,7 +44,14 @@ func newOwnershipTestPages(t *testing.T) *Pages {
 	if err := tokenModel.CreateTable(); err != nil {
 		t.Fatalf("create t_token: %v", err)
 	}
-	return &Pages{smtpModel: smtpModel, mailModel: mailModel, tokenModel: tokenModel}
+	userModel := &model.UserModel{}
+	if err := userModel.Init(conn, nil); err != nil {
+		t.Fatalf("init user model: %v", err)
+	}
+	if err := userModel.CreateTable(); err != nil {
+		t.Fatalf("create t_user: %v", err)
+	}
+	return &Pages{smtpModel: smtpModel, mailModel: mailModel, tokenModel: tokenModel, userModel: userModel}
 }
 
 type ownershipFixture struct {
@@ -173,13 +180,14 @@ func TestActiveTokenOwnedBy(t *testing.T) {
 	}
 }
 
-// The schedule form must offer the schedule owner's active tokens, not the admin's.
+// A regular user's schedule form offers the schedule owner's active tokens; an admin
+// may point the schedule at any user's active token.
 func TestFillTokenOptionsUsesScheduleOwner(t *testing.T) {
 	p := newOwnershipTestPages(t)
 	f := seedOwnership(t, p)
 
 	bob := &ScheduleFormData{}
-	if err := p.fillTokenOptions(bob, 2, f.bobToken); err != nil {
+	if err := p.fillTokenOptions(bob, &model.User{Id: 2}, 2, f.bobToken); err != nil {
 		t.Fatalf("fill bob tokens: %v", err)
 	}
 	if len(bob.TokenOptions) != 1 || bob.TokenOptions[0].Label != "bob-token" || !bob.TokenOptions[0].Selected {
@@ -187,10 +195,20 @@ func TestFillTokenOptionsUsesScheduleOwner(t *testing.T) {
 	}
 
 	admin := &ScheduleFormData{}
-	if err := p.fillTokenOptions(admin, 1, f.adminToken); err != nil {
+	if err := p.fillTokenOptions(admin, &model.User{Id: 1, IsAdmin: true}, 1, f.adminToken); err != nil {
 		t.Fatalf("fill admin tokens: %v", err)
 	}
-	if len(admin.TokenOptions) != 1 || admin.TokenOptions[0].Label != "admin-token" {
+	if len(admin.TokenOptions) != 2 {
+		t.Fatalf("admin should see every active token, got %+v", admin.TokenOptions)
+	}
+	labels := map[string]bool{}
+	for _, opt := range admin.TokenOptions {
+		labels[opt.Label] = true
+		if opt.Value == strconv.Itoa(int(f.adminToken)) && !opt.Selected {
+			t.Error("admin's token should stay selected")
+		}
+	}
+	if !labels["admin-token"] || !labels["bob-token"] {
 		t.Errorf("admin token options = %+v", admin.TokenOptions)
 	}
 }

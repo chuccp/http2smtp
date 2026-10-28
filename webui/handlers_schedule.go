@@ -152,24 +152,46 @@ func (p *Pages) scheduleForm(view *web.Template) error {
 		}
 		data.Title = translatorFor(data.Lang).T("schedule.editSchedule")
 	}
-	if err := p.fillTokenOptions(data, ownerId, selectedToken); err != nil {
+	if err := p.fillTokenOptions(data, user, ownerId, selectedToken); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	view.View("schedule_form").Layout(layoutFor("schedule_form")).Data(data)
 	return nil
 }
 
-// fillTokenOptions loads the schedule owner's enabled tokens into the form's select;
-// only in-use tokens may drive a schedule.
-func (p *Pages) fillTokenOptions(data *ScheduleFormData, ownerId uint, selected uint) error {
-	tokens, err := p.tokenModel.Query().Where("user_id = ? AND state = 0", ownerId).Order("id desc").All()
+// fillTokenOptions loads the enabled tokens a schedule may point at; only in-use
+// tokens drive a schedule. Everyone but an admin sees just the schedule owner's
+// tokens; an admin may pick any user's, so those options carry the owner name.
+func (p *Pages) fillTokenOptions(data *ScheduleFormData, user *model.User, ownerId uint, selected uint) error {
+	query := p.tokenModel.Query().Where("state = 0")
+	if !user.IsAdmin {
+		query = query.Where("user_id = ?", ownerId)
+	}
+	tokens, err := query.Order("id desc").All()
 	if err != nil {
 		return err
 	}
+	if user.IsAdmin {
+		userIds := make([]uint, 0, len(tokens))
+		for _, t := range tokens {
+			if t.UserId > 0 {
+				userIds = append(userIds, t.UserId)
+			}
+		}
+		if nameMap, err := p.userModel.FindNameMapByIds(userIds); err == nil {
+			for _, t := range tokens {
+				t.UserName = nameMap[t.UserId]
+			}
+		}
+	}
 	for _, t := range tokens {
+		label := t.Name
+		if user.IsAdmin && t.UserName != "" {
+			label += " (" + t.UserName + ")"
+		}
 		data.TokenOptions = append(data.TokenOptions, SelectOption{
 			Value:    strconv.Itoa(int(t.Id)),
-			Label:    t.Name,
+			Label:    label,
 			Selected: t.Id == selected,
 		})
 	}
@@ -269,7 +291,7 @@ func (p *Pages) scheduleSave(view *web.Template) error {
 		if len(data.Headers) == 0 {
 			data.Headers = []*model.Header{{}, {}}
 		}
-		_ = p.fillTokenOptions(data, ownerId, st.TokenId)
+		_ = p.fillTokenOptions(data, user, ownerId, st.TokenId)
 		return renderPageStatus(view, "schedule_form", data, http.StatusBadRequest)
 	}
 	if st.Id != 0 {
@@ -295,9 +317,14 @@ func (p *Pages) scheduleSave(view *web.Template) error {
 	if st.TokenId == 0 {
 		return fail("schedule.associatedToken")
 	}
-	// ScheduleService only checks existence, so the form enforces that the token
-	// belongs to the schedule's owner and is in use.
-	if owned, err := p.activeTokenOwnedBy(ownerId, st.TokenId); err != nil || owned == nil {
+	// ScheduleService only checks existence, so the form enforces that the token is in
+	// use — and, for a regular user, that it belongs to the schedule's owner. An admin
+	// may point the schedule at any user's token.
+	if user.IsAdmin {
+		if t, err := p.tokenModel.Query().Where("id = ? AND state = 0", st.TokenId).One(); err != nil || t == nil {
+			return fail("token not found")
+		}
+	} else if owned, err := p.activeTokenOwnedBy(ownerId, st.TokenId); err != nil || owned == nil {
 		return fail("token not found")
 	}
 
