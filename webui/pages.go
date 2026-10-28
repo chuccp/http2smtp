@@ -2,8 +2,6 @@ package webui
 
 import (
 	"fmt"
-	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -69,18 +67,14 @@ func (p *Pages) Init(ctx *core.Context) error {
 	}
 	ctx.Server().SetTemplates(templates)
 
-	// Static assets live in the binary and are served through the route table (not the
-	// NoRoute fallback), so they take part in the same pipeline as everything else.
-	// In dev mode they are read from disk per request, like the templates.
-	if devMode {
-		ctx.StaticFs("/static", http.Dir(devStaticDir))
-	} else {
-		staticSub, err := fs.Sub(staticFS, "static")
-		if err != nil {
-			return err
-		}
-		ctx.StaticFs("/static", http.FS(staticSub))
-	}
+	// Static assets live in the binary and take part in the normal route pipeline.
+	// The framework chooses the embedded copy or the development directory.
+	ctx.AddEmbedFs(
+		"/static",
+		web.EmbedFs("static", staticFS).
+			Reload(devMode).
+			ReloadPath(devStaticDir),
+	)
 	ctx.Get("/favicon.svg", p.staticFile("favicon.svg", "image/svg+xml"))
 	ctx.Get("/icons.svg", p.staticFile("icons.svg", "image/svg+xml"))
 
