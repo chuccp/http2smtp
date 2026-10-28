@@ -250,9 +250,12 @@ func drawCaptchaImage(keys []string, positions map[string]image.Point) (string, 
 		if key == "circle" {
 			fillCircle(img, p.X, p.Y, size, colour)
 		} else {
-			fillPolygon(img, shapePoints(key, p.X, p.Y, size), colour)
+			fillPolygon(img, shapePoints(key, p.X, p.Y, size, captchaShapeAngle(key)), colour)
 		}
 	}
+	// Draw the translucent bands last, over the shapes. The click targets stay at the
+	// shape centers, so this only makes the image harder to template-match.
+	drawCaptchaOcclusion(img)
 
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
@@ -261,36 +264,124 @@ func drawCaptchaImage(keys []string, positions map[string]image.Point) (string, 
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
 
-func shapePoints(key string, cx, cy, size int) []image.Point {
+// captchaShapeAngle keeps rotated squares and diamonds shallow: a square rotated by 45°
+// would read as a diamond (and the reverse), making the prompt ambiguous.
+func captchaShapeAngle(key string) float64 {
+	var degrees int
+	switch key {
+	case "triangle", "star":
+		degrees = mathrand.Intn(51) - 25
+	case "square", "diamond":
+		degrees = mathrand.Intn(21) - 10
+	}
+	return float64(degrees) * math.Pi / 180
+}
+
+func shapePoints(key string, cx, cy, size int, angle float64) []image.Point {
+	var points []image.Point
 	switch key {
 	case "triangle":
-		return []image.Point{{X: cx, Y: cy - size}, {X: cx + size, Y: cy + size}, {X: cx - size, Y: cy + size}}
+		points = []image.Point{{X: cx, Y: cy - size}, {X: cx + size, Y: cy + size}, {X: cx - size, Y: cy + size}}
 	case "square":
-		return []image.Point{
+		points = []image.Point{
 			{X: cx - size, Y: cy - size}, {X: cx + size, Y: cy - size},
 			{X: cx + size, Y: cy + size}, {X: cx - size, Y: cy + size},
 		}
 	case "diamond":
-		return []image.Point{
+		points = []image.Point{
 			{X: cx, Y: cy - size}, {X: cx + size, Y: cy},
 			{X: cx, Y: cy + size}, {X: cx - size, Y: cy},
 		}
 	case "star":
-		points := make([]image.Point, 0, 10)
+		points = make([]image.Point, 0, 10)
 		for i := 0; i < 10; i++ {
 			radius := size
 			if i%2 == 1 {
 				radius = size * 2 / 5
 			}
-			angle := -math.Pi/2 + float64(i)*math.Pi/5
+			a := -math.Pi/2 + float64(i)*math.Pi/5
 			points = append(points, image.Point{
-				X: cx + int(math.Cos(angle)*float64(radius)),
-				Y: cy + int(math.Sin(angle)*float64(radius)),
+				X: cx + int(math.Cos(a)*float64(radius)),
+				Y: cy + int(math.Sin(a)*float64(radius)),
 			})
 		}
-		return points
 	}
-	return nil
+	for i := range points {
+		points[i] = rotateCaptchaPoint(points[i], cx, cy, angle)
+	}
+	return points
+}
+
+func rotateCaptchaPoint(p image.Point, cx, cy int, angle float64) image.Point {
+	if angle == 0 {
+		return p
+	}
+	dx, dy := float64(p.X-cx), float64(p.Y-cy)
+	cos, sin := math.Cos(angle), math.Sin(angle)
+	return image.Point{
+		X: cx + int(math.Round(dx*cos-dy*sin)),
+		Y: cy + int(math.Round(dx*sin+dy*cos)),
+	}
+}
+
+// drawCaptchaOcclusion lays soft translucent bands over the finished image. They cut
+// through the shapes enough to break naive template matching while leaving each shape
+// recognizable to a person.
+func drawCaptchaOcclusion(img *image.RGBA) {
+	for i := 0; i < 2; i++ {
+		y := 30 + mathrand.Intn(captchaHeight-60)
+		thickness := 9 + mathrand.Intn(7)
+		shade := uint8(205 + mathrand.Intn(35))
+		alpha := uint8(70 + mathrand.Intn(50))
+		x1 := -20 + mathrand.Intn(60)
+		x2 := captchaWidth - mathrand.Intn(60)
+		slope := mathrand.Intn(41) - 20
+		for t := 0; t < thickness; t++ {
+			blendLine(img, x1, y+t, x2, y+slope+t, color.RGBA{R: shade, G: shade, B: shade, A: alpha})
+		}
+	}
+}
+
+func blendLine(img *image.RGBA, x1, y1, x2, y2 int, colour color.RGBA) {
+	dx := absInt(x2 - x1)
+	dy := absInt(y2 - y1)
+	sx, sy := 1, 1
+	if x1 > x2 {
+		sx = -1
+	}
+	if y1 > y2 {
+		sy = -1
+	}
+	err := dx - dy
+	for {
+		blendPixel(img, x1, y1, colour)
+		if x1 == x2 && y1 == y2 {
+			break
+		}
+		e2 := 2 * err
+		if e2 > -dy {
+			err -= dy
+			x1 += sx
+		}
+		if e2 < dx {
+			err += dx
+			y1 += sy
+		}
+	}
+}
+
+func blendPixel(img *image.RGBA, x, y int, colour color.RGBA) {
+	if !(image.Point{X: x, Y: y}).In(img.Bounds()) {
+		return
+	}
+	dst := img.RGBAAt(x, y)
+	a := float64(colour.A) / 255
+	img.SetRGBA(x, y, color.RGBA{
+		R: uint8(float64(colour.R)*a + float64(dst.R)*(1-a)),
+		G: uint8(float64(colour.G)*a + float64(dst.G)*(1-a)),
+		B: uint8(float64(colour.B)*a + float64(dst.B)*(1-a)),
+		A: 255,
+	})
 }
 
 func fillCircle(img *image.RGBA, cx, cy, radius int, colour color.RGBA) {

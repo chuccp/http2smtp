@@ -3,7 +3,10 @@ package service
 import (
 	"bytes"
 	"encoding/base64"
+	"image"
+	"image/color"
 	"image/png"
+	"math"
 	"strconv"
 	"strings"
 	"testing"
@@ -205,4 +208,27 @@ func TestCaptchaServiceBindsCredentials(t *testing.T) {
 	if !s.Verify(data.ID, "bob", "other", xs, ys) {
 		t.Error("the credentials the challenge was issued for were rejected")
 	}
+}
+
+func TestRotateCaptchaPoint(t *testing.T) {
+	got := rotateCaptchaPoint(image.Point{X: 10, Y: 0}, 0, 0, math.Pi/2)
+	if got != (image.Point{X: 0, Y: 10}) {
+		t.Errorf("90° rotation = %v, want (0,10)", got)
+	}
+	if got := rotateCaptchaPoint(image.Point{X: 3, Y: 4}, 0, 0, 0); got != (image.Point{X: 3, Y: 4}) {
+		t.Errorf("zero rotation changed the point: %v", got)
+	}
+}
+
+// The occlusion bands are translucent: the destination pixel keeps part of its colour
+// and out-of-bounds points are ignored.
+func TestBlendPixel(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.SetRGBA(0, 0, color.RGBA{A: 255})
+	blendPixel(img, 0, 0, color.RGBA{R: 255, G: 255, B: 255, A: 128})
+	got := img.RGBAAt(0, 0)
+	if got.R < 120 || got.R > 136 {
+		t.Errorf("50%% white over black = %d, want about 128", got.R)
+	}
+	blendPixel(img, 5, 5, color.RGBA{R: 255, G: 255, B: 255, A: 128})
 }

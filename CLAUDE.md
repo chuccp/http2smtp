@@ -266,8 +266,10 @@ too, since this is not a port). A hand edit of `config.ini` still needs a proces
 the in-process restart reads the live config, not the file.
 
 Login is protected by a server-rendered click captcha: `CaptchaService` draws exactly the
-three geometric shapes it asks for on a 300x200 PNG, the page asks for them in a random
-order, and the submitted image coordinates are checked against the stored targets.
+three geometric shapes it asks for on a 300x200 PNG — randomly rotated (squares and
+diamonds stay shallow so the pair cannot be confused) and crossed by translucent bands —
+the page asks for them in a random order, and the submitted image coordinates are checked
+against the stored shape centers.
 Challenges live in memory, expire after five minutes, are consumed by the first attempt
 (wrong or right), and the store is capped at 1024. `POST /login/captcha` takes the
 `username` and `password` the form is about to submit and binds the challenge to an
