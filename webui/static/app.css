@@ -450,6 +450,19 @@ legend { color: var(--muted); font-size: 13px; padding: 0 6px; }
 .admin-star { color: #f5a623; font-size: 12px; }
 
 
+/* Dashboard API address: the endpoint with a one-click copy. */
+.api-address { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.api-address code {
+  padding: 6px 10px; border-radius: 6px; background: var(--bg);
+  border: 1px solid var(--border); word-break: break-all;
+}
+.api-sample {
+  margin: 10px 0 0; padding: 10px 12px; border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  overflow-x: auto; white-space: pre; line-height: 1.6;
+}
+.api-usage-title { margin-top: 12px; color: var(--muted); font-size: 12px; }
+
 /* ---------- tags ---------- */
 .tag {
   display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px;

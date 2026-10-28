@@ -519,6 +519,30 @@ func TestOplogListRendersLabels(t *testing.T) {
 	}
 }
 
+// The dashboard shows the public API address with a copy button.
+func TestDashboardShowsAPIAddress(t *testing.T) {
+	out := renderContent(t, "dashboard", &DashboardData{
+		Base:   templateTestBase(),
+		ApiURL: "http://example.com:12567/sendMail",
+	})
+	for _, want := range []string{
+		"http://example.com:12567/sendMail",
+		`data-copy="http://example.com:12567/sendMail"`,
+		"API 地址",
+		"JSON（POST）",
+		"curl -X POST http://example.com:12567/sendMail",
+		`"token":"YOUR_TOKEN"`,
+		"表单（POST）",
+		`-d 'token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'`,
+		"GET 参数",
+		`curl 'http://example.com:12567/sendMail?token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("dashboard is missing %q", want)
+		}
+	}
+}
+
 // After a port change the old origin is gone, so the interstitial counts down and then
 // jumps to the same host on the new management port; a same-port restart just reloads.
 func TestRestartingPageCountsDownToNewPort(t *testing.T) {
