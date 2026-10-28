@@ -53,8 +53,6 @@ type Flash struct {
 	Err string
 }
 
-func (f Flash) empty() bool { return f.OK == "" && f.Err == "" }
-
 // Base is embedded in every page's data struct. Title is already translated.
 type Base struct {
 	Lang  string
@@ -73,11 +71,6 @@ type Base struct {
 	LangNames map[string]string
 }
 
-// pageData is implemented by every data struct via embedding Base.
-type pageData interface{ base() *Base }
-
-func (b *Base) base() *Base { return b }
-
 // templateFuncs are the only helpers bound at parse time. Everything request-specific
 // (language above all) travels through the data, never through a func closure.
 var templateFuncs = template.FuncMap{
@@ -92,18 +85,6 @@ var templateFuncs = template.FuncMap{
 			return s
 		}
 		return s[:12] + "..."
-	},
-	"add": func(a, b int) int { return a + b },
-	"sub": func(a, b int) int { return a - b },
-	"seq": func(from, to int) []int {
-		if to < from {
-			return nil
-		}
-		s := make([]int, 0, to-from+1)
-		for i := from; i <= to; i++ {
-			s = append(s, i)
-		}
-		return s
 	},
 	"flashText": flashText,
 	// dict builds the option map the form partials take. It only assembles data;

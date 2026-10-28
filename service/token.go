@@ -116,7 +116,7 @@ func (l *TokenService) SendApiCallMail(schedule *model.Schedule) error {
 		if byToken.SMTP == nil {
 			err0 = errors.New("SMTP not found")
 		} else {
-			body, err0 = smtp.SendAPIMail2(schedule, byToken.SMTP, byToken.ReceiveEmails)
+			body, err0 = smtp.SendAPIMail(schedule, byToken.SMTP, byToken.ReceiveEmails)
 		}
 		if err0 != nil {
 			log.Error("SendAPIMail log error", zap.Error(err0))
@@ -147,7 +147,7 @@ func (l *TokenService) sendMailWithToken(byToken *model.Token, recipients []stri
 	if subject == "" {
 		subject = byToken.Subject
 	}
-	err2 := smtp.SendAllMsg2(byToken.SMTP, byToken.ReceiveEmails, files, subject, content)
+	err2 := smtp.SendAllMsg(byToken.SMTP, byToken.ReceiveEmails, files, subject, content)
 	err := l.logService.Log(byToken.UserId, byToken.SMTP, byToken.ReceiveEmails, files, byToken.Name, byToken.Token, subject, content, err2)
 	if err != nil {
 		log.Error("sendMailWithToken log error", zap.Error(err))

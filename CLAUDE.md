@@ -207,7 +207,7 @@ template set is loaded once per process and installed on each new server.
 | `model/` | GORM models plus the `Config` struct mapped to `config.ini` |
 | `entity/` | Request/response DTOs and the log status constants |
 | `auth/` | Session cookie (`authentication.go`) and the AES-CBC helpers (`token.go`) |
-| `smtp/` | Delivery via `wneessen/go-mail`; `*2` suffixed functions are the live ones |
+| `smtp/` | Delivery via `wneessen/go-mail` |
 | `runner/` | `ScheduleRunner` — reloads scheduled tasks into cron every minute |
 | `db/` | Builds the GORM connection from config (sqlite or mysql) |
 | `util/` | String, time, template and HTTP helpers |

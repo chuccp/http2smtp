@@ -60,68 +60,6 @@ func SendTestMsg(st *model.SMTP) error {
 	}
 	return sendTestMsg(&SMTP{Username: st.Username, Mail: st.Mail, Password: st.Password, Host: st.Host, Port: st.Port})
 }
-func SendTestMsg2(st *model.SMTP) error {
-	if len(st.Username) == 0 {
-		return errors.New("username cannot be empty")
-	}
-	if len(st.Password) == 0 {
-		return errors.New("password cannot be empty")
-	}
-	if len(st.Host) == 0 {
-		return errors.New("host cannot be empty")
-	}
-	return sendTestMsg(&SMTP{Username: st.Username, Mail: st.Mail, Password: st.Password, Host: st.Host, Port: st.Port})
-}
-
-func SendContentMsgByRecipients(smtp *model.SMTP, recipients []string, subject, bodyString string) error {
-	receiveEmails := make([]*model.Mail, 0)
-	for _, recipient := range recipients {
-		name, m, err := util.ParseMail(recipient)
-		if err != nil {
-			continue
-		}
-		receiveEmails = append(receiveEmails, &model.Mail{Name: name, Mail: m})
-	}
-	return SendContentMsg(smtp, receiveEmails, subject, bodyString)
-}
-
-func SendContentMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string) error {
-	return SendFilesMsg(smtp, mails, nil, subject, bodyString)
-}
-
-func SendContentTemplateMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string, useTemplate bool, templateStr string) (string, error) {
-	if useTemplate {
-		template, err := util.ParseTemplate(templateStr, bodyString)
-		if err != nil {
-			return bodyString, SendContentMsg(smtp, mails, subject, bodyString)
-		} else {
-			return template, SendContentMsg(smtp, mails, subject, template)
-		}
-	}
-	return bodyString, SendContentMsg(smtp, mails, subject, bodyString)
-}
-func SendAllMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
-	return SendFilesMsg(smtp, mails, files, subject, bodyString)
-}
-func SendFilesMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
-	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
-	receiveEmails := make([]*Mail, 0)
-	for _, d := range mails {
-		receiveEmails = append(receiveEmails, &Mail{Name: d.Name, Mail: d.Mail})
-	}
-	if len(receiveEmails) == 0 {
-		return errors.New("receiveEmails is empty")
-	}
-	var sendMsg SendMsg
-	sendMsg.SendMail = SMTP
-	sendMsg.ReceiveEmails = receiveEmails
-	sendMsg.Subject = subject
-	sendMsg.BodyString = bodyString
-	for _, file := range files {
-		sendMsg.ff = append(sendMsg.ff, file)
-	}
-	return SendMail(&sendMsg)
-}
 
 func SendMail(sendMsg *SendMsg, invalidMails ...string) error {
 
@@ -197,6 +135,45 @@ func SendMail(sendMsg *SendMsg, invalidMails ...string) error {
 	return nil
 }
 
+func SendAllMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
+	return SendFilesMsg(smtp, mails, files, subject, bodyString)
+}
+
+func SendFilesMsg(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
+	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
+	receiveEmails := make([]*Mail, 0)
+	for _, d := range mails {
+		receiveEmails = append(receiveEmails, &Mail{Name: d.Name, Mail: d.Mail})
+	}
+	if len(receiveEmails) == 0 {
+		return errors.New("receiveEmails is empty")
+	}
+	var sendMsg SendMsg
+	sendMsg.SendMail = SMTP
+	sendMsg.ReceiveEmails = receiveEmails
+	sendMsg.Subject = subject
+	sendMsg.BodyString = bodyString
+	for _, file := range files {
+		sendMsg.ff = append(sendMsg.ff, file)
+	}
+	return SendMail(&sendMsg)
+}
+func SendContentTemplateMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string, useTemplate bool, templateStr string) (string, error) {
+	if useTemplate {
+		template, err := util.ParseTemplate(templateStr, bodyString)
+		if err != nil {
+			return bodyString, SendContentMsg(smtp, mails, subject, bodyString)
+		} else {
+			return template, SendContentMsg(smtp, mails, subject, template)
+		}
+	}
+	return bodyString, SendContentMsg(smtp, mails, subject, bodyString)
+}
+
+func SendContentMsg(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string) error {
+	return SendFilesMsg(smtp, mails, nil, subject, bodyString)
+}
+
 func SendAPIMail(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail) (string, error) {
 	url := schedule.Url
 	Method := schedule.Method
@@ -224,83 +201,6 @@ func SendAPIMail(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail
 		if errSend != nil {
 			return errSend.Error(), err
 		}
-		return err.Error(), nil
-	}
-	if schedule.IsOnlySendByError {
-		if response.StatusCode >= 400 {
-			return SendContentTemplateMsg(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
-		}
-		return string(response.Body), nil
-	} else {
-		return SendContentTemplateMsg(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
-	}
-}
-
-func SendAllMsg2(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
-	return SendFilesMsg2(smtp, mails, files, subject, bodyString)
-}
-
-func SendFilesMsg2(smtp *model.SMTP, mails []*model.Mail, files []*File, subject, bodyString string) error {
-	SMTP := &SMTP{Username: smtp.Username, Mail: smtp.Mail, Password: smtp.Password, Host: smtp.Host, Port: smtp.Port}
-	receiveEmails := make([]*Mail, 0)
-	for _, d := range mails {
-		receiveEmails = append(receiveEmails, &Mail{Name: d.Name, Mail: d.Mail})
-	}
-	if len(receiveEmails) == 0 {
-		return errors.New("receiveEmails is empty")
-	}
-	var sendMsg SendMsg
-	sendMsg.SendMail = SMTP
-	sendMsg.ReceiveEmails = receiveEmails
-	sendMsg.Subject = subject
-	sendMsg.BodyString = bodyString
-	for _, file := range files {
-		sendMsg.ff = append(sendMsg.ff, file)
-	}
-	return SendMail(&sendMsg)
-}
-func SendContentTemplateMsg2(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string, useTemplate bool, templateStr string) (string, error) {
-	if useTemplate {
-		template, err := util.ParseTemplate(templateStr, bodyString)
-		if err != nil {
-			return bodyString, SendContentMsg2(smtp, mails, subject, bodyString)
-		} else {
-			return template, SendContentMsg2(smtp, mails, subject, template)
-		}
-	}
-	return bodyString, SendContentMsg2(smtp, mails, subject, bodyString)
-}
-
-func SendContentMsg2(smtp *model.SMTP, mails []*model.Mail, subject, bodyString string) error {
-	return SendFilesMsg2(smtp, mails, nil, subject, bodyString)
-}
-func SendAPIMail2(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mail) (string, error) {
-	url := schedule.Url
-	Method := schedule.Method
-	request := util.NewRequest()
-	var headers []model.Header
-	var dataMap = make(map[string]string)
-	if len(schedule.HeaderStr) > 0 {
-		err := json.Unmarshal([]byte(schedule.HeaderStr), &headers)
-		if err == nil {
-			for _, header := range headers {
-				dataMap[header.Name] = header.Value
-			}
-		} else {
-			return "", err
-		}
-	}
-	if len(schedule.Headers) > 0 {
-		for _, header := range schedule.Headers {
-			dataMap[header.Name] = header.Value
-		}
-	}
-	response, err := request.CallApiForResponse(url, dataMap, Method, []byte(schedule.Body))
-	if err != nil {
-		errSend := SendContentMsg2(smtp, mails, schedule.Name, err.Error())
-		if errSend != nil {
-			return errSend.Error(), err
-		}
 		// The alert mail went out, but the call itself failed: that failure is what the
 		// caller and the mail log must see. Returning nil here used to log a permanently
 		// broken schedule as SUCCESS with the error text as its result.
@@ -308,7 +208,7 @@ func SendAPIMail2(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mai
 	}
 	if schedule.IsOnlySendByError {
 		if response.StatusCode >= 400 {
-			body, errSend := SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
+			body, errSend := SendContentTemplateMsg(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
 			if errSend != nil {
 				return body, errSend
 			}
@@ -318,5 +218,5 @@ func SendAPIMail2(schedule *model.Schedule, smtp *model.SMTP, mails []*model.Mai
 		}
 		return string(response.Body), nil
 	}
-	return SendContentTemplateMsg2(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
+	return SendContentTemplateMsg(smtp, mails, schedule.Name, string(response.Body), schedule.UseTemplate, schedule.Template)
 }

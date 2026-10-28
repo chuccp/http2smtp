@@ -144,7 +144,7 @@ func (smtp *Smtp) test(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = stmp2.SendTestMsg2(&st)
+	err = stmp2.SendTestMsg(&st)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 		return nil, errors.New("no valid recipients")
 	}
 	// 发送邮件
-	err = stmp2.SendAllMsg2(smtpServer, recipients, nil, sendMail.Subject, sendMail.Content)
+	err = stmp2.SendAllMsg(smtpServer, recipients, nil, sendMail.Subject, sendMail.Content)
 	if err != nil {
 		return nil, err
 	}

@@ -7,13 +7,6 @@ import (
 	"github.com/chuccp/go-web-frame/util"
 )
 
-type Token struct {
-	Time  string `json:"time"`
-	Type  string `json:"type"`
-	Value string `json:"value"`
-	Code  string `json:"code"`
-}
-
 // cryptoRandomAlnum fills n characters from [A-Za-z0-9] using the cryptographic
 // generator. Session cookies are only as strong as the key that encrypts them, so
 // this must not be the time-seeded math/rand the framework helpers use.
@@ -48,16 +41,6 @@ func cryptoRandomAlnum(n int) string {
 var aesKey = cryptoRandomAlnum(32)
 var aesIv = cryptoRandomAlnum(16)
 
-func GenerateToken(value string, code string, type_ string) (string, error) {
-	token := &Token{
-		Time:  util.NowDateTime(),
-		Type:  type_,
-		Value: value,
-		Code:  code,
-	}
-	v, _ := json.Marshal(token)
-	return util.EncryptByCBC(string(v), aesKey, aesIv)
-}
 func Encrypt(value any) (string, error) {
 	v, _ := json.Marshal(value)
 	return util.EncryptByCBC(string(v), aesKey, aesIv)

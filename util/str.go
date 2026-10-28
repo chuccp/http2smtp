@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"math/rand"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -21,9 +20,6 @@ func MD5(data []byte) string {
 	hashValue := hash.Sum(nil)
 	md5Hash := hex.EncodeToString(hashValue)
 	return md5Hash
-}
-func MD5Str(data string) string {
-	return MD5([]byte(data))
 }
 
 // DefaultChunkSize 常用分块大小：4KB，与大多数操作系统页大小一致
@@ -79,20 +75,6 @@ func SplitAndDeduplicate(text, sep string) []string {
 	return ps
 }
 
-func SplitPath(path string) []string {
-	path = strings.ReplaceAll(path, "\\", "/")
-	vs := strings.Split(path, "/")
-	ps := make([]string, 0)
-	for _, i2 := range vs {
-		i2 = strings.TrimSpace(i2)
-		if len(i2) == 0 {
-			continue
-		}
-		ps = append(ps, i2)
-	}
-	return ps
-}
-
 func DeduplicateIds(ids string) string {
 	vs := strings.Split(ids, ",")
 	vvs := RemoveDuplicates(vs)
@@ -126,27 +108,6 @@ func StringToUintIds(ids string) []uint {
 	return uIds
 }
 
-func IsMatchPath(path, smath string) bool {
-	math := ReplaceAllRegex(smath, "\\*[a-zA-Z]+", ".*")
-	re := regexp.MustCompile("^" + math)
-	fa := re.MatchString(path)
-	return fa
-
-}
-func ReplaceAllRegex(path, regex, math string) string {
-	re := regexp.MustCompile(regex)
-	return re.ReplaceAllString(path, math)
-}
-
-func ContainsAny(s string, strs ...string) bool {
-	for _, str := range strs {
-		if strings.Contains(s, str) {
-			return true
-		}
-	}
-	return false
-}
-
 func ContainsAnyIgnoreCase(s string, strs ...string) bool {
 	sLower := strings.ToLower(s)
 	for _, str := range strs {
@@ -165,35 +126,6 @@ func EqualsAnyIgnoreCase(s string, strs ...string) bool {
 	}
 	return false
 }
-func BoolToString(b bool) string {
-	if b {
-		return "true"
-	} else {
-		return "false"
-	}
-}
-func StringToBool(s string) bool {
-	if s == "true" {
-		return true
-	} else {
-		return false
-	}
-}
-func StringToUInt(s string) uint {
-	i, err := strconv.Atoi(s)
-	if err != nil {
-		return 0
-	}
-	return uint(i)
-}
-func StringToInt(s string) int {
-	i, err := strconv.Atoi(s)
-	if err != nil {
-		return 0
-	}
-	return i
-}
-
 func GetCachePath(rootPath, filename string) string {
 	id := uuid.New().String()
 	name := MD5([]byte(id))
@@ -226,14 +158,6 @@ func DecodeFileBase64(base64Str string) ([]byte, error) {
 const (
 	// Alphanumeric 包含大小写字母和数字
 	Alphanumeric = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	// Lowercase 仅包含小写字母
-	Lowercase = "abcdefghijklmnopqrstuvwxyz"
-	// Uppercase 仅包含大写字母
-	Uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	// Numeric 仅包含数字
-	Numeric = "0123456789"
-	// WithSpecialChars 包含字母、数字和常见特殊字符
-	WithSpecialChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
 )
 
 // GenerateRandomString 生成指定长度的随机字符串

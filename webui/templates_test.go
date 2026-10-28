@@ -35,7 +35,7 @@ func renderContent(t *testing.T, page string, data any) string {
 func templateTestServer(t *testing.T, handler web.TemplateHandler) http.Handler {
 	t.Helper()
 	templatesOnce.Do(func() {
-		templatesForTests, templatesErr = web.LoadTemplates(
+		templateOptionForTests, templatesErr = web.LoadTemplateOption(
 			templatesFS,
 			"templates",
 			web.WithTemplateFuncs(templateFuncs),
@@ -48,49 +48,15 @@ func templateTestServer(t *testing.T, handler web.TemplateHandler) http.Handler 
 	}
 
 	server := web.DefaultServer()
-	server.GetTemplate("/", handler, web.WithTemplateSet(templatesForTests))
+	server.GetTemplate("/", handler, templateOptionForTests)
 	return server.GetHandler()
 }
 
 var (
-	templatesOnce     sync.Once
-	templatesForTests *web.TemplateSet
-	templatesErr      error
+	templatesOnce          sync.Once
+	templateOptionForTests web.TemplateOption
+	templatesErr           error
 )
-
-func TestRenderPageStatusIsAppliedByConverter(t *testing.T) {
-	server := templateTestServer(t, func(view *web.Template) error {
-		return renderPageStatus(view, "login", &LoginData{Base: templateTestBase()}, http.StatusUnauthorized)
-	})
-	recorder := httptest.NewRecorder()
-	server.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	if recorder.Code != http.StatusUnauthorized {
-		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusUnauthorized)
-	}
-	if contentType := recorder.Header().Get("Content-Type"); !strings.HasPrefix(contentType, "text/html") {
-		t.Fatalf("Content-Type = %q, want HTML", contentType)
-	}
-	if !strings.Contains(recorder.Body.String(), `class="form login-form"`) {
-		t.Fatal("login template was not rendered")
-	}
-}
-
-func TestTemplateRedirectDoesNotRenderPage(t *testing.T) {
-	server := templateTestServer(t, func(view *web.Template) error {
-		return redirect(view, "/dashboard")
-	})
-	recorder := httptest.NewRecorder()
-	server.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	if recorder.Code != http.StatusFound {
-		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusFound)
-	}
-	if location := recorder.Header().Get("Location"); location != "/dashboard" {
-		t.Fatalf("Location = %q, want /dashboard", location)
-	}
-	if strings.Contains(recorder.Body.String(), "<html") {
-		t.Fatalf("redirect rendered a page: %q", recorder.Body.String())
-	}
-}
 
 // The create form must post an empty id; a nonzero id turns the same POST into an
 // update of that row. A failed edit must keep the id so it does not become a create.

@@ -246,7 +246,7 @@ func (p *Pages) smtpTest(req *web.Request) (any, error) {
 	if _, err := mail.ParseAddress(st.Mail); err != nil {
 		return nil, err
 	}
-	if err := stmp2.SendTestMsg2(st); err != nil {
+	if err := stmp2.SendTestMsg(st); err != nil {
 		return nil, err
 	}
 	return web.Ok("ok"), nil
