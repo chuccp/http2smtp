@@ -155,13 +155,13 @@ func (p *Pages) mailSave(view *web.Template) error {
 		if err := p.mailModel.Save(existing); err != nil {
 			return fail(err.Error())
 		}
-		p.recordOp(user.Id, entity.OpUpdate, entity.TargetMail, existing.Id, existing.Name)
+		p.recordOp(req, user.Id, entity.OpUpdate, entity.TargetMail, existing.Id, existing.Name)
 	} else {
 		row := &model.Mail{UserId: user.Id, Name: data.Name, Mail: data.Mail}
 		if err := p.mailModel.Save(row); err != nil {
 			return fail(err.Error())
 		}
-		p.recordOp(user.Id, entity.OpCreate, entity.TargetMail, row.Id, row.Name)
+		p.recordOp(req, user.Id, entity.OpCreate, entity.TargetMail, row.Id, row.Name)
 	}
 	return redirect(view, backTo("/mail", "common.success", "", ""))
 }

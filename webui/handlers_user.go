@@ -126,7 +126,7 @@ func (p *Pages) userSave(view *web.Template) error {
 		if err := p.userService.UpdateUser(uint(id), data.Name, password, data.IsAdmin, data.IsUse); err != nil {
 			return fail(err.Error())
 		}
-		p.recordOp(caller.Id, entity.OpUpdate, entity.TargetUser, uint(id), data.Name)
+		p.recordOp(req, caller.Id, entity.OpUpdate, entity.TargetUser, uint(id), data.Name)
 	} else {
 		if data.Name == "" || password == "" {
 			return fail("common.failed")
@@ -137,7 +137,7 @@ func (p *Pages) userSave(view *web.Template) error {
 		if err := p.userService.CreateUser(data.Name, password, data.IsAdmin, data.IsUse); err != nil {
 			return fail(err.Error())
 		}
-		p.recordOp(caller.Id, entity.OpCreate, entity.TargetUser, 0, data.Name)
+		p.recordOp(req, caller.Id, entity.OpCreate, entity.TargetUser, 0, data.Name)
 	}
 	return redirect(view, backTo("/users", "common.success", "", ""))
 }
@@ -186,6 +186,7 @@ func (p *Pages) passwordPost(view *web.Template) error {
 	if err := p.userService.ChangeOwnPassword(user.Id, newPw); err != nil {
 		return fail(err.Error())
 	}
+	p.recordOp(req, user.Id, entity.OpUpdate, entity.TargetUser, user.Id, user.Name)
 	// The salt rotated with the password, so this session is already dead — drop the
 	// cookie rather than leave the browser holding a corpse, and sign in again.
 	req.Cookie().Delete(entity.UserToken)

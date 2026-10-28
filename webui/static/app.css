@@ -246,6 +246,7 @@ a:hover { text-decoration: underline; }
 .toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .filter-bar input[type=text], .filter-bar input[type=search] { width: 160px; min-width: 0; }
+.filter-bar select { width: auto; min-width: 120px; }
 .filter-bar .check { white-space: nowrap; }
 .toolbar .filter-bar {
   margin-left: auto; margin-bottom: 0;

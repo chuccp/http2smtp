@@ -18,6 +18,7 @@ type OperationLog struct {
 	TargetType string    `gorm:"column:target_type" json:"targetType"`
 	TargetId   uint      `gorm:"column:target_id" json:"targetId"`
 	TargetName string    `gorm:"column:target_name" json:"targetName"`
+	Ip         string    `gorm:"column:ip" json:"ip"`
 	CreateTime time.Time `gorm:"column:create_time" json:"createTime"`
 }
 

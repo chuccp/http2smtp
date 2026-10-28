@@ -34,6 +34,8 @@ func (l *User) signIn(request *web.Request) (any, error) {
 
 	dbUser, err := l.userService.ValidateLogin(u.Username, u.Password)
 	if err != nil {
+		// Failed attempts carry no user id; the attempted name is what audit needs.
+		recordOp(l.context, request, 0, entity.OpLoginFailed, entity.TargetUser, 0, u.Username)
 		return nil, err
 	}
 
@@ -46,7 +48,7 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	if _, err := l.authenticationFilter.SignIn(&u, request); err != nil {
 		return nil, err
 	}
-	recordOp(l.context, dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
+	recordOp(l.context, request, dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
 	return map[string]any{
 		"isAdmin": dbUser.IsAdmin,
 	}, nil
@@ -60,6 +62,7 @@ func (l *User) logout(request *web.Request) (any, error) {
 		if err := l.userService.RotateSalt(user.Id); err != nil {
 			log.Error("rotate session salt failed", zap.Uint("userId", user.Id), zap.Error(err))
 		}
+		recordOp(l.context, request, user.Id, entity.OpLogout, entity.TargetUser, user.Id, user.Name)
 	}
 	return l.authenticationFilter.SignOut(request)
 }
@@ -93,6 +96,7 @@ func (l *User) changePassword(request *web.Request) (any, error) {
 	if err := l.userService.ChangeOwnPassword(user.Id, req.NewPassword); err != nil {
 		return nil, err
 	}
+	recordOp(l.context, request, user.Id, entity.OpUpdate, entity.TargetUser, user.Id, user.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -153,7 +157,7 @@ func (l *User) createUser(request *web.Request) (any, error) {
 	if err := l.userService.CreateUser(req.Name, req.Password, req.IsAdmin, req.IsUse); err != nil {
 		return nil, err
 	}
-	recordOp(l.context, user.Id, entity.OpCreate, entity.TargetUser, 0, req.Name)
+	recordOp(l.context, request, user.Id, entity.OpCreate, entity.TargetUser, 0, req.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -187,7 +191,7 @@ func (l *User) updateUser(request *web.Request) (any, error) {
 	if err := l.userService.UpdateUser(req.Id, req.Name, req.Password, req.IsAdmin, req.IsUse); err != nil {
 		return nil, err
 	}
-	recordOp(l.context, user.Id, entity.OpUpdate, entity.TargetUser, req.Id, req.Name)
+	recordOp(l.context, request, user.Id, entity.OpUpdate, entity.TargetUser, req.Id, req.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -212,7 +216,7 @@ func (l *User) deleteUser(request *web.Request) (any, error) {
 	if target != nil {
 		name = target.Name
 	}
-	recordOp(l.context, user.Id, entity.OpDisable, entity.TargetUser, uint(id), name)
+	recordOp(l.context, request, user.Id, entity.OpDisable, entity.TargetUser, uint(id), name)
 	return web.Ok("ok"), nil
 }
 

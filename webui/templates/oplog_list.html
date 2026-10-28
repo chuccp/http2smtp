@@ -1,11 +1,28 @@
 {{define "content"}}
 <div class="toolbar">
+  {{if .User.IsAdmin}}
   <button type="button" class="btn btn-danger" id="oplog-cleanup"
     data-title="{{.L.T "oplog.cleanup"}}"
     data-days-label="{{.L.T "oplog.cleanupDays"}}"
     data-hint="{{.L.T "oplog.cleanupDaysHint"}}"
     data-done="{{.L.T "oplog.cleanupDone"}}">{{.L.T "oplog.cleanup"}}</button>
+  {{end}}
   <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
+  <form class="filter-bar" method="get" action="/oplogs">
+    {{if .User.IsAdmin}}
+    <input type="text" name="user" value="{{.UserFilter}}" placeholder="{{.L.T "oplog.user"}}">
+    {{end}}
+    <select name="action">
+      <option value="">{{.L.T "oplog.action"}}</option>
+      {{range .ActionOptions}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}
+    </select>
+    <select name="target">
+      <option value="">{{.L.T "oplog.target"}}</option>
+      {{range .TargetOptions}}<option value="{{.Value}}" {{if .Selected}}selected{{end}}>{{.Label}}</option>{{end}}
+    </select>
+    <button class="btn" type="submit">{{.L.T "common.search"}}</button>
+    <a class="btn" href="/oplogs">{{.L.T "common.reset"}}</a>
+  </form>
 </div>
 
 <div class="table-wrap">
@@ -30,7 +47,9 @@
       <td>{{.TargetName}}</td>
       <td class="col-actions">
         <button type="button" class="btn btn-sm" data-page-dialog="/oplogs/{{.Id}}" data-dialog-width="600px">{{$.L.T "oplog.detail"}}</button>
+        {{if $.User.IsAdmin}}
         <button type="button" class="btn btn-sm btn-danger" data-confirm="{{$.L.T "oplog.deleteConfirm"}}" data-href="/api/oplog/{{.Id}}" data-flash="{{$.L.T "common.success"}}">{{$.L.T "common.delete"}}</button>
+        {{end}}
       </td>
     </tr>
     {{else}}
@@ -41,6 +60,7 @@
 </div>
 {{template "pager" .}}
 
+{{if .User.IsAdmin}}
 <script>
 (function () {
   var btn = document.getElementById('oplog-cleanup');
@@ -119,4 +139,5 @@
   });
 })();
 </script>
+{{end}}
 {{end}}

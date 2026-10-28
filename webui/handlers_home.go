@@ -111,6 +111,8 @@ func (p *Pages) loginPost(view *web.Template) error {
 
 	dbUser, err := p.userService.ValidateLogin(username, password)
 	if err != nil {
+		// Failed attempts carry no user id; the attempted name is what audit needs.
+		p.recordOp(req, 0, entity.OpLoginFailed, entity.TargetUser, 0, username)
 		data := p.loginData(req, next, Flash{Err: err.Error()})
 		return renderPageStatus(view, "login", data, http.StatusUnauthorized)
 	}
@@ -123,7 +125,7 @@ func (p *Pages) loginPost(view *web.Template) error {
 	if _, err := p.authFilter.SignIn(lu, req); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	p.recordOp(dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
+	p.recordOp(req, dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
 	return redirect(view, next)
 }
 
@@ -136,6 +138,7 @@ func (p *Pages) logout(view *web.Template) error {
 			// Signing out must not be blocked by the rotation failing
 			log.Error("rotate session salt failed", zap.Uint("userId", user.Id), zap.Error(err))
 		}
+		p.recordOp(req, user.Id, entity.OpLogout, entity.TargetUser, user.Id, user.Name)
 	}
 	if _, err := p.authFilter.SignOut(req); err != nil {
 		return err

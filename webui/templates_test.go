@@ -552,10 +552,34 @@ func TestOplogListRendersLabels(t *testing.T) {
 		`data-page-dialog="/oplogs/1"`,
 		`data-href="/api/oplog/1"`,
 		`id="oplog-cleanup"`,
+		`name="user"`,
+		`name="action"`,
+		`name="target"`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("operation log page is missing %q", want)
 		}
+	}
+}
+
+// A regular user reads their own operation log without the maintenance actions.
+func TestOplogListMaintenanceIsAdminOnly(t *testing.T) {
+	base := templateTestBase()
+	base.User = &NavUser{Id: 2, Name: "bob"}
+	out := renderContent(t, "oplog_list", &OplogListData{
+		Base: base,
+		Rows: []OplogRow{{
+			OperationLog: &model.OperationLog{Id: 1, UserId: 2, UserName: "bob"},
+			ActionLabel:  "登录", TargetLabel: "用户管理",
+		}},
+	})
+	for _, banned := range []string{`id="oplog-cleanup"`, "/api/oplog/1", `name="user"`} {
+		if strings.Contains(out, banned) {
+			t.Errorf("regular user should not see %q", banned)
+		}
+	}
+	if !strings.Contains(out, "/oplogs/1") {
+		t.Error("regular user should still open their own entry")
 	}
 }
 

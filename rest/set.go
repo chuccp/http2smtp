@@ -100,7 +100,7 @@ func (set *Set) postRestart(req *web.Request) (any, error) {
 	if !user.IsAdmin {
 		return nil, errors.New("admin access required")
 	}
-	recordOp(set.context, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
+	recordOp(set.context, req, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	managePort, apiPort, err := wf.GetService[*service.RestartService](set.context).Restart()
 	if err != nil {
 		return nil, err

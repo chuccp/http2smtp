@@ -139,14 +139,14 @@ func (l *Log) deleteOne(req *web.Request) (any, error) {
 		return nil, err
 	}
 	removeAttachments(one.Files)
-	recordOp(l.context, user.Id, entity.OpDelete, entity.TargetLog, uint(id), one.Subject)
+	recordOp(l.context, req, user.Id, entity.OpDelete, entity.TargetLog, uint(id), one.Subject)
 	return web.Ok("ok"), nil
 }
 
-// cleanUp deletes the caller's own entries — all of them when days is 0 — together with
-// their attachments, and reports how many went. The scope stays the caller's own entries
-// even for an admin: wiping the instance's whole send record should be a decision, not a
-// button, and cleaning up after yourself is the thing that actually needs doing.
+// cleanUp deletes the instance's log entries older than days (0 clears everything),
+// together with their attachments, and reports how many went. It is admin-only: the log
+// page is the instance's send record, so the admin maintains it as a whole — the same
+// scope single-row deletes already have.
 func (l *Log) cleanUp(req *web.Request) (any, error) {
 	user, err := auth.User(req, l.context)
 	if user == nil {
@@ -156,7 +156,7 @@ func (l *Log) cleanUp(req *web.Request) (any, error) {
 		return nil, errors.New("admin access required")
 	}
 	days := req.GetJsonIntValueOrDefault("days", 0)
-	query := l.logModel.Query().Where("user_id = ?", user.Id)
+	query := l.logModel.Query()
 	if days > 0 {
 		query = query.Where("create_time < ?", time.Now().AddDate(0, 0, -days))
 	}
@@ -184,7 +184,7 @@ func (l *Log) cleanUp(req *web.Request) (any, error) {
 	for _, one := range files {
 		removeAttachments(one)
 	}
-	recordOp(l.context, user.Id, entity.OpCleanup, entity.TargetLog, 0, "")
+	recordOp(l.context, req, user.Id, entity.OpCleanup, entity.TargetLog, 0, "")
 	return web.Data(map[string]any{"deleted": len(ids)}), nil
 }
 

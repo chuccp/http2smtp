@@ -60,7 +60,7 @@ func (m *Mail) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(m.context, user.Id, entity.OpDelete, entity.TargetMail, uint(atoi), exist.Name)
+	recordOp(m.context, req, user.Id, entity.OpDelete, entity.TargetMail, uint(atoi), exist.Name)
 	return web.Ok("ok"), nil
 }
 func (m *Mail) getPage(req *web.Request) (any, error) {
@@ -146,7 +146,7 @@ func (m *Mail) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(m.context, user.Id, entity.OpCreate, entity.TargetMail, st.Id, st.Name)
+	recordOp(m.context, req, user.Id, entity.OpCreate, entity.TargetMail, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 func (m *Mail) putOne(req *web.Request) (any, error) {
@@ -180,7 +180,7 @@ func (m *Mail) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(m.context, user.Id, entity.OpUpdate, entity.TargetMail, exist.Id, exist.Name)
+	recordOp(m.context, req, user.Id, entity.OpUpdate, entity.TargetMail, exist.Id, exist.Name)
 	return web.Ok("ok"), nil
 }
 func (m *Mail) Init(context *core.Context) error {

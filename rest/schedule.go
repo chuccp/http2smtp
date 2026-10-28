@@ -63,7 +63,7 @@ func (schedule *Schedule) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(schedule.context, user.Id, entity.OpDelete, entity.TargetSchedule, uint(atoi), exist.Name)
+	recordOp(schedule.context, req, user.Id, entity.OpDelete, entity.TargetSchedule, uint(atoi), exist.Name)
 	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) getPage(req *web.Request) (any, error) {
@@ -106,7 +106,7 @@ func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(schedule.context, user.Id, entity.OpCreate, entity.TargetSchedule, st.Id, st.Name)
+	recordOp(schedule.context, req, user.Id, entity.OpCreate, entity.TargetSchedule, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) putOne(req *web.Request) (any, error) {
@@ -155,7 +155,7 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(schedule.context, user.Id, entity.OpUpdate, entity.TargetSchedule, exist.Id, exist.Name)
+	recordOp(schedule.context, req, user.Id, entity.OpUpdate, entity.TargetSchedule, exist.Id, exist.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -275,7 +275,7 @@ func (schedule *Schedule) toggleOne(req *web.Request) (any, error) {
 	if st.IsUse {
 		action = entity.OpEnable
 	}
-	recordOp(schedule.context, user.Id, action, entity.TargetSchedule, st.Id, st.Name)
+	recordOp(schedule.context, req, user.Id, action, entity.TargetSchedule, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -310,7 +310,7 @@ func (schedule *Schedule) triggerById(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(schedule.context, user.Id, entity.OpTrigger, entity.TargetSchedule, st.Id, st.Name)
+	recordOp(schedule.context, req, user.Id, entity.OpTrigger, entity.TargetSchedule, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 

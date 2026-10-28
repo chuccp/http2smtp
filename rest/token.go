@@ -54,7 +54,7 @@ func (token *Token) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(token.context, user.Id, entity.OpDelete, entity.TargetToken, id, exist.Name)
+	recordOp(token.context, req, user.Id, entity.OpDelete, entity.TargetToken, id, exist.Name)
 	return web.Ok("ok"), nil
 }
 func (token *Token) getPage(req *web.Request) (any, error) {
@@ -98,7 +98,7 @@ func (token *Token) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(token.context, user.Id, entity.OpCreate, entity.TargetToken, st.Id, st.Name)
+	recordOp(token.context, req, user.Id, entity.OpCreate, entity.TargetToken, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 func (token *Token) putOne(req *web.Request) (any, error) {
@@ -144,7 +144,7 @@ func (token *Token) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	recordOp(token.context, user.Id, entity.OpUpdate, entity.TargetToken, exist.Id, exist.Name)
+	recordOp(token.context, req, user.Id, entity.OpUpdate, entity.TargetToken, exist.Id, exist.Name)
 	return web.Ok("ok"), nil
 }
 

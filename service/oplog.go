@@ -21,13 +21,14 @@ func (s *OperationLogService) Init(ctx *core.Context) error {
 
 // Record stores one action. Best effort: an audit write must never fail the operation
 // it describes, so errors are logged and swallowed.
-func (s *OperationLogService) Record(userId uint, action, target string, targetId uint, targetName string) {
+func (s *OperationLogService) Record(userId uint, action, target string, targetId uint, targetName, ip string) {
 	row := &model.OperationLog{
 		UserId:     userId,
 		Action:     action,
 		TargetType: target,
 		TargetId:   targetId,
 		TargetName: targetName,
+		Ip:         ip,
 	}
 	if err := s.oplogModel.Save(row); err != nil {
 		log.Error("operation log write failed",

@@ -10,6 +10,10 @@
     <dd class="muted">{{fmtTime .Entry.CreateTime}}</dd>
     <dt>{{.L.T "oplog.user"}}</dt>
     <dd>{{.Entry.UserName}}</dd>
+    {{if .Entry.Ip}}
+    <dt>{{.L.T "oplog.ip"}}</dt>
+    <dd class="mono">{{.Entry.Ip}}</dd>
+    {{end}}
     <dt>{{.L.T "oplog.action"}}</dt>
     <dd><span class="tag {{.Entry.ActionClass}}">{{.Entry.ActionLabel}}</span></dd>
     <dt>{{.L.T "oplog.target"}}</dt>

@@ -8,11 +8,11 @@ import (
 	"github.com/chuccp/http2smtp/model"
 )
 
-// recordOp stores one audit entry. It is best effort: the service logs a write failure
-// and the operation itself carries on.
-func (p *Pages) recordOp(userId uint, action, target string, targetId uint, targetName string) {
+// recordOp stores one audit entry, stamped with the caller's IP. It is best effort: the
+// service logs a write failure and the operation itself carries on.
+func (p *Pages) recordOp(req *web.Request, userId uint, action, target string, targetId uint, targetName string) {
 	if p.oplogService != nil {
-		p.oplogService.Record(userId, action, target, targetId, targetName)
+		p.oplogService.Record(userId, action, target, targetId, targetName, req.ClientIP())
 	}
 }
 
@@ -24,35 +24,57 @@ type OplogRow struct {
 	TargetLabel string
 }
 
-// OplogListData is the operation-log page (admin only).
+// OplogListData is the operation-log page. Admins read every entry; everyone else sees
+// their own.
 type OplogListData struct {
 	Base
-	Rows  []OplogRow
-	Pager *Pager
+	Rows          []OplogRow
+	Pager         *Pager
+	UserFilter    string
+	ActionFilter  string
+	TargetFilter  string
+	ActionOptions []SelectOption
+	TargetOptions []SelectOption
 }
 
 var oplogActionKeys = map[string]string{
-	entity.OpCreate:  "oplog.actionCreate",
-	entity.OpUpdate:  "oplog.actionUpdate",
-	entity.OpDelete:  "oplog.actionDelete",
-	entity.OpEnable:  "oplog.actionEnable",
-	entity.OpDisable: "oplog.actionDisable",
-	entity.OpTrigger: "oplog.actionTrigger",
-	entity.OpCleanup: "oplog.actionCleanup",
-	entity.OpRestart: "oplog.actionRestart",
-	entity.OpLogin:   "oplog.actionLogin",
+	entity.OpCreate:      "oplog.actionCreate",
+	entity.OpUpdate:      "oplog.actionUpdate",
+	entity.OpDelete:      "oplog.actionDelete",
+	entity.OpEnable:      "oplog.actionEnable",
+	entity.OpDisable:     "oplog.actionDisable",
+	entity.OpTrigger:     "oplog.actionTrigger",
+	entity.OpCleanup:     "oplog.actionCleanup",
+	entity.OpRestart:     "oplog.actionRestart",
+	entity.OpLogin:       "oplog.actionLogin",
+	entity.OpLoginFailed: "oplog.actionLoginFailed",
+	entity.OpLogout:      "oplog.actionLogout",
 }
 
 var oplogActionClasses = map[string]string{
-	entity.OpCreate:  "tag-ok",
-	entity.OpEnable:  "tag-ok",
-	entity.OpLogin:   "tag-ok",
-	entity.OpDelete:  "tag-off",
-	entity.OpDisable: "tag-off",
-	entity.OpUpdate:  "tag-warn",
-	entity.OpTrigger: "tag-warn",
-	entity.OpCleanup: "tag-warn",
-	entity.OpRestart: "tag-warn",
+	entity.OpCreate:      "tag-ok",
+	entity.OpEnable:      "tag-ok",
+	entity.OpLogin:       "tag-ok",
+	entity.OpDelete:      "tag-off",
+	entity.OpDisable:     "tag-off",
+	entity.OpLoginFailed: "tag-off",
+	entity.OpUpdate:      "tag-warn",
+	entity.OpTrigger:     "tag-warn",
+	entity.OpCleanup:     "tag-warn",
+	entity.OpRestart:     "tag-warn",
+	entity.OpLogout:      "tag-warn",
+}
+
+// The filter drop-downs list every action and target in a stable order.
+var oplogActionOrder = []string{
+	entity.OpLogin, entity.OpLoginFailed, entity.OpLogout,
+	entity.OpCreate, entity.OpUpdate, entity.OpDelete, entity.OpEnable, entity.OpDisable,
+	entity.OpTrigger, entity.OpCleanup, entity.OpRestart,
+}
+
+var oplogTargetOrder = []string{
+	entity.TargetSMTP, entity.TargetMail, entity.TargetToken, entity.TargetSchedule,
+	entity.TargetUser, entity.TargetLog, entity.TargetSettings, entity.TargetOplog,
 }
 
 // Target types reuse the sidebar labels, so a row reads "定时任务 / 邮件通知".
@@ -69,12 +91,43 @@ var oplogTargetKeys = map[string]string{
 
 func (p *Pages) oplogList(view *web.Template) error {
 	req := view.Request()
-	user, ok := p.requireAdmin(view)
+	user, ok := p.requireUser(view)
 	if !ok {
 		return nil
 	}
 	page := listPage(req)
-	result, err := p.oplogModel.Query().Order("id desc").PageForWeb(page)
+	userFilter := req.Query("user")
+	actionFilter := req.Query("action")
+	targetFilter := req.Query("target")
+
+	query := p.oplogModel.Query()
+	if !user.IsAdmin {
+		// Regular users read their own audit trail only.
+		query = query.Where("user_id = ?", user.Id)
+	} else if userFilter != "" {
+		// The operator filter matches user names, so resolve them to ids first.
+		operators, err := p.userModel.Query().Where("name LIKE ?", "%"+userFilter+"%").All()
+		if err != nil {
+			return p.renderErr(view, 0, "common.failed", err.Error())
+		}
+		ids := make([]uint, 0, len(operators))
+		for _, u := range operators {
+			ids = append(ids, u.Id)
+		}
+		if len(ids) == 0 {
+			query = query.Where("1 = 0")
+		} else {
+			query = query.Where("user_id IN ?", ids)
+		}
+	}
+	if actionFilter != "" {
+		query = query.Where("action = ?", actionFilter)
+	}
+	if targetFilter != "" {
+		query = query.Where("target_type = ?", targetFilter)
+	}
+
+	result, err := query.Order("id desc").PageForWeb(page)
 	if err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
@@ -86,10 +139,28 @@ func (p *Pages) oplogList(view *web.Template) error {
 	for _, r := range result.List {
 		rows = append(rows, oplogRow(r, tr))
 	}
+	actionOptions := make([]SelectOption, 0, len(oplogActionOrder))
+	for _, a := range oplogActionOrder {
+		actionOptions = append(actionOptions, SelectOption{
+			Value: a, Label: tr.T(oplogActionKeys[a]), Selected: a == actionFilter,
+		})
+	}
+	targetOptions := make([]SelectOption, 0, len(oplogTargetOrder))
+	for _, t := range oplogTargetOrder {
+		targetOptions = append(targetOptions, SelectOption{
+			Value: t, Label: tr.T(oplogTargetKeys[t]), Selected: t == targetFilter,
+		})
+	}
+	q := queryOf(req, "user", "action", "target", "pageSize")
 	data := &OplogListData{
-		Base:  p.base(req, user, "oplog.title", true),
-		Rows:  rows,
-		Pager: newPager(page.PageNo, page.PageSize, result.Total, "/oplogs", nil),
+		Base:          p.base(req, user, "oplog.title", true),
+		Rows:          rows,
+		Pager:         newPager(page.PageNo, page.PageSize, result.Total, "/oplogs", q),
+		UserFilter:    userFilter,
+		ActionFilter:  actionFilter,
+		TargetFilter:  targetFilter,
+		ActionOptions: actionOptions,
+		TargetOptions: targetOptions,
 	}
 	view.View("oplog_list").Layout(layoutFor("oplog_list")).Data(data)
 	return nil
@@ -121,7 +192,7 @@ type OplogDetailData struct {
 
 func (p *Pages) oplogDetail(view *web.Template) error {
 	req := view.Request()
-	user, ok := p.requireAdmin(view)
+	user, ok := p.requireUser(view)
 	if !ok {
 		return nil
 	}
@@ -133,7 +204,8 @@ func (p *Pages) oplogDetail(view *web.Template) error {
 	if err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	if one == nil {
+	// A row that is not the caller's answers "not found", like the other lists.
+	if one == nil || (!user.IsAdmin && one.UserId != user.Id) {
 		return p.renderErr(view, http.StatusNotFound, "common.failed", "operation log not found")
 	}
 	fillNames(p.userService, []*model.OperationLog{one},

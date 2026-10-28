@@ -272,16 +272,18 @@ fetch their attachments; everyone else gets `data: null` on a row that is not th
 
 Management actions are audited separately from sends: `OperationLogService.Record`
 (best effort — a failed write never fails the action) stores create/update/delete,
-enable/disable, trigger, cleanup, restart and login events from both the page handlers
-and the JSON API, and the admin-only `/oplogs` page lists them translated. This is not
-the mail log: `t_log` records sends, `t_operation_log` records who changed what.
+enable/disable, trigger, cleanup, restart, login (success and failure), logout and
+password-change events from both the page handlers and the JSON API, each stamped with
+the caller's IP. The `/oplogs` page lists them translated, with operator/action/target
+filters: admins read every entry and own the cleanup/delete endpoints, while a regular
+user sees only their own entries and gets no maintenance actions. This is not the mail
+log: `t_log` records sends, `t_operation_log` records who changed what.
 
 Nothing prunes `t_log` or the attachment cache on its own — cleanup is manual and
 **admin-only** (`DELETE /log/:id` and `POST /log/cleanup`, which takes `days`: 0 clears
 everything); the page hides both actions from regular users. Both remove the attachments
 a deleted entry recorded, which is the only thing that keeps the cache from growing
-forever. The bulk cleanup is scoped to the admin's own entries; deleting a single row is
-not, since that row was on screen.
+forever. Both operate on the instance's whole log now that they are admin-only.
 
 ### Restart
 

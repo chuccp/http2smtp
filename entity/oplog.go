@@ -9,9 +9,11 @@ const (
 	OpEnable  = "enable"
 	OpDisable = "disable"
 	OpTrigger = "trigger"
-	OpCleanup = "cleanup"
-	OpRestart = "restart"
-	OpLogin   = "login"
+	OpCleanup     = "cleanup"
+	OpRestart     = "restart"
+	OpLogin       = "login"
+	OpLoginFailed = "login_failed"
+	OpLogout      = "logout"
 )
 
 const (

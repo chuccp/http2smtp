@@ -96,7 +96,7 @@ func (p *Pages) settingsSave(view *web.Template) error {
 	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	p.recordOp(user.Id, entity.OpUpdate, entity.TargetSettings, 0, "")
+	p.recordOp(req, user.Id, entity.OpUpdate, entity.TargetSettings, 0, "")
 	return redirect(view, backTo("/settings", "settings.settingsSaved", "", ""))
 }
 
@@ -128,7 +128,7 @@ func (p *Pages) settingsRestart(view *web.Template) error {
 	}
 	// Recorded before the restart so the entry lands in the database that is still
 	// attached; the restart is in-process and would otherwise race the write.
-	p.recordOp(user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
+	p.recordOp(req, user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	managePort, apiPort, err := wf.GetService[*service.RestartService](p.ctx).Restart()
 	if err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())

@@ -21,10 +21,11 @@ type Oplog struct {
 	oplogModel *model.OperationLogModel
 }
 
-// recordOp writes one operation-log entry. Best effort: the service swallows write
-// failures, so an audit problem never fails the operation it describes.
-func recordOp(ctx *core.Context, userId uint, action, target string, targetId uint, targetName string) {
-	core.GetService[*service.OperationLogService](ctx).Record(userId, action, target, targetId, targetName)
+// recordOp writes one operation-log entry, stamped with the caller's IP. Best effort:
+// the service swallows write failures, so an audit problem never fails the operation it
+// describes.
+func recordOp(ctx *core.Context, req *web.Request, userId uint, action, target string, targetId uint, targetName string) {
+	core.GetService[*service.OperationLogService](ctx).Record(userId, action, target, targetId, targetName, req.ClientIP())
 }
 
 func (o *Oplog) adminUser(req *web.Request) (*model.User, error) {
@@ -47,18 +48,12 @@ func (o *Oplog) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	one, err := o.oplogModel.FindByPK(uint(id))
+	one, err := deleteOplogRow(o.oplogModel, uint(id))
 	if err != nil {
 		return nil, err
 	}
-	if one == nil {
-		return nil, errors.New("operation log not found")
-	}
-	if err := o.oplogModel.DeleteByPK(uint(id)); err != nil {
-		return nil, err
-	}
 	// Deleting audit rows is itself audited.
-	recordOp(o.context, user.Id, entity.OpDelete, entity.TargetOplog, uint(id), one.TargetName)
+	recordOp(o.context, req, user.Id, entity.OpDelete, entity.TargetOplog, uint(id), one.TargetName)
 	return web.Ok("ok"), nil
 }
 
@@ -68,13 +63,42 @@ func (o *Oplog) cleanUp(req *web.Request) (any, error) {
 		return nil, err
 	}
 	days := req.GetJsonIntValueOrDefault("days", 0)
-	query := o.oplogModel.Query()
+	deleted, err := cleanupOplogRows(o.oplogModel, days)
+	if err != nil {
+		return nil, err
+	}
+	if deleted > 0 {
+		recordOp(o.context, req, user.Id, entity.OpCleanup, entity.TargetOplog, 0, "")
+	}
+	return web.Data(map[string]any{"deleted": deleted}), nil
+}
+
+// deleteOplogRow removes one audit entry and returns it, so the caller can name the
+// deleted row in its own audit entry.
+func deleteOplogRow(m *model.OperationLogModel, id uint) (*model.OperationLog, error) {
+	one, err := m.FindByPK(id)
+	if err != nil {
+		return nil, err
+	}
+	if one == nil {
+		return nil, errors.New("operation log not found")
+	}
+	if err := m.DeleteByPK(id); err != nil {
+		return nil, err
+	}
+	return one, nil
+}
+
+// cleanupOplogRows removes entries older than days — everything when days is 0 — and
+// reports how many went.
+func cleanupOplogRows(m *model.OperationLogModel, days int) (int, error) {
+	query := m.Query()
 	if days > 0 {
 		query = query.Where("create_time < ?", time.Now().AddDate(0, 0, -days))
 	}
 	rows, err := query.All()
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	ids := make([]uint, 0, len(rows))
 	for _, one := range rows {
@@ -83,13 +107,12 @@ func (o *Oplog) cleanUp(req *web.Request) (any, error) {
 		}
 	}
 	if len(ids) == 0 {
-		return web.Data(map[string]any{"deleted": 0}), nil
+		return 0, nil
 	}
-	if err := o.oplogModel.Delete().Where("id IN (?)", ids).Delete(); err != nil {
-		return nil, err
+	if err := m.Delete().Where("id IN (?)", ids).Delete(); err != nil {
+		return 0, err
 	}
-	recordOp(o.context, user.Id, entity.OpCleanup, entity.TargetOplog, 0, "")
-	return web.Data(map[string]any{"deleted": len(ids)}), nil
+	return len(ids), nil
 }
 
 func (o *Oplog) Init(context *core.Context) error {
