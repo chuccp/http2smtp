@@ -3,18 +3,22 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/chuccp/go-web-frame/core"
+	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/smtp"
+	"go.uber.org/zap"
 	"go.uber.org/zap/buffer"
 )
 
 type LogService struct {
-	context  *core.Context
-	logModel *model.LogModel
+	context         *core.Context
+	logModel        *model.LogModel
+	attachmentModel *model.AttachmentModel
 }
 
 func (l *LogService) log(userId uint, st *model.SMTP, mails []*model.Mail, tokenName string, token string, subject, bodyString string, files []*smtp.File, err error) error {
@@ -63,7 +67,40 @@ func (l *LogService) log(userId uint, st *model.SMTP, mails []*model.Mail, token
 		}
 	}
 
-	return l.logModel.Save(&lg)
+	if err := l.logModel.Save(&lg); err != nil {
+		return err
+	}
+	l.recordAttachments(&lg, files)
+	return nil
+}
+
+// recordAttachments stores one row per file, linking it to the mail log it was sent
+// with. Best effort: the log's files JSON still records the paths, so a failure here
+// leaves downloads working through the legacy lookup.
+func (l *LogService) recordAttachments(logEntry *model.Log, files []*smtp.File) {
+	if l.attachmentModel == nil || len(files) == 0 {
+		return
+	}
+	now := time.Now()
+	rows := make([]*model.Attachment, 0, len(files))
+	for _, file := range files {
+		if file == nil || file.FilePath == "" {
+			continue
+		}
+		rows = append(rows, &model.Attachment{
+			LogId:      logEntry.Id,
+			Name:       file.Name,
+			FilePath:   file.FilePath,
+			CreateTime: now,
+			UpdateTime: now,
+		})
+	}
+	if len(rows) == 0 {
+		return
+	}
+	if err := l.attachmentModel.Saves(rows); err != nil {
+		log.Error("attachment rows write failed", zap.Uint("logId", logEntry.Id), zap.Error(err))
+	}
 }
 
 // Log records one send attempt. userId is the owner the entry belongs to: the token
@@ -78,5 +115,6 @@ func (l *LogService) Name() string {
 func (l *LogService) Init(context *core.Context) error {
 	l.context = context
 	l.logModel = core.GetModel[*model.LogModel](context)
+	l.attachmentModel = core.GetModel[*model.AttachmentModel](context)
 	return nil
 }

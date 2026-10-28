@@ -2,6 +2,9 @@ package model
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/chuccp/go-web-frame/config"
@@ -46,6 +49,7 @@ func TestByteSizeString(t *testing.T) {
 		1 << 30:   "1G",
 		512 << 10: "512K",
 		10:        "10",
+		0:         "0",
 		-1:        "-1",
 	}
 	for in, want := range cases {
@@ -118,6 +122,33 @@ func TestConfigReadsMaxBodySize(t *testing.T) {
 	}
 	if got := cfg.Core.MaxBodySizeValue(); got != -1 {
 		t.Errorf("unlimited MaxBodySizeValue = %d, want -1", got)
+	}
+}
+
+// A settings save rewrites config.ini from the live object; a hand-written
+// core.maxBodySize must survive that round trip.
+func TestConfigWriteKeepsMaxBodySize(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.ini")
+	if err := os.WriteFile(path, []byte("[core]\nmaxbodysize=20M\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, err := config.LoadSingleFileConfig(path)
+	if err != nil {
+		t.Fatalf("loading config: %v", err)
+	}
+	if _, err := GetConfig(c); err != nil {
+		t.Fatalf("decoding config: %v", err)
+	}
+	c.Put("core.dbinit", "true")
+	if err := c.WriteConfig(); err != nil {
+		t.Fatalf("writing config: %v", err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "maxbodysize") {
+		t.Errorf("config.ini lost maxbodysize after write:\n%s", data)
 	}
 }
 

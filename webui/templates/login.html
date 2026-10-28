@@ -13,8 +13,17 @@
   <div class="login-brand">HTTP2SMTP</div>
   <h1>{{.L.T "auth.login"}}</h1>
 </div>
-<form method="post" action="/login" class="form login-form">
+<form method="post" action="/login" class="form login-form"
+  data-captcha-title="{{.L.T "auth.captchaTitle"}}"
+  data-captcha-prompt-label="{{.L.T "auth.captchaPrompt"}}"
+  data-captcha-refresh-label="{{.L.T "auth.captchaRefresh"}}"
+  data-captcha-progress="{{.L.T "auth.captchaProgress"}}"
+  data-captcha-done="{{.L.T "auth.captchaDone"}}"
+  data-captcha-failed="{{.L.T "auth.captchaFailed"}}">
   <input type="hidden" name="next" value="{{.Next}}">
+  <input type="hidden" name="captchaId" value="" data-captcha-id>
+  <input type="hidden" name="captchaXs" value="" data-captcha-xs>
+  <input type="hidden" name="captchaYs" value="" data-captcha-ys>
   <label class="login-field">
     <span>{{.L.T "auth.username"}}</span>
     <div class="login-input">

@@ -100,21 +100,27 @@ func TestRestartService_AppliesNewPorts(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Put("manage.port", 19121)
 	cfg.Put("api.port", 19122)
+	cfg.Put("core.maxbodysize", "10M")
 
-	restartService, _, _ := startProbeApp(t, cfg, 19121, 19122)
+	restartService, manageConfig, apiConfig := startProbeApp(t, cfg, 19121, 19122)
 
 	waitBody(t, "http://127.0.0.1:19121/api/probe", "manage", 5*time.Second)
 	waitBody(t, "http://127.0.0.1:19122/probe", "api", 5*time.Second)
 
-	// What the settings page does: persist the new ports, then ask for the restart.
+	// What the settings page does: persist the new ports and body cap, then ask for the
+	// restart.
 	cfg.Put("manage.port", 19123)
 	cfg.Put("api.port", 19124)
+	cfg.Put("core.maxbodysize", "20M")
 	managePort, apiPort, err := restartService.Restart()
 	if err != nil {
 		t.Fatalf("Restart: %v", err)
 	}
 	if managePort != 19123 || apiPort != 19124 {
 		t.Fatalf("Restart reported ports %d/%d, want 19123/19124", managePort, apiPort)
+	}
+	if manageConfig.MaxBodySize != 20<<20 || apiConfig.MaxBodySize != 20<<20 {
+		t.Errorf("body cap = %d/%d, want 20 MB on both servers", manageConfig.MaxBodySize, apiConfig.MaxBodySize)
 	}
 
 	waitBody(t, "http://127.0.0.1:19123/api/probe", "manage", 5*time.Second)

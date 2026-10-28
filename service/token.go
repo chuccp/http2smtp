@@ -214,6 +214,8 @@ func (l *TokenService) sendMailWithToken(byToken *model.Token, recipients []stri
 	err := l.logService.Log(byToken.UserId, byToken.SMTP, byToken.ReceiveEmails, files, byToken.Name, byToken.Token, subject, content, err2)
 	if err != nil {
 		log.Error("sendMailWithToken log error", zap.Error(err))
+		// No log row records these paths, so nothing would ever clean the copies up.
+		removeSendFiles(files)
 	}
 	if err2 == nil {
 		return web.Ok("ok"), nil
@@ -313,7 +315,7 @@ func (l *TokenService) SendMailByToken(req *web.Request, user *model.User) (any,
 			}
 		}
 	}
-	files, err = l.appendBase64Files(files, sendMailApi.Files)
+	files, err = AppendBase64Files(l.cachePath, files, sendMailApi.Files)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +362,7 @@ func (l *TokenService) SendMailByTokenId(user *model.User, req *entity.SendMailB
 			}
 		}
 	}()
-	files, err = l.appendBase64Files(files, req.Files)
+	files, err = AppendBase64Files(l.cachePath, files, req.Files)
 	if err != nil {
 		return nil, err
 	}
@@ -370,10 +372,11 @@ func (l *TokenService) SendMailByTokenId(user *model.User, req *entity.SendMailB
 	return l.sendMailWithToken(byToken, req.Recipients, req.Subject, req.Content, files)
 }
 
-// appendBase64Files writes the base64 attachments of a send request into the cache and
+// AppendBase64Files writes the base64 attachments of a send request into the cache and
 // appends them to files. On error the files written so far are still returned, so the
-// caller's cleanup can remove them.
-func (l *TokenService) appendBase64Files(files []*smtp.File, specs []entity.File) ([]*smtp.File, error) {
+// caller's cleanup can remove them. The SMTP test-send path takes the same request shape
+// and uses this too.
+func AppendBase64Files(cachePath string, files []*smtp.File, specs []entity.File) ([]*smtp.File, error) {
 	for _, spec := range specs {
 		if len(spec.Data) == 0 {
 			continue
@@ -389,8 +392,10 @@ func (l *TokenService) appendBase64Files(files []*smtp.File, specs []entity.File
 				return files, err
 			}
 		}
-		filePath := util.GetCachePath(l.cachePath, name)
+		filePath := util.GetCachePath(cachePath, name)
 		if err := util.WriteFile(data, filePath); err != nil {
+			// A failed write can leave a partial file behind; nothing records it.
+			_ = os.Remove(filePath)
 			return files, err
 		}
 		// Append before opening so an open failure still leaves the written file where

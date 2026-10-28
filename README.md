@@ -32,6 +32,7 @@ A gateway service that converts SMTP protocol to HTTP interfaces, helping develo
 - 🚀 Configure SMTP servers and recipient emails via Web UI
 - 📦 Support for GET/POST/JSON request formats
 - 🔒 Token-based API access control
+- 🧩 Click-the-shapes captcha on login
 - 📎 Multi-file attachment support (Base64 encoding/form upload)
 - 🐳 Ready-to-use Docker image
 - 📊 Send record query and statistics
@@ -147,7 +148,9 @@ keeps the settings page from moving it.
 both is sent to once. Malformed addresses are skipped, and the request fails only if no
 usable recipient remains. Request bodies are capped by `core.maxBodySize` (default
 10 MB, K/M/G suffixes accepted, `-1` for no limit) for JSON, form and multipart requests
-alike; a change takes effect after a restart.
+alike; the settings page edits it, and a change takes effect after a restart. The limit
+applies to the encoded body, so a Base64 attachment uses about a third more space than
+the file itself.
 
 **Successful Response**:
 

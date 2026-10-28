@@ -32,7 +32,51 @@ func newTestLogService(t *testing.T) *LogService {
 	if err := logModel.CreateTable(); err != nil {
 		t.Fatalf("create t_log: %v", err)
 	}
-	return &LogService{logModel: logModel}
+	attachmentModel := &model.AttachmentModel{}
+	if err := attachmentModel.Init(conn, nil); err != nil {
+		t.Fatalf("init attachment model: %v", err)
+	}
+	if err := attachmentModel.CreateTable(); err != nil {
+		t.Fatalf("create t_attachment: %v", err)
+	}
+	return &LogService{logModel: logModel, attachmentModel: attachmentModel}
+}
+
+// Each file becomes a row linked to the log, keeping the name the sender used even when
+// two files share it.
+func TestLogServiceRecordsAttachments(t *testing.T) {
+	s := newTestLogService(t)
+	files := []*stmp.File{
+		{Name: "report.pdf", FilePath: "/cache/one.pdf"},
+		{Name: "report.pdf", FilePath: "/cache/two.pdf"},
+		{Name: "empty.pdf"},
+	}
+	if err := s.Log(5, nil, nil, files, "", "", "subject", "body", nil); err != nil {
+		t.Fatalf("log: %v", err)
+	}
+	logs, err := s.logModel.Query().All()
+	if err != nil || len(logs) != 1 {
+		t.Fatalf("logs = %d (%v), want 1", len(logs), err)
+	}
+	rows, err := s.attachmentModel.FindByLogId(logs[0].Id)
+	if err != nil {
+		t.Fatalf("reading attachments: %v", err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("attachments = %d, want 2 (the pathless entry is skipped)", len(rows))
+	}
+	if rows[0].Name != "report.pdf" || rows[0].FilePath != "/cache/one.pdf" {
+		t.Errorf("first attachment = %+v", rows[0])
+	}
+	if rows[1].Name != "report.pdf" || rows[1].FilePath != "/cache/two.pdf" {
+		t.Errorf("second attachment = %+v", rows[1])
+	}
+	if rows[0].LogId != logs[0].Id {
+		t.Errorf("log id = %d, want %d", rows[0].LogId, logs[0].Id)
+	}
+	if rows[0].CreateTime.IsZero() {
+		t.Error("attachment create time was not set")
+	}
 }
 
 // The entry records the owner, the formatted SMTP/recipient strings and a status that

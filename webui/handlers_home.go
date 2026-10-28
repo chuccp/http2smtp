@@ -10,6 +10,7 @@ import (
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
+	"github.com/chuccp/http2smtp/service"
 	"go.uber.org/zap"
 )
 
@@ -80,6 +81,52 @@ func (p *Pages) home(view *web.Template) error {
 	return redirect(view, "/dashboard")
 }
 
+// CaptchaView is the login page's challenge: the rendered shapes, the translated click
+// order and the id the answer is checked against. The image and prompt also travel
+// through /login/captcha when the refresh button asks for a new one.
+type CaptchaView struct {
+	ID    string `json:"id"`
+	Image string `json:"image"`
+	// Prompt is the text fallback; the page renders Shapes as icons in order and uses
+	// Labels for their accessible names, so the sequence itself needs no translation.
+	Prompt string   `json:"prompt"`
+	Shapes []string `json:"shapes"`
+	Labels []string `json:"labels"`
+	Count  int      `json:"count"`
+	Width  int      `json:"width"`
+	Height int      `json:"height"`
+}
+
+var captchaShapeKeys = map[string]string{
+	"circle":   "captcha.circle",
+	"triangle": "captcha.triangle",
+	"square":   "captcha.square",
+	"diamond":  "captcha.diamond",
+	"star":     "captcha.star",
+}
+
+func (p *Pages) captchaView(lang string, data *service.CaptchaData) *CaptchaView {
+	tr := translatorFor(lang)
+	labels := make([]string, 0, len(data.Shapes))
+	for _, shape := range data.Shapes {
+		if key, ok := captchaShapeKeys[shape]; ok {
+			labels = append(labels, tr.T(key))
+		} else {
+			labels = append(labels, shape)
+		}
+	}
+	return &CaptchaView{
+		ID:     data.ID,
+		Image:  data.Image,
+		Prompt: strings.Join(labels, " → "),
+		Shapes: append([]string(nil), data.Shapes...),
+		Labels: labels,
+		Count:  len(data.Shapes),
+		Width:  data.Width,
+		Height: data.Height,
+	}
+}
+
 func (p *Pages) loginData(req *web.Request, next string, flash Flash) *LoginData {
 	lang := langOf(req)
 	b := p.newBase(lang, "auth.login")
@@ -103,11 +150,35 @@ func (p *Pages) loginGet(view *web.Template) error {
 	return nil
 }
 
+// loginCaptcha issues a fresh challenge bound to the credentials the form is about to
+// submit. Sending them here (and not only with the login POST) lets the service tie the
+// challenge to this exact account and password, so a solved challenge cannot be pointed
+// at another account or replayed.
+func (p *Pages) loginCaptcha(req *web.Request) (any, error) {
+	username := req.GetFormParam("username")
+	password := req.GetFormParam("password")
+	if username == "" || password == "" {
+		return nil, web.NewErrorCode(web.CodeBadRequest, "username and password are required")
+	}
+	data, err := p.captchaService.New(username, password)
+	if err != nil {
+		return nil, err
+	}
+	return web.Data(p.captchaView(langOf(req), data)), nil
+}
+
 func (p *Pages) loginPost(view *web.Template) error {
 	req := view.Request()
 	username := req.GetFormParam("username")
 	password := req.GetFormParam("password")
 	next := safeNext(req.GetFormParam("next"))
+
+	// Check the captcha before the password: an invalid answer must not become a
+	// password oracle, and the challenge is consumed by the attempt either way.
+	if !p.captchaService.VerifyForm(req.GetFormParam("captchaId"), username, password, req.GetFormParam("captchaXs"), req.GetFormParam("captchaYs")) {
+		data := p.loginData(req, next, Flash{Err: translatorFor(langOf(req)).T("auth.captchaFailed")})
+		return renderPageStatus(view, "login", data, http.StatusUnauthorized)
+	}
 
 	dbUser, err := p.userService.ValidateLogin(username, password)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -21,9 +22,10 @@ import (
 )
 
 type Log struct {
-	context     *core.Context
-	logModel    *model.LogModel
-	userService *service.UserService
+	context         *core.Context
+	logModel        *model.LogModel
+	attachmentModel *model.AttachmentModel
+	userService     *service.UserService
 }
 
 // The log page is the instance's whole send record for an admin and the caller's own
@@ -135,10 +137,15 @@ func (l *Log) deleteOne(req *web.Request) (any, error) {
 	if one == nil {
 		return nil, errors.New("log not found")
 	}
+	attachments, err := l.attachmentModel.FindByLogId(uint(id))
+	if err != nil {
+		return nil, err
+	}
 	if err := l.logModel.DeleteByPK(uint(id)); err != nil {
 		return nil, err
 	}
-	removeAttachments(one.Files)
+	l.deleteAttachmentRows([]uint{uint(id)})
+	removeLogFiles(one.Files, attachments)
 	recordOp(l.context, req, user.Id, entity.OpDelete, entity.TargetLog, uint(id), one.Subject)
 	return web.Ok("ok"), nil
 }
@@ -182,8 +189,23 @@ func (l *Log) cleanUp(req *web.Request) (any, error) {
 		if err := l.logModel.Delete().Where("id IN (?)", batch).Delete(); err != nil {
 			return err
 		}
+		attachments, aerr := l.attachmentModel.FindByLogIds(batch)
+		if aerr != nil {
+			// The legacy files JSON still carries every path, so the cleanup below can
+			// proceed even when the attachment rows cannot be read.
+			log.Error("read attachment rows failed", zap.Error(aerr))
+		}
+		if derr := l.attachmentModel.Delete().Where("log_id IN ?", batch).Delete(); derr != nil {
+			log.Error("delete attachment rows failed", zap.Error(derr))
+		}
+		byLog := make(map[uint][]*model.Attachment, len(batch))
+		for _, attachment := range attachments {
+			if attachment != nil {
+				byLog[attachment.LogId] = append(byLog[attachment.LogId], attachment)
+			}
+		}
 		for _, id := range batch {
-			removeAttachments(filesByID[id])
+			removeLogFiles(filesByID[id], byLog[id])
 		}
 		return nil
 	})
@@ -211,64 +233,164 @@ func removeAttachments(filesJSON string) {
 	}
 }
 
-// downLoad serves an attachment recorded on a log the caller may read: their own, or any
-// entry when they are an admin. The path is resolved from the log record, never from
-// client input.
-func (l *Log) downLoad(req *web.Request) (any, error) {
-	logId, err := strconv.Atoi(req.GetFormParam("logId"))
-	if err != nil {
-		return nil, errors.New("logId is required")
+// deleteAttachmentRows removes the attachment rows of the given logs. Best effort: the
+// legacy files JSON still carries the paths, so a failed row delete never blocks the
+// cache cleanup.
+func (l *Log) deleteAttachmentRows(logIds []uint) {
+	if l.attachmentModel == nil || len(logIds) == 0 {
+		return
 	}
+	if err := deleteInBatches(logIds, func(batch []uint) error {
+		return l.attachmentModel.Delete().Where("log_id IN ?", batch).Delete()
+	}); err != nil {
+		log.Error("delete attachment rows failed", zap.Error(err))
+	}
+}
+
+// removeLogFiles deletes the cache copies recorded for a log in either place: the legacy
+// files JSON and the attachment table.
+func removeLogFiles(filesJSON string, attachments []*model.Attachment) {
+	removeAttachments(filesJSON)
+	for _, attachment := range attachments {
+		if attachment != nil && attachment.FilePath != "" {
+			_ = os.Remove(attachment.FilePath)
+		}
+	}
+}
+
+// downLoad serves an attachment the caller may read. A new-style link carries the
+// attachment id, whose log is the permission boundary; the older logId+index and
+// logId+file forms still resolve through the log's files JSON.
+func (l *Log) downLoad(req *web.Request) (any, error) {
+	attachmentIdRaw := req.GetFormParam("id")
+	logIdRaw := req.GetFormParam("logId")
+	indexRaw := req.GetFormParam("index")
 	fileName := req.GetFormParam("file")
-	if fileName == "" {
-		return nil, errors.New("file is required")
+	if attachmentIdRaw == "" && logIdRaw == "" {
+		return nil, errors.New("id or logId is required")
 	}
 	user, err := auth.User(req, l.context)
 	if user == nil {
 		return nil, err
 	}
-	query := l.logModel.Query().Where("id = ?", uint(logId))
-	if !user.IsAdmin {
-		query = query.Where("user_id = ?", user.Id)
+	var file *smtp.File
+	var logId uint
+	index := -1
+	if attachmentIdRaw != "" {
+		attachmentId, err := strconv.Atoi(attachmentIdRaw)
+		if err != nil {
+			return nil, errors.New("invalid attachment id")
+		}
+		attachment, err := l.attachmentModel.FindByPK(uint(attachmentId))
+		if err != nil {
+			return nil, err
+		}
+		if attachment == nil {
+			return nil, errors.New("attachment not found")
+		}
+		// The attachment's log is the permission boundary: a row whose log is gone, or
+		// belongs to someone else, stays unreachable.
+		query := l.logModel.Query().Where("id = ?", attachment.LogId)
+		if !user.IsAdmin {
+			query = query.Where("user_id = ?", user.Id)
+		}
+		entry, err := query.One()
+		if err != nil {
+			return nil, err
+		}
+		if entry == nil {
+			return nil, errors.New("attachment not found")
+		}
+		logId = attachment.LogId
+		file = &smtp.File{Name: attachment.Name, FilePath: attachment.FilePath}
+	} else {
+		if indexRaw == "" && fileName == "" {
+			return nil, errors.New("file or index is required")
+		}
+		parsed, err := strconv.Atoi(logIdRaw)
+		if err != nil {
+			return nil, errors.New("logId is required")
+		}
+		logId = uint(parsed)
+		query := l.logModel.Query().Where("id = ?", logId)
+		if !user.IsAdmin {
+			query = query.Where("user_id = ?", user.Id)
+		}
+		one, err := query.One()
+		if err != nil {
+			return nil, err
+		}
+		if one == nil {
+			return nil, errors.New("log not found")
+		}
+		if indexRaw != "" {
+			// Older links address the recorded array by position.
+			index, err = strconv.Atoi(indexRaw)
+			if err != nil {
+				return nil, errors.New("invalid file index")
+			}
+			file, err = attachmentAt(one.Files, index)
+		} else {
+			// The oldest links carry only the name; a duplicate resolves to the first copy.
+			file, err = attachmentByName(one.Files, fileName)
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
-	one, err := query.One()
-	if err != nil {
-		return nil, err
-	}
-	if one == nil {
-		return nil, errors.New("log not found")
-	}
-	filePath, err := FilePathOf(one.Files, fileName)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := os.Stat(filePath); err != nil {
+	if _, err := os.Stat(file.FilePath); err != nil {
 		return nil, errors.New("attachment file is no longer available")
 	}
-	log.Info("downLoad", zap.Uint("logId", uint(logId)), zap.String("file", fileName), zap.Uint("userId", user.Id))
-	return web.CreateFileResponse(filePath), nil
+	log.Info("downLoad", zap.Uint("logId", logId), zap.Int("index", index), zap.String("file", file.Name), zap.Uint("userId", user.Id))
+	// Serve it under the name it was sent with, not the hashed cache filename.
+	name := filepath.Base(file.Name)
+	if name == "." || name == ".." || name == string(filepath.Separator) {
+		return web.CreateFileResponse(file.FilePath), nil
+	}
+	return web.CreateFileResponseWithName(file.FilePath, name), nil
 }
 
-// FilePathOf resolves the stored path of a named attachment from a log's files JSON.
-func FilePathOf(filesJSON string, name string) (string, error) {
-	if filesJSON == "" {
-		return "", errors.New("log has no attachments")
+// attachmentAt resolves the attachment at index in a log's files array.
+func attachmentAt(filesJSON string, index int) (*smtp.File, error) {
+	files, err := decodeAttachments(filesJSON)
+	if err != nil {
+		return nil, err
 	}
-	var files []*smtp.File
-	if err := json.Unmarshal([]byte(filesJSON), &files); err != nil {
-		return "", errors.New("invalid attachment record")
+	if index < 0 || index >= len(files) || files[index] == nil || files[index].FilePath == "" {
+		return nil, errors.New("attachment not found")
+	}
+	return files[index], nil
+}
+
+// attachmentByName is the name lookup used by older links.
+func attachmentByName(filesJSON string, name string) (*smtp.File, error) {
+	files, err := decodeAttachments(filesJSON)
+	if err != nil {
+		return nil, err
 	}
 	for _, file := range files {
 		if file != nil && file.Name == name && file.FilePath != "" {
-			return file.FilePath, nil
+			return file, nil
 		}
 	}
-	return "", errors.New("attachment not found")
+	return nil, errors.New("attachment not found")
+}
+
+func decodeAttachments(filesJSON string) ([]*smtp.File, error) {
+	if filesJSON == "" {
+		return nil, errors.New("log has no attachments")
+	}
+	var files []*smtp.File
+	if err := json.Unmarshal([]byte(filesJSON), &files); err != nil {
+		return nil, errors.New("invalid attachment record")
+	}
+	return files, nil
 }
 
 func (l *Log) Init(context *core.Context) error {
 	l.context = context
 	l.logModel = wf.GetModel[*model.LogModel](context)
+	l.attachmentModel = wf.GetModel[*model.AttachmentModel](context)
 	l.userService = wf.GetService[*service.UserService](context)
 	context.Get("/api/log/:id", l.getOne).WithMeta(auth2.WithLogin())
 	context.Get("/api/log", l.getPage).WithMeta(auth2.WithLogin())

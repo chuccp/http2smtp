@@ -352,6 +352,222 @@
     }
   });
 
+  /* ---------- login captcha ----------
+     Clicking Login opens a modal with a fresh challenge from /login/captcha. The form
+     only submits after the shapes have been clicked in order: the dialog's confirm sets
+     the hidden answer fields and lets the submit through. Cancelling consumes nothing. */
+  (function () {
+    var form = document.querySelector('.login-form');
+    if (!form) return;
+    var idInput = form.querySelector('[data-captcha-id]');
+    var xsInput = form.querySelector('[data-captcha-xs]');
+    var ysInput = form.querySelector('[data-captcha-ys]');
+    if (!idInput || !xsInput || !ysInput) return;
+    var usernameInput = form.querySelector('[name=username]');
+    var passwordInput = form.querySelector('[name=password]');
+    var verified = false;
+    var cancelLabel = document.body.getAttribute('data-ui-cancel') || 'Cancel';
+
+    function attr(name, fallback) {
+      var value = form.getAttribute(name);
+      return value == null || value === '' ? fallback : value;
+    }
+
+    // The click order is shown as the shapes themselves, not translated names, so the
+    // sequence reads the same in every language. Labels only feed aria-label/title.
+    function shapeNode(shape) {
+      var ns = 'http://www.w3.org/2000/svg';
+      var node;
+      if (shape === 'circle') {
+        node = document.createElementNS(ns, 'circle');
+        node.setAttribute('cx', '12');
+        node.setAttribute('cy', '12');
+        node.setAttribute('r', '8.5');
+      } else if (shape === 'triangle') {
+        node = document.createElementNS(ns, 'path');
+        node.setAttribute('d', 'M12 3.8 21 20.2H3Z');
+      } else if (shape === 'square') {
+        node = document.createElementNS(ns, 'rect');
+        node.setAttribute('x', '4');
+        node.setAttribute('y', '4');
+        node.setAttribute('width', '16');
+        node.setAttribute('height', '16');
+      } else if (shape === 'diamond') {
+        node = document.createElementNS(ns, 'path');
+        node.setAttribute('d', 'M12 3 21 12 12 21 3 12Z');
+      } else {
+        node = document.createElementNS(ns, 'path');
+        node.setAttribute('d', 'M12 3.2 14.6 8.9 20.8 9.6 16.2 13.9 17.5 20 12 16.9 6.5 20 7.8 13.9 3.2 9.6 9.4 8.9Z');
+      }
+      return node;
+    }
+
+    function renderPrompt(target, data) {
+      target.textContent = '';
+      var shapes = data.shapes || [];
+      if (!shapes.length) {
+        target.textContent = data.prompt || '';
+        return;
+      }
+      var labels = data.labels || [];
+      var ns = 'http://www.w3.org/2000/svg';
+      shapes.forEach(function (shape, i) {
+        if (i) {
+          var arrow = document.createElement('span');
+          arrow.className = 'login-captcha-arrow';
+          arrow.textContent = '→';
+          target.appendChild(arrow);
+        }
+        var label = labels[i] || shape;
+        var icon = document.createElementNS(ns, 'svg');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('class', 'login-captcha-icon');
+        icon.setAttribute('role', 'img');
+        icon.setAttribute('aria-label', label);
+        icon.appendChild(shapeNode(shape));
+        var title = document.createElementNS(ns, 'title');
+        title.textContent = label;
+        icon.appendChild(title);
+        target.appendChild(icon);
+      });
+    }
+
+    form.addEventListener('submit', function (event) {
+      if (verified) return;
+      event.preventDefault();
+      if (form.reportValidity && !form.reportValidity()) return;
+      openCaptcha();
+    });
+
+    function openCaptcha() {
+      var cancelled = false;
+      var autoTimer = null;
+      // The challenge is bound to these exact values; the overlay blocks the form, so
+      // they cannot change while the dialog is open.
+      var username = usernameInput ? usernameInput.value : '';
+      var password = passwordInput ? passwordInput.value : '';
+      var dlg = UI.modal({
+        title: attr('data-captcha-title', ''),
+        width: '360px',
+        cancelValue: null,
+        onClose: function () {
+          cancelled = true;
+          clearTimeout(autoTimer);
+        }
+      });
+      var box = document.createElement('div');
+      box.className = 'login-captcha';
+      box.innerHTML =
+        '<div class="login-captcha-head"><span><span class="login-captcha-prefix"></span> ' +
+        '<span class="login-captcha-order" data-order></span></span>' +
+        '<button type="button" class="login-captcha-refresh" data-refresh></button></div>' +
+        '<div class="login-captcha-stage" data-stage>' +
+        '<img alt="" draggable="false" data-image>' +
+        '<div class="login-captcha-marks" data-marks></div></div>' +
+        '<div class="login-captcha-status" data-status></div>';
+      var orderEl = box.querySelector('[data-order]');
+      var refresh = box.querySelector('[data-refresh]');
+      var stage = box.querySelector('[data-stage]');
+      var image = box.querySelector('[data-image]');
+      var marks = box.querySelector('[data-marks]');
+      var status = box.querySelector('[data-status]');
+      box.querySelector('.login-captcha-prefix').textContent = attr('data-captcha-prompt-label', '');
+      refresh.textContent = attr('data-captcha-refresh-label', 'Refresh');
+
+      dlg.setBody(box);
+      var cancel = dlg.addButton(cancelLabel, false, function () { dlg.close(); });
+
+      var challengeId = '';
+      var width = 300;
+      var height = 200;
+      var total = 3;
+      var points = [];
+
+      function submitAnswer() {
+        if (!challengeId || points.length !== total) return;
+        idInput.value = challengeId;
+        xsInput.value = points.map(function (p) { return p.x; }).join(',');
+        ysInput.value = points.map(function (p) { return p.y; }).join(',');
+        verified = true;
+        dlg.close();
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
+      }
+      function progressText(done) {
+        return attr('data-captcha-progress', '{done}/{total}')
+          .replace('{done}', done)
+          .replace('{total}', total);
+      }
+      function render() {
+        if (challengeId && points.length === total) {
+          status.textContent = attr('data-captcha-done', '');
+          // The last click submits on its own; the short delay lets the marker land.
+          if (!autoTimer) {
+            autoTimer = setTimeout(function () {
+              if (!cancelled) submitAnswer();
+            }, 300);
+          }
+        } else {
+          status.textContent = progressText(points.length);
+        }
+      }
+      function reset() {
+        clearTimeout(autoTimer);
+        autoTimer = null;
+        points = [];
+        marks.textContent = '';
+        render();
+      }
+      function load() {
+        refresh.disabled = true;
+        status.textContent = '';
+        fetch('/login/captcha', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ username: username, password: password }).toString()
+        })
+          .then(function (response) { return response.json(); })
+          .then(function (payload) {
+            var data = payload && payload.data;
+            if (!data || !data.id || !data.image) throw new Error('bad captcha');
+            challengeId = data.id;
+            width = Number(data.width) || width;
+            height = Number(data.height) || height;
+            total = Number(data.count) || total;
+            image.src = data.image;
+            renderPrompt(orderEl, data);
+            reset();
+          })
+          .catch(function () {
+            challengeId = '';
+            status.textContent = attr('data-captcha-failed', '');
+          })
+          .then(function () { refresh.disabled = false; });
+      }
+
+      stage.addEventListener('click', function (event) {
+        if (!challengeId || points.length >= total) return;
+        var rect = image.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        var x = Math.round((event.clientX - rect.left) * width / rect.width);
+        var y = Math.round((event.clientY - rect.top) * height / rect.height);
+        if (x < 0 || y < 0 || x > width || y > height) return;
+        points.push({ x: x, y: y });
+        var mark = document.createElement('span');
+        mark.className = 'login-captcha-mark';
+        mark.textContent = String(points.length);
+        mark.style.left = (x / width * 100) + '%';
+        mark.style.top = (y / height * 100) + '%';
+        marks.appendChild(mark);
+        render();
+      });
+      refresh.addEventListener('click', load);
+      load();
+      dlg.focus(cancel);
+    }
+  })();
+
   /* ---------- copy to clipboard ----------
      navigator.clipboard only exists in a secure context; the management UI is
      normally reached over plain http on a LAN address, so fall back to the old

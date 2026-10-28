@@ -214,7 +214,8 @@ template set is loaded once per process and installed on each new server.
 | `db/` | Builds the GORM connection from config (sqlite or mysql) |
 | `util/` | String, time, template and HTTP helpers |
 
-Tables: `t_user`, `t_SMTP`, `t_mail`, `t_token`, `t_schedule`, `t_log`, `t_operation_log`.
+Tables: `t_user`, `t_SMTP`, `t_mail`, `t_token`, `t_schedule`, `t_log`, `t_attachment`,
+`t_operation_log`.
 
 ### Sessions and authorisation
 
@@ -256,10 +257,27 @@ an address in both is sent to once. A malformed address is skipped (`FilterValid
 rather than failing the whole send, and the log records only the addresses actually
 attempted. Making the list a hard whitelist would be a deliberate change of semantics,
 not a bug fix. A send body is capped by `core.maxBodySize` (default 10 MB; `K`/`M`/`G`
-suffixes accepted, `-1` unlimited), read once per process: JSON through the framework's
+suffixes accepted, `-1` unlimited): JSON through the framework's
 `ServerConfig.MaxBodySize` set in `main.go`, form/multipart through
 `TokenService.limitSendBody` — the framework parses those two without a size limit, and
-multipart is how attachments arrive. Like the ports, a change needs a restart.
+multipart is how attachments arrive. The settings page edits the value, `ApplyReSet`
+writes `core.maxbodysize`, and `RestartService` refreshes both `ServerConfig`s (in Docker
+too, since this is not a port). A hand edit of `config.ini` still needs a process restart;
+the in-process restart reads the live config, not the file.
+
+Login is protected by a server-rendered click captcha: `CaptchaService` draws exactly the
+three geometric shapes it asks for on a 300x200 PNG, the page asks for them in a random
+order, and the submitted image coordinates are checked against the stored targets.
+Challenges live in memory, expire after five minutes, are consumed by the first attempt
+(wrong or right), and the store is capped at 1024. `POST /login/captcha` takes the
+`username` and `password` the form is about to submit and binds the challenge to an
+HMAC of them: a solved challenge cannot be pointed at another account, and changing the
+credentials means fetching a new one. Both the page login and `POST /api/signIn` then
+send `captchaId`, `captchaXs` and `captchaYs` together with the same credentials. The
+password sent to the challenge endpoint is only hashed and is never stored or logged. The
+page's JS lives in `app.js`: the click order is rendered as the geometric shapes
+themselves (inline SVG), so the sequence is language-neutral; only the instruction
+prefix is translated, and the i18n `captcha.*` names are used for `aria-label`/`title`.
 
 Two routes are open until `core.init` is set and admin-only afterwards, because the setup
 wizard needs them before any account exists: `/adminExists` (it returns the administrator's
@@ -275,6 +293,15 @@ because the log list and the attachment download both filter on it. The admin ca
 page is the instance's send record, so an admin reads every user's entries (the list
 carries the same `adminOnly` filter as the other lists, and fills the owner name) and can
 fetch their attachments; everyone else gets `data: null` on a row that is not theirs.
+Every attachment also becomes a `t_attachment` row pointing at its log (`log_id`) with the
+original `name` and the hashed cache `file_path`; the table is what lets the UI link a
+download by attachment id and find which email a file belongs to. The log's `files` JSON
+is still written, both for rows created before the table existed and as the fallback when
+the row insert fails. `/api/download?id=<attachment id>` gates on the parent log and
+serves the original filename; the older `logId+index` and `file=<name>` forms still work
+through the JSON (a duplicate name resolves to the first copy). The mail-log list carries
+an attachment count and a "with attachments" filter, both covering old JSON entries too.
+Deleting or cleaning up a log removes its attachment rows and the cache copies.
 
 Management actions are audited separately from sends: `OperationLogService.Record`
 (best effort — a failed write never fails the action) stores create/update/delete,
@@ -345,7 +372,8 @@ and needs no change — it never referenced `web/` directly.
 - **Signing out ends every session for that user**, on all devices — it rotates the session
   salt (see above). Per-device revocation would need a server-side session store.
 - **The public `/sendMail` endpoint has no rate limiting.** The framework ships a
-  `ratelimit` component; it is not wired up here.
+  `ratelimit` component; it is not wired up here. The login captcha endpoint has no rate
+  limit either: its challenge store is bounded, but every request still renders a PNG.
 - **INI cannot express a `[]string` field.** A bad `[]string` value makes startup fail
   with `cannot convert string to []string` rather than reporting a config error; the app
   no longer has such a field (the old `web.server.locations` usage went away with the

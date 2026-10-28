@@ -19,23 +19,25 @@ type authFilter = auth2.AuthenticationFilter[*model.User]
 // Pages is the server-rendered management UI. It implements core.IRest and rides the
 // same port and auth filter as the JSON API, but its routes live at the site root.
 type Pages struct {
-	ctx          *core.Context
-	userService  *service.UserService
-	smtpService  *service.SmtpService
-	tokenService *service.TokenService
-	scheduleSvc  *service.ScheduleService
-	oplogService *service.OperationLogService
-	authFilter   *authFilter
+	ctx            *core.Context
+	userService    *service.UserService
+	smtpService    *service.SmtpService
+	tokenService   *service.TokenService
+	scheduleSvc    *service.ScheduleService
+	oplogService   *service.OperationLogService
+	captchaService *service.CaptchaService
+	authFilter     *authFilter
 
 	// Models are captured once: SwitchDB re-runs Init on the same instances, so the
 	// pointers stay valid across a settings save.
-	smtpModel     *model.SMTPModel
-	mailModel     *model.MailModel
-	tokenModel    *model.TokenModel
-	scheduleModel *model.ScheduleModel
-	logModel      *model.LogModel
-	userModel     *model.UserModel
-	oplogModel    *model.OperationLogModel
+	smtpModel       *model.SMTPModel
+	mailModel       *model.MailModel
+	tokenModel      *model.TokenModel
+	scheduleModel   *model.ScheduleModel
+	logModel        *model.LogModel
+	attachmentModel *model.AttachmentModel
+	userModel       *model.UserModel
+	oplogModel      *model.OperationLogModel
 
 	// Locale parsing is process-wide; the template set has its own process-wide cache.
 	once    sync.Once
@@ -52,12 +54,14 @@ func (p *Pages) Init(ctx *core.Context) error {
 	p.tokenService = wf.GetService[*service.TokenService](ctx)
 	p.scheduleSvc = wf.GetService[*service.ScheduleService](ctx)
 	p.oplogService = wf.GetService[*service.OperationLogService](ctx)
+	p.captchaService = wf.GetService[*service.CaptchaService](ctx)
 	p.authFilter = wf.GetFilter[*authFilter](ctx)
 	p.smtpModel = core.GetModel[*model.SMTPModel](ctx)
 	p.mailModel = core.GetModel[*model.MailModel](ctx)
 	p.tokenModel = core.GetModel[*model.TokenModel](ctx)
 	p.scheduleModel = core.GetModel[*model.ScheduleModel](ctx)
 	p.logModel = core.GetModel[*model.LogModel](ctx)
+	p.attachmentModel = core.GetModel[*model.AttachmentModel](ctx)
 	p.userModel = core.GetModel[*model.UserModel](ctx)
 	p.oplogModel = core.GetModel[*model.OperationLogModel](ctx)
 
@@ -93,6 +97,7 @@ func (p *Pages) Init(ctx *core.Context) error {
 	ctx.GetTemplate("/", p.home, templateOption)
 	ctx.GetTemplate("/login", p.loginGet, templateOption)
 	ctx.PostTemplate("/login", p.loginPost, templateOption)
+	ctx.Post("/login/captcha", p.loginCaptcha)
 	ctx.PostTemplate("/logout", p.logout, templateOption)
 	ctx.Any("/lang", p.lang)
 

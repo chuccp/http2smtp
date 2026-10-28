@@ -10,6 +10,7 @@
   <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
   <form class="filter-bar" method="get" action="/logs">
     <input type="text" name="searchKey" value="{{.SearchKey}}" placeholder="{{.L.T "log.searchKeyword"}}">
+    <label class="check"><input type="checkbox" name="hasAttachment" value="true" {{if .HasAttachment}}checked{{end}} data-auto-submit> {{.L.T "log.hasAttachment"}}</label>
     {{if .User.IsAdmin}}
     <label class="check"><input type="checkbox" name="adminOnly" value="true" {{if .AdminOnly}}checked{{end}} data-auto-submit> {{.L.T "log.adminCreated"}}</label>
     {{end}}
@@ -27,6 +28,7 @@
       <th>{{.L.T "log.smtpServer"}}</th>
       <th>{{.L.T "log.recipients"}}</th>
       <th>{{.L.T "log.subject"}}</th>
+      <th>{{.L.T "log.attachments"}}</th>
       <th>{{.L.T "log.status"}}</th>
       <th>{{.L.T "log.createTime"}}</th>
       <th class="col-actions">{{.L.T "common.operations"}}</th>
@@ -40,6 +42,7 @@
       <td>{{.SMTP}}</td>
       <td>{{.Mail}}</td>
       <td>{{.Subject}}</td>
+      <td>{{with index $.AttachmentCounts .Id}}{{.}}{{else}}<span class="muted">—</span>{{end}}</td>
       <td>
         {{if eq .StatusStr "success"}}<span class="tag tag-ok">{{$.L.T "log.success"}}</span>
         {{else if eq .StatusStr "error"}}<span class="tag tag-off">{{$.L.T "log.error"}}</span>
@@ -54,7 +57,7 @@
       </td>
     </tr>
     {{else}}
-    <tr><td colspan="8" class="muted">{{.L.T "log.noResults"}}</td></tr>
+    <tr><td colspan="{{if .User.IsAdmin}}9{{else}}8{{end}}" class="muted">{{.L.T "log.noResults"}}</td></tr>
     {{end}}
   </tbody>
 </table>

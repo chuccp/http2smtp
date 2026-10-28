@@ -11,9 +11,9 @@ import (
 )
 
 func TestAppendBase64Files(t *testing.T) {
-	svc := &TokenService{cachePath: t.TempDir()}
+	cachePath := t.TempDir()
 	data := base64.StdEncoding.EncodeToString([]byte("hello"))
-	files, err := svc.appendBase64Files(nil, []entity.File{{Name: "note.txt", Data: data}})
+	files, err := AppendBase64Files(cachePath, nil, []entity.File{{Name: "note.txt", Data: data}})
 	if err != nil {
 		t.Fatalf("append: %v", err)
 	}
@@ -38,9 +38,9 @@ func TestAppendBase64Files(t *testing.T) {
 // A decode failure returns the files already written, so the caller's cleanup can remove
 // them, and never claims an entry it did not write.
 func TestAppendBase64FilesInvalidData(t *testing.T) {
-	svc := &TokenService{cachePath: t.TempDir()}
+	cachePath := t.TempDir()
 	good := base64.StdEncoding.EncodeToString([]byte("ok"))
-	files, err := svc.appendBase64Files(nil, []entity.File{
+	files, err := AppendBase64Files(cachePath, nil, []entity.File{
 		{Name: "first.txt", Data: good},
 		{Name: "bad.txt", Data: "not base64!"},
 	})

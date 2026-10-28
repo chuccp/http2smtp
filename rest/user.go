@@ -23,29 +23,47 @@ type User struct {
 	context              *core.Context
 	authenticationFilter *authFilter
 	userService          *service.UserService
+	captchaService       *service.CaptchaService
+}
+
+// signInRequest carries the click captcha alongside the credentials. The page login and
+// this endpoint share the same challenge service; the browser page is not the only way
+// in, so skipping the captcha here would make it decorative.
+type signInRequest struct {
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	CaptchaId string `json:"captchaId"`
+	CaptchaXs string `json:"captchaXs"`
+	CaptchaYs string `json:"captchaYs"`
 }
 
 func (l *User) signIn(request *web.Request) (any, error) {
-	var u entity.LoginUser
-	err := request.BindJSON(&u)
+	var req signInRequest
+	err := request.BindJSON(&req)
 	if err != nil {
 		return nil, err
 	}
+	if !l.captchaService.VerifyForm(req.CaptchaId, req.Username, req.Password, req.CaptchaXs, req.CaptchaYs) {
+		return nil, web.NewErrorCode(web.CodeBadRequest, "captcha verification failed")
+	}
 
-	dbUser, err := l.userService.ValidateLogin(u.Username, u.Password)
+	dbUser, err := l.userService.ValidateLogin(req.Username, req.Password)
 	if err != nil {
 		// Failed attempts are not audited: the endpoint is unauthenticated, so recording
 		// them would let anyone write rows into the audit table for free.
 		return nil, err
 	}
 
-	u.Id = dbUser.Id
-	u.IsAdmin = dbUser.IsAdmin
-	u.Salt = dbUser.Salt
+	u := &entity.LoginUser{
+		Id:       dbUser.Id,
+		Username: dbUser.Name,
+		IsAdmin:  dbUser.IsAdmin,
+		Salt:     dbUser.Salt,
+	}
 	// The session travels only in the HttpOnly cookie. Echoing the encrypted token in
 	// the response body as well would hand it to any script that can read a fetch
 	// result, defeating the point of HttpOnly.
-	if _, err := l.authenticationFilter.SignIn(&u, request); err != nil {
+	if _, err := l.authenticationFilter.SignIn(u, request); err != nil {
 		return nil, err
 	}
 	recordOp(l.context, request, dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
@@ -224,6 +242,7 @@ func (l *User) Init(context *core.Context) error {
 	l.context = context
 	l.authenticationFilter = wf.GetFilter[*authFilter](context)
 	l.userService = wf.GetService[*service.UserService](context)
+	l.captchaService = wf.GetService[*service.CaptchaService](context)
 	context.Post("/api/signIn", l.signIn)
 	context.Post("/api/logout", l.logout)
 	context.Post("/api/changePassword", l.changePassword).WithMeta(auth2.WithLogin())

@@ -15,10 +15,12 @@ import (
 // LogListData is the mail-log list page.
 type LogListData struct {
 	Base
-	Rows      []*model.Log
-	Pager     *Pager
-	SearchKey string
-	AdminOnly bool
+	Rows             []*model.Log
+	Pager            *Pager
+	SearchKey        string
+	AdminOnly        bool
+	HasAttachment    bool
+	AttachmentCounts map[uint]int
 }
 
 func (p *Pages) logList(view *web.Template) error {
@@ -30,6 +32,7 @@ func (p *Pages) logList(view *web.Template) error {
 	page := listPage(req)
 	searchKey := req.Query("searchKey")
 	adminOnly := boolQuery(req, "adminOnly")
+	hasAttachment := boolQuery(req, "hasAttachment")
 
 	query := p.logModel.Query()
 	if user.IsAdmin {
@@ -41,6 +44,10 @@ func (p *Pages) logList(view *web.Template) error {
 	}
 	if searchKey != "" {
 		query = query.Where("(name LIKE ? OR mail LIKE ? OR subject LIKE ?)", "%"+searchKey+"%", "%"+searchKey+"%", "%"+searchKey+"%")
+	}
+	if hasAttachment {
+		// New entries have attachment rows; older ones only carry the files JSON.
+		query = query.Where("(id IN (SELECT log_id FROM t_attachment) OR files <> ?)", "")
 	}
 	result, err := query.Order("id desc").PageForWeb(page)
 	if err != nil {
@@ -56,16 +63,50 @@ func (p *Pages) logList(view *web.Template) error {
 			func(l *model.Log) uint { return l.UserId },
 			func(l *model.Log, n string) { l.UserName = n })
 	}
-	q := queryOf(req, "searchKey", "adminOnly", "pageSize")
+	counts := p.attachmentCounts(result.List)
+	q := queryOf(req, "searchKey", "adminOnly", "hasAttachment", "pageSize")
 	data := &LogListData{
-		Base:      p.base(req, user, "log.systemLogs", true),
-		Rows:      result.List,
-		Pager:     newPager(page.PageNo, page.PageSize, result.Total, "/logs", q),
-		SearchKey: searchKey,
-		AdminOnly: adminOnly,
+		Base:             p.base(req, user, "log.systemLogs", true),
+		Rows:             result.List,
+		Pager:            newPager(page.PageNo, page.PageSize, result.Total, "/logs", q),
+		SearchKey:        searchKey,
+		AdminOnly:        adminOnly,
+		HasAttachment:    hasAttachment,
+		AttachmentCounts: counts,
 	}
 	view.View("logs_list").Layout(layoutFor("logs_list")).Data(data)
 	return nil
+}
+
+// attachmentCounts returns how many files each listed log carries. Logs from before the
+// attachment table fall back to their files JSON.
+func (p *Pages) attachmentCounts(rows []*model.Log) map[uint]int {
+	counts := make(map[uint]int, len(rows))
+	ids := make([]uint, 0, len(rows))
+	for _, one := range rows {
+		if one != nil {
+			ids = append(ids, one.Id)
+		}
+	}
+	if len(ids) > 0 {
+		if attachments, err := p.attachmentModel.FindByLogIds(ids); err == nil {
+			for _, attachment := range attachments {
+				if attachment != nil {
+					counts[attachment.LogId]++
+				}
+			}
+		}
+	}
+	for _, one := range rows {
+		if one == nil || counts[one.Id] > 0 || one.Files == "" {
+			continue
+		}
+		var files []*smtp.File
+		if err := json.Unmarshal([]byte(one.Files), &files); err == nil {
+			counts[one.Id] = len(files)
+		}
+	}
+	return counts
 }
 
 // LogAttachment is one downloadable file recorded on a log entry.
@@ -111,22 +152,42 @@ func (p *Pages) logDetail(view *web.Template) error {
 
 	data := &LogDetailData{Base: p.base(req, user, "log.logDetail", false), Entry: one}
 	// The stored paths are resolved server-side by /api/download; the page only carries
-	// the recorded names.
-	var files []*smtp.File
-	if one.Files != "" {
-		_ = json.Unmarshal([]byte(one.Files), &files)
+	// the recorded ids and names. Logs written before the attachment table existed have
+	// no rows and fall back to their files JSON.
+	attachments, err := p.attachmentModel.FindByLogId(one.Id)
+	if err != nil {
+		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
-	for _, f := range files {
-		if f == nil || f.Name == "" {
-			continue
+	if len(attachments) > 0 {
+		for _, attachment := range attachments {
+			if attachment == nil || attachment.Name == "" {
+				continue
+			}
+			v := url.Values{}
+			v.Set("id", strconv.Itoa(int(attachment.Id)))
+			data.Attachments = append(data.Attachments, LogAttachment{
+				Name: attachment.Name,
+				Href: "/api/download?" + v.Encode(),
+			})
 		}
-		v := url.Values{}
-		v.Set("logId", strconv.Itoa(int(one.Id)))
-		v.Set("file", f.Name)
-		data.Attachments = append(data.Attachments, LogAttachment{
-			Name: f.Name,
-			Href: "/api/download?" + v.Encode(),
-		})
+	} else {
+		var files []*smtp.File
+		if one.Files != "" {
+			_ = json.Unmarshal([]byte(one.Files), &files)
+		}
+		for i, f := range files {
+			if f == nil || f.Name == "" {
+				continue
+			}
+			// Address the recorded position, not the name: two attachments may share one.
+			v := url.Values{}
+			v.Set("logId", strconv.Itoa(int(one.Id)))
+			v.Set("index", strconv.Itoa(i))
+			data.Attachments = append(data.Attachments, LogAttachment{
+				Name: f.Name,
+				Href: "/api/download?" + v.Encode(),
+			})
+		}
 	}
 	view.View("logs_detail").Layout(layoutFor("logs_detail")).Data(data)
 	return nil

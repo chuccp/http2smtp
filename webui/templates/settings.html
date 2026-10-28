@@ -14,6 +14,9 @@
     {{if not .IsDocker}}
     <div class="hint hint-indent">{{.L.T "setup.portHint"}}</div>
     {{end}}
+    <div class="form-grid form-grid-single" style="margin-top:10px">
+      {{template "field" (dict "L" .L "label" "settings.maxBodySize" "name" "maxBodySize" "value" .MaxBodySize "placeholderKey" "settings.maxBodySizePlaceholder" "required" true)}}
+    </div>
   </div>
 
   <div class="card">

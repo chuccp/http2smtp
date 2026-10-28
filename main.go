@@ -128,6 +128,7 @@ func createAPP() (*wf.WebFrame, error) {
 		&model.TokenModel{},
 		&model.ScheduleModel{},
 		&model.LogModel{},
+		&model.AttachmentModel{},
 		&model.UserModel{},
 		&model.OperationLogModel{},
 	)
@@ -143,7 +144,7 @@ func createAPP() (*wf.WebFrame, error) {
 		configapply.AttachInitial(connection)
 	}
 	restartService := &service.RestartService{}
-	builder.Service(restartService, &service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{}, &service.OperationLogService{})
+	builder.Service(restartService, &service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{}, &service.OperationLogService{}, &service.CaptchaService{})
 
 	builder.Runner(schedule.NewScheduleWithSeconds(), &runner.ScheduleRunner{})
 

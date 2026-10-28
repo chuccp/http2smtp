@@ -65,7 +65,9 @@ func (s *RestartService) Restart() (int, int, error) {
 	if cfg.Core != nil && cfg.Core.IsDocker {
 		// In Docker the ports arrive on the command line or the environment and the
 		// container's port mapping is built around them, so a restart re-inits without
-		// moving them — whatever the settings page wrote to config.ini.
+		// moving them — whatever the settings page wrote to config.ini. The body cap is
+		// not a port, so it still follows the restart.
+		s.applyMaxBodySize(cfg)
 		time.AfterFunc(restartDelay, s.restart)
 		return s.manage.Port, s.api.Port, nil
 	}
@@ -73,10 +75,22 @@ func (s *RestartService) Restart() (int, int, error) {
 	if err := checkPorts(managePort, apiPort, s.manage.Port, s.api.Port); err != nil {
 		return 0, 0, err
 	}
+	s.applyMaxBodySize(cfg)
 	s.manage.Port = managePort
 	s.api.Port = apiPort
 	time.AfterFunc(restartDelay, s.restart)
 	return managePort, apiPort, nil
+}
+
+// applyMaxBodySize carries the configured cap onto both servers. It runs only once the
+// restart is actually going ahead, so a refused restart leaves the running limit alone.
+func (s *RestartService) applyMaxBodySize(cfg *model.Config) {
+	size := model.DefaultMaxBodySize
+	if cfg.Core != nil {
+		size = cfg.Core.MaxBodySizeValue()
+	}
+	s.manage.MaxBodySize = size
+	s.api.MaxBodySize = size
 }
 
 // checkPorts rejects a change the app could not come back up with, leaving the running

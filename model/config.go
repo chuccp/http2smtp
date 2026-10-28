@@ -61,6 +61,8 @@ func (b ByteSize) String() string {
 	switch {
 	case b < 0:
 		return "-1"
+	case b == 0:
+		return "0"
 	case b%(1<<30) == 0:
 		return strconv.FormatInt(int64(b>>30), 10) + "G"
 	case b%(1<<20) == 0:
@@ -177,21 +179,23 @@ type CoreConfig struct {
 	LogLevel  string `json:"logLevel"`
 	IsDocker  bool   `json:"isDocker"`
 	Debug     bool   `json:"debug"`
-	// MaxBodySize caps request bodies on both servers. Rediscovered at startup, so a
-	// change needs a restart (like the ports).
+	// MaxBodySize caps request bodies on both servers; 0 means unset (10 MB). Written by
+	// the settings page and applied on the next restart, like the ports.
 	MaxBodySize ByteSize `json:"maxBodySize"`
 }
 
 func DefaultCoreConfig() *CoreConfig {
 	return &CoreConfig{
-		Init:        false,
-		DbInit:      false,
-		CachePath:   ".cache",
-		DbType:      "sqlite",
-		LogLevel:    "info",
-		IsDocker:    false,
-		Debug:       false,
-		MaxBodySize: ByteSize(DefaultMaxBodySize),
+		Init:      false,
+		DbInit:    false,
+		CachePath: ".cache",
+		DbType:    "sqlite",
+		LogLevel:  "info",
+		IsDocker:  false,
+		Debug:     false,
+		// 0 is "unset": GetConfig fills in DefaultMaxBodySize, and a settings save that
+		// does not carry the field leaves an existing config.ini value alone.
+		MaxBodySize: 0,
 	}
 }
 

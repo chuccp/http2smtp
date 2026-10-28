@@ -741,3 +741,49 @@ func TestLogCleanupGuardsEmptyAndZero(t *testing.T) {
 		}
 	}
 }
+
+// The login captcha carries its challenge into the form and keeps the submit button
+// disabled until the script has seen every click.
+// The login form carries the captcha hook and the hidden answer fields; the challenge
+// itself opens in a modal and is fetched by the script, so the page stays compact.
+func TestLoginRendersCaptchaHook(t *testing.T) {
+	out := renderContent(t, "login", &LoginData{Base: templateTestBase()})
+	for _, want := range []string{
+		`name="captchaId"`,
+		`name="captchaXs"`,
+		`name="captchaYs"`,
+		`data-captcha-title=`,
+		`data-captcha-prompt-label=`,
+		`data-captcha-progress=`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("login captcha hook is missing %q", want)
+		}
+	}
+	if strings.Contains(out, "data:image/png") {
+		t.Error("the login page should fetch the challenge instead of embedding it")
+	}
+}
+
+// The general settings card carries the request-body cap next to the ports.
+func TestSettingsRendersMaxBodySize(t *testing.T) {
+	base := templateTestBase()
+	base.User = &NavUser{Id: 1, Name: "admin", IsAdmin: true}
+	out := renderContent(t, "settings", &SettingsData{
+		Base:        base,
+		WebPort:     12566,
+		ApiPort:     12567,
+		MaxBodySize: "10M",
+		DbType:      "sqlite",
+		SqliteFile:  "d-mail.db",
+	})
+	for _, want := range []string{
+		`name="maxBodySize"`,
+		`value="10M"`,
+		`required`,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("settings maxBodySize field is missing %q", want)
+		}
+	}
+}

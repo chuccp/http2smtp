@@ -49,6 +49,10 @@ func putDbSettings(ctx *core.Context, setInfo *model.Config) {
 	if setInfo.Core.DbType != "" {
 		ctx.GetConfig().Put("core.dbtype", setInfo.Core.DbType)
 	}
+	// 0 means the caller did not send a size; leave whatever config.ini already holds.
+	if setInfo.Core.MaxBodySize != 0 {
+		ctx.GetConfig().Put("core.maxbodysize", setInfo.Core.MaxBodySize.String())
+	}
 	if setInfo.Sqlite != nil && setInfo.Sqlite.Filename != "" {
 		ctx.GetConfig().Put("sqlite.filename", setInfo.Sqlite.Filename)
 	}

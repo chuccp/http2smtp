@@ -10,7 +10,6 @@ import (
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/log"
-	wfutil "github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
 	"github.com/chuccp/http2smtp/entity"
@@ -200,6 +199,9 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 	// copies behind.
 	files := make([]*stmp2.File, 0)
 	logged := false
+	// Registered before any handle is opened: an error halfway through the loop must
+	// still remove the copies already written. The close below runs first (LIFO), which
+	// matters on Windows, where an open file cannot be removed.
 	defer func() {
 		if !logged {
 			for _, f := range files {
@@ -209,31 +211,6 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 			}
 		}
 	}()
-	for _, file := range sendMail.Files {
-		if file.Data == "" {
-			continue
-		}
-		data, err := wfutil.DecodeFileBase64(file.Data)
-		if err != nil {
-			return nil, err
-		}
-		name := file.Name
-		if name == "" {
-			name, err = wfutil.CalculateMD5(data)
-			if err != nil {
-				return nil, err
-			}
-		}
-		filePath := wfutil.GetCachePath(smtp.cachePath, name)
-		if err := wfutil.WriteFile(data, filePath); err != nil {
-			return nil, err
-		}
-		vFile, err := os.Open(filePath)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, &stmp2.File{File: vFile, Name: name, FilePath: filePath})
-	}
 	// go-mail reads these readers but never closes them.
 	defer func() {
 		for _, f := range files {
@@ -242,13 +219,20 @@ func (smtp *Smtp) sendMail(req *web.Request) (any, error) {
 			}
 		}
 	}()
+	files, err = service.AppendBase64Files(smtp.cachePath, files, sendMail.Files)
+	if err != nil {
+		return nil, err
+	}
 	// 发送邮件
 	err = stmp2.SendAllMsg(smtpServer, recipients, files, sendMail.Subject, sendMail.Content)
-	logged = true
 	// The log is the instance's send record, so a test send belongs there too, under the
 	// user who ran the test — including an admin testing another user's server.
 	if logErr := smtp.logService.Log(user.Id, smtpServer, recipients, files, "", "", sendMail.Subject, sendMail.Content, err); logErr != nil {
 		log.Error("sendMailBySMTP log error", zap.Error(logErr))
+	} else {
+		// Only a written log entry takes ownership of the attachments. If the write
+		// failed, nothing references these paths, so the deferred cleanup removes them.
+		logged = true
 	}
 	if err != nil {
 		return nil, err

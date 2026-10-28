@@ -1,7 +1,10 @@
 package webui
 
 import (
+	"fmt"
+	"net/http"
 	"strconv"
+	"strings"
 
 	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/web"
@@ -17,6 +20,7 @@ type SettingsData struct {
 	IsDocker      bool
 	WebPort       int
 	ApiPort       int
+	MaxBodySize   string
 	DbType        string
 	SqliteFile    string
 	MysqlHost     string
@@ -38,6 +42,7 @@ func (p *Pages) settingsGet(view *web.Template) error {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	data.IsDocker = cfg.Core.IsDocker
+	data.MaxBodySize = cfg.Core.MaxBodySize.String()
 	data.DbType = cfg.Core.DbType
 	if data.DbType == "" {
 		data.DbType = "sqlite"
@@ -62,10 +67,19 @@ func (p *Pages) settingsGet(view *web.Template) error {
 	return nil
 }
 
-// settingsFromForm reads the database section of the settings form. A blank MySQL
-// password means "keep the stored one" — MaskSecrets never echoes it.
-func settingsFromForm(req *web.Request) *model.Config {
+// settingsFromForm reads the database and general section of the settings form. A
+// blank MySQL password means "keep the stored one" — MaskSecrets never echoes it.
+func settingsFromForm(req *web.Request) (*model.Config, error) {
 	setInfo := model.DefaultConfig()
+	// A missing field (an old page left open across an upgrade) keeps the current value;
+	// a present but invalid one is a real error.
+	if raw := strings.TrimSpace(req.GetFormParam("maxBodySize")); raw != "" {
+		maxBodySize, err := model.ParseByteSize(raw)
+		if err != nil {
+			return nil, fmt.Errorf("maxBodySize: %w", err)
+		}
+		setInfo.Core.MaxBodySize = maxBodySize
+	}
 	setInfo.Core.DbType = req.GetFormParam("dbType")
 	if setInfo.Core.DbType == "sqlite" {
 		setInfo.Sqlite.Filename = req.GetFormParam("sqliteFile")
@@ -82,7 +96,7 @@ func settingsFromForm(req *web.Request) *model.Config {
 		setInfo.Manage.Port, _ = strconv.Atoi(req.GetFormParam("webPort"))
 		setInfo.Api.Port, _ = strconv.Atoi(req.GetFormParam("apiPort"))
 	}
-	return setInfo
+	return setInfo, nil
 }
 
 // settingsSave persists without restarting; the ports only take effect through the
@@ -93,7 +107,11 @@ func (p *Pages) settingsSave(view *web.Template) error {
 	if !ok {
 		return nil
 	}
-	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
+	setInfo, err := settingsFromForm(req)
+	if err != nil {
+		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
+	}
+	if err := configapply.ApplyReSet(p.ctx, setInfo); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	p.recordOp(req, user.Id, entity.OpUpdate, entity.TargetSettings, 0, "")
@@ -123,7 +141,11 @@ func (p *Pages) settingsRestart(view *web.Template) error {
 	if cfg, err := model.GetConfig(p.ctx.GetConfig()); err == nil && cfg.Manage != nil {
 		current = cfg.Manage.Port
 	}
-	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
+	setInfo, err := settingsFromForm(req)
+	if err != nil {
+		return p.renderErr(view, http.StatusBadRequest, "common.failed", err.Error())
+	}
+	if err := configapply.ApplyReSet(p.ctx, setInfo); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
 	managePort, apiPort, err := wf.GetService[*service.RestartService](p.ctx).Restart()
