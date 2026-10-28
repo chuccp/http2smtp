@@ -61,7 +61,7 @@ func (p *Pages) Init(ctx *core.Context) error {
 	if p.loadErr != nil {
 		return p.loadErr
 	}
-	templates, err := web.LoadTemplates(
+	templateOption, err := web.LoadTemplateOption(
 		web.EmbedFs("templates", templatesFS).
 			Reload(devMode).
 			ReloadPath(devTemplatesDir),
@@ -71,12 +71,8 @@ func (p *Pages) Init(ctx *core.Context) error {
 		web.WithPartials("partials"),
 	)
 	if err != nil {
-		if devMode {
-			err = fmt.Errorf("development mode serves templates from disk but %s could not be loaded: %w — run the binary from the repository root, or build with -tags release for a self-contained binary (WEBUI_DEV=0 also forces the embedded copies in a dev build)", devTemplatesDir, err)
-		}
 		return fmt.Errorf("load web templates: %w", err)
 	}
-	templateOption := web.WithTemplateSet(templates)
 
 	// Static assets live in the binary and take part in the normal route pipeline.
 	// The framework chooses the embedded copy or the development directory.

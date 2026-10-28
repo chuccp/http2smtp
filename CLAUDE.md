@@ -77,7 +77,7 @@ JSON is embedded in every build.
   live in `webui/handlers_*.go`. Page routes sit at the site root (`/login`, `/smtp`, …)
   and call `requireUser`/`requireAdmin` themselves — they deliberately do **not** carry the
   framework's `WithLogin` meta, whose 403 JSON is wrong for a browser navigation.
-- Rendering: `Pages.Init` calls framework `web.LoadTemplates` with
+- Rendering: `Pages.Init` calls framework `web.LoadTemplateOption` with
   `web.EmbedFs("templates", templatesFS).Reload(devMode)` and passes the resulting
   `web.TemplateSet` to each page route through `web.WithTemplateSet`. The framework
   infers reload behavior from the filesystem. Page handlers call
