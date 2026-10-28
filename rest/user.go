@@ -46,6 +46,7 @@ func (l *User) signIn(request *web.Request) (any, error) {
 	if _, err := l.authenticationFilter.SignIn(&u, request); err != nil {
 		return nil, err
 	}
+	recordOp(l.context, dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
 	return map[string]any{
 		"isAdmin": dbUser.IsAdmin,
 	}, nil
@@ -149,7 +150,11 @@ func (l *User) createUser(request *web.Request) (any, error) {
 	if err := util.ValidatePassword(req.Password); err != nil {
 		return nil, err
 	}
-	return web.Ok("ok"), l.userService.CreateUser(req.Name, req.Password, req.IsAdmin, req.IsUse)
+	if err := l.userService.CreateUser(req.Name, req.Password, req.IsAdmin, req.IsUse); err != nil {
+		return nil, err
+	}
+	recordOp(l.context, user.Id, entity.OpCreate, entity.TargetUser, 0, req.Name)
+	return web.Ok("ok"), nil
 }
 
 func (l *User) updateUser(request *web.Request) (any, error) {
@@ -179,7 +184,11 @@ func (l *User) updateUser(request *web.Request) (any, error) {
 			return nil, err
 		}
 	}
-	return web.Ok("ok"), l.userService.UpdateUser(req.Id, req.Name, req.Password, req.IsAdmin, req.IsUse)
+	if err := l.userService.UpdateUser(req.Id, req.Name, req.Password, req.IsAdmin, req.IsUse); err != nil {
+		return nil, err
+	}
+	recordOp(l.context, user.Id, entity.OpUpdate, entity.TargetUser, req.Id, req.Name)
+	return web.Ok("ok"), nil
 }
 
 func (l *User) deleteUser(request *web.Request) (any, error) {
@@ -194,7 +203,17 @@ func (l *User) deleteUser(request *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return web.Ok("ok"), l.userService.DeleteUser(uint(id))
+	target, _ := l.userService.GetOne(uint(id))
+	if err := l.userService.DeleteUser(uint(id)); err != nil {
+		return nil, err
+	}
+	// DeleteUser disables the account (and ends its sessions); the audit entry says so.
+	name := ""
+	if target != nil {
+		name = target.Name
+	}
+	recordOp(l.context, user.Id, entity.OpDisable, entity.TargetUser, uint(id), name)
+	return web.Ok("ok"), nil
 }
 
 func (l *User) Init(context *core.Context) error {

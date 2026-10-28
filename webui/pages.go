@@ -24,6 +24,7 @@ type Pages struct {
 	smtpService  *service.SmtpService
 	tokenService *service.TokenService
 	scheduleSvc  *service.ScheduleService
+	oplogService *service.OperationLogService
 	authFilter   *authFilter
 
 	// Models are captured once: SwitchDB re-runs Init on the same instances, so the
@@ -34,6 +35,7 @@ type Pages struct {
 	scheduleModel *model.ScheduleModel
 	logModel      *model.LogModel
 	userModel     *model.UserModel
+	oplogModel    *model.OperationLogModel
 
 	// Locale parsing is process-wide; the template set has its own process-wide cache.
 	once    sync.Once
@@ -49,6 +51,7 @@ func (p *Pages) Init(ctx *core.Context) error {
 	p.smtpService = wf.GetService[*service.SmtpService](ctx)
 	p.tokenService = wf.GetService[*service.TokenService](ctx)
 	p.scheduleSvc = wf.GetService[*service.ScheduleService](ctx)
+	p.oplogService = wf.GetService[*service.OperationLogService](ctx)
 	p.authFilter = wf.GetFilter[*authFilter](ctx)
 	p.smtpModel = core.GetModel[*model.SMTPModel](ctx)
 	p.mailModel = core.GetModel[*model.MailModel](ctx)
@@ -56,6 +59,7 @@ func (p *Pages) Init(ctx *core.Context) error {
 	p.scheduleModel = core.GetModel[*model.ScheduleModel](ctx)
 	p.logModel = core.GetModel[*model.LogModel](ctx)
 	p.userModel = core.GetModel[*model.UserModel](ctx)
+	p.oplogModel = core.GetModel[*model.OperationLogModel](ctx)
 
 	p.once.Do(func() {
 		p.loadErr = loadI18n()

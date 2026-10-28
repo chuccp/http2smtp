@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 )
 
@@ -493,6 +494,27 @@ func TestSendDialogsOfferAttachments(t *testing.T) {
 			if !strings.Contains(out, want) {
 				t.Errorf("%s is missing %q", c.page, want)
 			}
+		}
+	}
+}
+
+// The operation-log page renders the translated action and target plus the operator.
+func TestOplogListRendersLabels(t *testing.T) {
+	out := renderContent(t, "oplog_list", &OplogListData{
+		Base: templateTestBase(),
+		Rows: []OplogRow{{
+			OperationLog: &model.OperationLog{
+				Id: 1, UserId: 1, UserName: "111111",
+				Action: entity.OpDelete, TargetType: entity.TargetSchedule, TargetName: "nightly",
+			},
+			ActionLabel: "删除",
+			ActionClass: "tag-off",
+			TargetLabel: "定时任务",
+		}},
+	})
+	for _, want := range []string{"删除", "定时任务", "nightly", "111111", "tag-off"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("operation log page is missing %q", want)
 		}
 	}
 }

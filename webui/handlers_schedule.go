@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/util"
 )
@@ -344,10 +345,12 @@ func (p *Pages) scheduleSave(view *web.Template) error {
 		if err := p.scheduleSvc.Edit(existing); err != nil {
 			return fail(err.Error())
 		}
+		p.recordOp(user.Id, entity.OpUpdate, entity.TargetSchedule, existing.Id, existing.Name)
 	} else {
 		if err := p.scheduleSvc.Save(st); err != nil {
 			return fail(err.Error())
 		}
+		p.recordOp(user.Id, entity.OpCreate, entity.TargetSchedule, st.Id, st.Name)
 	}
 	return redirect(view, backTo("/schedule", "common.success", "", ""))
 }

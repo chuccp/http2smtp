@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/chuccp/go-web-frame/web"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	stmp2 "github.com/chuccp/http2smtp/smtp"
 )
@@ -161,6 +162,7 @@ func (p *Pages) smtpSave(view *web.Template) error {
 		if err := p.smtpModel.Save(existing); err != nil {
 			return formErr(data, err.Error())
 		}
+		p.recordOp(user.Id, entity.OpUpdate, entity.TargetSMTP, existing.Id, existing.Name)
 	} else {
 		row := &model.SMTP{
 			UserId:   user.Id,
@@ -180,6 +182,7 @@ func (p *Pages) smtpSave(view *web.Template) error {
 		if err := p.smtpModel.Save(row); err != nil {
 			return formErr(data, err.Error())
 		}
+		p.recordOp(user.Id, entity.OpCreate, entity.TargetSMTP, row.Id, row.Name)
 	}
 	return redirect(view, backTo("/smtp", "common.success", "", ""))
 }

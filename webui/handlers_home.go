@@ -50,6 +50,8 @@ func (p *Pages) registerPageRoutes(ctx *core.Context, templateOption web.Templat
 	ctx.GetTemplate("/logs", p.logList, templateOption)
 	ctx.GetTemplate("/logs/:id", p.logDetail, templateOption)
 
+	ctx.GetTemplate("/oplogs", p.oplogList, templateOption)
+
 	ctx.GetTemplate("/users", p.userList, templateOption)
 	ctx.GetTemplate("/users/form", p.userForm, templateOption)
 	ctx.GetTemplate("/users/form/:id", p.userForm, templateOption)
@@ -120,6 +122,7 @@ func (p *Pages) loginPost(view *web.Template) error {
 	if _, err := p.authFilter.SignIn(lu, req); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
+	p.recordOp(dbUser.Id, entity.OpLogin, entity.TargetUser, dbUser.Id, dbUser.Name)
 	return redirect(view, next)
 }
 

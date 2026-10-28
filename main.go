@@ -123,6 +123,7 @@ func createAPP() (*wf.WebFrame, error) {
 		&model.ScheduleModel{},
 		&model.LogModel{},
 		&model.UserModel{},
+		&model.OperationLogModel{},
 	)
 
 	if coreState.Init || coreState.DbInit {
@@ -136,7 +137,7 @@ func createAPP() (*wf.WebFrame, error) {
 		configapply.AttachInitial(connection)
 	}
 	restartService := &service.RestartService{}
-	builder.Service(restartService, &service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{})
+	builder.Service(restartService, &service.TokenService{}, &service.ScheduleService{}, &service.LogService{}, &service.SmtpService{}, &service.UserService{}, &service.OperationLogService{})
 
 	builder.Runner(schedule.NewScheduleWithSeconds(), &runner.ScheduleRunner{})
 

@@ -68,6 +68,7 @@ func (smtp *Smtp) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(smtp.context, user.Id, entity.OpDelete, entity.TargetSMTP, uint(atoi), exist.Name)
 	return web.Ok("ok"), nil
 
 }
@@ -95,6 +96,7 @@ func (smtp *Smtp) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(smtp.context, user.Id, entity.OpCreate, entity.TargetSMTP, st.Id, st.Name)
 	return web.Ok("ok"), nil
 
 }
@@ -137,6 +139,7 @@ func (smtp *Smtp) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(smtp.context, user.Id, entity.OpUpdate, entity.TargetSMTP, exist.Id, exist.Name)
 	return web.Ok("ok"), nil
 
 }

@@ -6,6 +6,7 @@ import (
 	wf "github.com/chuccp/go-web-frame"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/configapply"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
 )
@@ -88,12 +89,14 @@ func settingsFromForm(req *web.Request) *model.Config {
 // save-and-restart button.
 func (p *Pages) settingsSave(view *web.Template) error {
 	req := view.Request()
-	if _, ok := p.requireAdmin(view); !ok {
+	user, ok := p.requireAdmin(view)
+	if !ok {
 		return nil
 	}
 	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
+	p.recordOp(user.Id, entity.OpUpdate, entity.TargetSettings, 0, "")
 	return redirect(view, backTo("/settings", "settings.settingsSaved", "", ""))
 }
 
@@ -123,6 +126,9 @@ func (p *Pages) settingsRestart(view *web.Template) error {
 	if err := configapply.ApplyReSet(p.ctx, settingsFromForm(req)); err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())
 	}
+	// Recorded before the restart so the entry lands in the database that is still
+	// attached; the restart is in-process and would otherwise race the write.
+	p.recordOp(user.Id, entity.OpRestart, entity.TargetSettings, 0, "")
 	managePort, apiPort, err := wf.GetService[*service.RestartService](p.ctx).Restart()
 	if err != nil {
 		return p.renderErr(view, 0, "common.failed", err.Error())

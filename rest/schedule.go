@@ -12,6 +12,7 @@ import (
 	"github.com/chuccp/go-web-frame/log"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
 	"github.com/chuccp/http2smtp/util"
@@ -62,6 +63,7 @@ func (schedule *Schedule) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(schedule.context, user.Id, entity.OpDelete, entity.TargetSchedule, uint(atoi), exist.Name)
 	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) getPage(req *web.Request) (any, error) {
@@ -104,6 +106,7 @@ func (schedule *Schedule) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(schedule.context, user.Id, entity.OpCreate, entity.TargetSchedule, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 func (schedule *Schedule) putOne(req *web.Request) (any, error) {
@@ -152,6 +155,7 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(schedule.context, user.Id, entity.OpUpdate, entity.TargetSchedule, exist.Id, exist.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -267,6 +271,11 @@ func (schedule *Schedule) toggleOne(req *web.Request) (any, error) {
 	if err := schedule.scheduleModel.Save(st); err != nil {
 		return nil, err
 	}
+	action := entity.OpDisable
+	if st.IsUse {
+		action = entity.OpEnable
+	}
+	recordOp(schedule.context, user.Id, action, entity.TargetSchedule, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 
@@ -301,6 +310,7 @@ func (schedule *Schedule) triggerById(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(schedule.context, user.Id, entity.OpTrigger, entity.TargetSchedule, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 

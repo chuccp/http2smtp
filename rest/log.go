@@ -136,6 +136,7 @@ func (l *Log) deleteOne(req *web.Request) (any, error) {
 		return nil, err
 	}
 	removeAttachments(one.Files)
+	recordOp(l.context, user.Id, entity.OpDelete, entity.TargetLog, uint(id), one.Subject)
 	return web.Ok("ok"), nil
 }
 
@@ -177,6 +178,7 @@ func (l *Log) cleanUp(req *web.Request) (any, error) {
 	for _, one := range files {
 		removeAttachments(one)
 	}
+	recordOp(l.context, user.Id, entity.OpCleanup, entity.TargetLog, 0, "")
 	return web.Data(map[string]any{"deleted": len(ids)}), nil
 }
 

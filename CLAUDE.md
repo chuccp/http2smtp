@@ -214,7 +214,7 @@ template set is loaded once per process and installed on each new server.
 | `db/` | Builds the GORM connection from config (sqlite or mysql) |
 | `util/` | String, time, template and HTTP helpers |
 
-Tables: `t_user`, `t_SMTP`, `t_mail`, `t_token`, `t_schedule`, `t_log`.
+Tables: `t_user`, `t_SMTP`, `t_mail`, `t_token`, `t_schedule`, `t_log`, `t_operation_log`.
 
 ### Sessions and authorisation
 
@@ -269,6 +269,12 @@ because the log list and the attachment download both filter on it. The admin ca
 page is the instance's send record, so an admin reads every user's entries (the list
 carries the same `adminOnly` filter as the other lists, and fills the owner name) and can
 fetch their attachments; everyone else gets `data: null` on a row that is not theirs.
+
+Management actions are audited separately from sends: `OperationLogService.Record`
+(best effort — a failed write never fails the action) stores create/update/delete,
+enable/disable, trigger, cleanup, restart and login events from both the page handlers
+and the JSON API, and the admin-only `/oplogs` page lists them translated. This is not
+the mail log: `t_log` records sends, `t_operation_log` records who changed what.
 
 Nothing prunes `t_log` or the attachment cache on its own — cleanup is manual
 (`DELETE /log/:id` and `POST /log/cleanup`, which takes `days`: 0 clears everything).

@@ -11,6 +11,7 @@ import (
 	"github.com/chuccp/go-web-frame/core"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
+	"github.com/chuccp/http2smtp/entity"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/service"
 )
@@ -59,6 +60,7 @@ func (m *Mail) deleteOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(m.context, user.Id, entity.OpDelete, entity.TargetMail, uint(atoi), exist.Name)
 	return web.Ok("ok"), nil
 }
 func (m *Mail) getPage(req *web.Request) (any, error) {
@@ -140,6 +142,7 @@ func (m *Mail) postOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(m.context, user.Id, entity.OpCreate, entity.TargetMail, st.Id, st.Name)
 	return web.Ok("ok"), nil
 }
 func (m *Mail) putOne(req *web.Request) (any, error) {
@@ -173,6 +176,7 @@ func (m *Mail) putOne(req *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordOp(m.context, user.Id, entity.OpUpdate, entity.TargetMail, exist.Id, exist.Name)
 	return web.Ok("ok"), nil
 }
 func (m *Mail) Init(context *core.Context) error {

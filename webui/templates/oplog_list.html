@@ -1,0 +1,33 @@
+{{define "content"}}
+<div class="toolbar">
+  <button type="button" class="btn" data-refresh>{{.L.T "common.refresh"}}</button>
+</div>
+
+<div class="table-wrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>{{.L.T "common.createTime"}}</th>
+      <th>{{.L.T "oplog.user"}}</th>
+      <th>{{.L.T "oplog.action"}}</th>
+      <th>{{.L.T "oplog.target"}}</th>
+      <th>{{.L.T "common.name"}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td class="muted">{{fmtTime .CreateTime}}</td>
+      <td>{{.UserName}}</td>
+      <td><span class="tag {{.ActionClass}}">{{.ActionLabel}}</span></td>
+      <td>{{.TargetLabel}}</td>
+      <td>{{.TargetName}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" class="muted">—</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{template "pager" .}}
+{{end}}

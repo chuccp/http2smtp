@@ -298,6 +298,7 @@ func (p *Pages) tokenSave(view *web.Template) error {
 		if err := p.tokenModel.Save(existing); err != nil {
 			return fail(err.Error())
 		}
+		p.recordOp(user.Id, entity.OpUpdate, entity.TargetToken, existing.Id, existing.Name)
 	} else {
 		row := &model.Token{
 			UserId:          user.Id,
@@ -311,6 +312,7 @@ func (p *Pages) tokenSave(view *web.Template) error {
 		if err := p.tokenModel.Save(row); err != nil {
 			return fail(err.Error())
 		}
+		p.recordOp(user.Id, entity.OpCreate, entity.TargetToken, row.Id, row.Name)
 	}
 	return redirect(view, backTo("/tokens", "common.success", "", ""))
 }
