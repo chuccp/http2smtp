@@ -22,6 +22,13 @@ HTTP2SMTP はセルフホスト可能な HTTP-to-SMTP ゲートウェイです�
 > アップグレード前に[「v0.2.x からのアップグレード」](#v02x-からのアップグレード)を
 > 確認してください。
 
+## コミュニティ
+
+Telegram：<https://t.me/+JClG9_DojaM0ZGE1>
+
+問題報告や機能提案は [GitHub Issues](https://github.com/chuccp/http2smtp/issues) へ
+お寄せください。
+
 ## 主な機能
 
 - JSON、フォーム、URL パラメーターによるメール送信
@@ -319,13 +326,6 @@ var staticFS embed.FS
 
 最新ビルドは [GitHub Releases](https://github.com/chuccp/http2smtp/releases) と
 [Docker Hub](https://hub.docker.com/r/cooge123/http2smtp) から取得できます。
-
-## コミュニティ
-
-Telegram：<https://t.me/+JClG9_DojaM0ZGE1>
-
-問題報告や機能提案は [GitHub Issues](https://github.com/chuccp/http2smtp/issues) へ
-お寄せください。
 
 ## ライセンス
 

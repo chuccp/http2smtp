@@ -19,6 +19,12 @@ HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在管理界�
 > 管理页面的兼容模式，不会打开或修改旧数据库，并会在页面中提示备份与重置步骤。
 > 升级前请先阅读[从 v0.2.x 升级](#从-v02x-升级)。
 
+## 社区
+
+Telegram：<https://t.me/+JClG9_DojaM0ZGE1>
+
+欢迎在 [GitHub Issues](https://github.com/chuccp/http2smtp/issues) 提交问题与建议。
+
 ## 主要功能
 
 - 支持 JSON、表单和 URL 参数发送邮件
@@ -310,12 +316,6 @@ var staticFS embed.FS
 
 最新构建可从 [GitHub Releases](https://github.com/chuccp/http2smtp/releases) 和
 [Docker Hub](https://hub.docker.com/r/cooge123/http2smtp) 获取。
-
-## 社区
-
-Telegram：<https://t.me/+JClG9_DojaM0ZGE1>
-
-欢迎在 [GitHub Issues](https://github.com/chuccp/http2smtp/issues) 提交问题与建议。
 
 ## 许可证
 
