@@ -42,10 +42,6 @@ HTTP2SMTP 是一個可自託管的 HTTP 到 SMTP 閘道。你可以在管理介�
 |---|---|
 | <img src="./docs/screenshots/login.png" alt="登入" width="100%"> | <img src="./docs/screenshots/setup.png" alt="安裝精靈" width="100%"> |
 
-**資料不相容與重設提示**
-
-<img src="./docs/screenshots/compatibility.png" alt="相容提示與重設頁面" width="100%">
-
 ## 快速開始
 
 ### Docker Compose

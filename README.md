@@ -44,10 +44,6 @@ simple HTTP request.
 |---|---|
 | <img src="./docs/screenshots/login.png" alt="Login" width="100%"> | <img src="./docs/screenshots/setup.png" alt="Setup wizard" width="100%"> |
 
-**Incompatible data / reset guide**
-
-<img src="./docs/screenshots/compatibility.png" alt="Compatibility and reset page" width="100%">
-
 ## Quick Start
 
 ### Docker Compose

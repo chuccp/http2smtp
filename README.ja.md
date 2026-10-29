@@ -45,10 +45,6 @@ HTTP2SMTP はセルフホスト可能な HTTP-to-SMTP ゲートウェイです�
 |---|---|
 | <img src="./docs/screenshots/login.png" alt="ログイン" width="100%"> | <img src="./docs/screenshots/setup.png" alt="セットアップウィザード" width="100%"> |
 
-**データ互換性エラーとリセット手順**
-
-<img src="./docs/screenshots/compatibility.png" alt="互換性エラーとリセット画面" width="100%">
-
 ## クイックスタート
 
 ### Docker Compose
