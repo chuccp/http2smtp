@@ -21,6 +21,13 @@ simple HTTP request.
 > instructions. The old database is not opened or modified. Read
 > [Upgrading from v0.2.x](#upgrading-from-v02x) before upgrading.
 
+## Community
+
+Telegram: <https://t.me/+JClG9_DojaM0ZGE1>
+
+Issues and feature requests are welcome in
+[GitHub Issues](https://github.com/chuccp/http2smtp/issues).
+
 ## Highlights
 
 - HTTP sending with JSON, form data or query parameters
@@ -316,13 +323,6 @@ The locale JSON files are embedded as well. The release workflow:
 Latest builds are available from
 [GitHub Releases](https://github.com/chuccp/http2smtp/releases) and
 [Docker Hub](https://hub.docker.com/r/cooge123/http2smtp).
-
-## Community
-
-Telegram: <https://t.me/+JClG9_DojaM0ZGE1>
-
-Issues and feature requests are welcome in
-[GitHub Issues](https://github.com/chuccp/http2smtp/issues).
 
 ## License
 
