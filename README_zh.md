@@ -10,7 +10,7 @@
 
 [English](./README.md) | **简体中文**
 
-HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在现代化管理界面中维护 SMTP
+HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在管理界面中维护 SMTP
 服务器、收件人、API 令牌和定时任务，业务程序只需要发送一个 HTTP 请求即可投递邮件。
 
 > [!IMPORTANT]
@@ -31,6 +31,20 @@ HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在现代化�
 - 简体中文、繁体中文、英文和日文界面
 - Docker 单目录 `/data` 持久化
 - GitHub 自动验证嵌入资源、打包和发布版本
+
+## 界面截图
+
+| 仪表盘 | 系统设置 |
+|---|---|
+| <img src="./docs/screenshots/dashboard.png" alt="仪表盘" width="100%"> | <img src="./docs/screenshots/settings.png" alt="系统设置" width="100%"> |
+
+| 登录 | 安装向导 |
+|---|---|
+| <img src="./docs/screenshots/login.png" alt="登录" width="100%"> | <img src="./docs/screenshots/setup.png" alt="安装向导" width="100%"> |
+
+**数据不兼容与重置提示**
+
+<img src="./docs/screenshots/compatibility.png" alt="兼容提示与重置页面" width="100%">
 
 ## 快速开始
 

@@ -11,8 +11,8 @@
 **English** | [简体中文](./README_zh.md)
 
 HTTP2SMTP is a self-hosted HTTP-to-SMTP gateway. Manage SMTP servers, recipients, API
-tokens and scheduled tasks from a modern web UI, then send mail from any application with
-a simple HTTP request.
+tokens and scheduled tasks from the web UI, then send mail from any application with a
+simple HTTP request.
 
 > [!IMPORTANT]
 > This release is **not data-compatible with v0.2.x**. If an incompatible installation is
@@ -33,6 +33,20 @@ a simple HTTP request.
 - Chinese, Traditional Chinese, English and Japanese interfaces
 - Docker image with one persistent `/data` volume
 - GitHub releases with version and embedded UI verified automatically
+
+## Screenshots
+
+| Dashboard | Settings |
+|---|---|
+| <img src="./docs/screenshots/dashboard.png" alt="Dashboard" width="100%"> | <img src="./docs/screenshots/settings.png" alt="Settings" width="100%"> |
+
+| Login | Setup |
+|---|---|
+| <img src="./docs/screenshots/login.png" alt="Login" width="100%"> | <img src="./docs/screenshots/setup.png" alt="Setup wizard" width="100%"> |
+
+**Incompatible data / reset guide**
+
+<img src="./docs/screenshots/compatibility.png" alt="Compatibility and reset page" width="100%">
 
 ## Quick Start
 
