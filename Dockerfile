@@ -6,8 +6,11 @@ ARG release_base=https://github.com/chuccp/http2smtp/releases/latest/download
 
 # Package the GitHub Release binary as-is. Templates, static assets and locale files
 # are already embedded by the release build.
-ADD ${release_base}/http2smtp-linux-${goarch}.tar.gz /app/
-RUN tar -xzf http2smtp-linux-${goarch}.tar.gz && rm -rf  *.tar.gz && chmod a+x /app/http2smtp
+ADD ${release_base}/http2smtp-linux-${goarch}.tar.gz /tmp/http2smtp-release.tar.gz
+RUN mkdir -p /app \
+    && tar -xzf /tmp/http2smtp-release.tar.gz -C /app \
+    && chmod a+x /app/http2smtp \
+    && rm -f /tmp/http2smtp-release.tar.gz
 
 # Everything mutable lives under one mountable root: config.ini, the SQLite
 # database, rotated application logs, and date-stamped attachment directories.
