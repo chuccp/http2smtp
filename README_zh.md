@@ -308,13 +308,6 @@ var staticFS embed.FS
 最新构建可从 [GitHub Releases](https://github.com/chuccp/http2smtp/releases) 和
 [Docker Hub](https://hub.docker.com/r/cooge123/http2smtp) 获取。
 
-## 安全建议
-
-- 管理端口应放在 HTTPS 反向代理后，并限制为可信网络访问。
-- API 令牌等同于密码；发现泄露后应立即停用或删除。
-- 公开邮件接口没有内置限流。对互联网开放时，请在反向代理或网关层配置限流。
-- 备份时同时保存配置和数据库，只备份其中一项可能无法完整恢复安装。
-
 ## 社区
 
 Telegram：<https://t.me/+JClG9_DojaM0ZGE1>

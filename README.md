@@ -314,15 +314,6 @@ Latest builds are available from
 [GitHub Releases](https://github.com/chuccp/http2smtp/releases) and
 [Docker Hub](https://hub.docker.com/r/cooge123/http2smtp).
 
-## Security Notes
-
-- Put the management port behind HTTPS and restrict it to trusted networks.
-- Treat API tokens as credentials; rotate or disable exposed tokens immediately.
-- The public mail endpoint does not include built-in rate limiting. Use a reverse proxy or
-  gateway when exposing it to the internet.
-- Backups should include both the configuration and the database; either alone may be
-  insufficient to restore an installation.
-
 ## Community
 
 Telegram: <https://t.me/+JClG9_DojaM0ZGE1>
