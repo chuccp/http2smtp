@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTTP2SMTP - 使用 HTTP 发送邮件</title>
+  <meta name="description" content="HTTP2SMTP 是一个自托管的 HTTP 到 SMTP 网关，提供管理界面、API 令牌、定时任务、附件、邮件日志和 Docker 支持。">
+  <meta name="theme-color" content="#07111f">
+  <meta property="og:title" content="HTTP2SMTP - 使用 HTTP 发送邮件">
+  <meta property="og:description" content="自托管 HTTP-to-SMTP 网关，使用网页管理 SMTP、令牌、收件人和定时任务。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://chuccp.github.io/http2smtp/">
+  <meta property="og:image" content="https://chuccp.github.io/http2smtp/screenshots/dashboard.webp">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./" aria-label="HTTP2SMTP 首页">
+        <img src="./favicon.svg" alt="" width="38" height="38">
+        <span>HTTP2SMTP</span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#features">功能</a>
+        <a href="#screenshots">界面</a>
+        <a href="#quickstart">快速开始</a>
+        <a href="#api">API</a>
+      </nav>
+      <div class="header-actions">
+        <div class="language-menu">
+          <button type="button" aria-haspopup="true">中文</button>
+          <div class="language-links">
+            <a href="https://github.com/chuccp/http2smtp/blob/main/README.md">English</a>
+            <a href="https://github.com/chuccp/http2smtp/blob/main/README_zh.md">简体中文</a>
+            <a href="https://github.com/chuccp/http2smtp/blob/main/README.zh-TW.md">繁體中文</a>
+            <a href="https://github.com/chuccp/http2smtp/blob/main/README.ja.md">日本語</a>
+          </div>
+        </div>
+        <a class="github-link" href="https://github.com/chuccp/http2smtp" aria-label="GitHub 仓库">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7A11.5 11.5 0 0 0 8.4 23c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.7.2 2.9.1 3.2.8.9 1.2 1.9 1.2 3.2 0 4.5-2.8 5.5-5.4 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .7Z"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-glow hero-glow-one"></div>
+      <div class="hero-glow hero-glow-two"></div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span></span> Self-hosted · HTTP → SMTP</div>
+          <h1>让 HTTP 请求，<br><strong>直接变成邮件。</strong></h1>
+          <p class="hero-lead">
+            在浏览器中管理 SMTP、收件人、API 令牌和定时任务。
+            业务程序不再保存邮件密码，只需发送一个 HTTP 请求。
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#quickstart">
+              Docker 快速开始
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </a>
+            <a class="button button-ghost" href="https://github.com/chuccp/http2smtp/releases/latest">下载最新版</a>
+          </div>
+          <div class="hero-tags">
+            <span>Go 单二进制</span>
+            <span>4 种语言</span>
+            <span>多架构 Docker</span>
+            <span>Token 鉴权</span>
+          </div>
+        </div>
+
+        <div class="hero-preview">
+          <div class="browser-frame">
+            <div class="browser-bar">
+              <span></span><span></span><span></span>
+              <div>127.0.0.1:12566</div>
+            </div>
+            <img src="./screenshots/dashboard.webp" alt="HTTP2SMTP 仪表盘" width="1024" height="712">
+          </div>
+          <div class="floating-card floating-card-top">
+            <span class="status-dot"></span>
+            <div><strong>Management</strong><small>:12566</small></div>
+          </div>
+          <div class="floating-card floating-card-bottom">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>
+            <div><strong>Scheduled</strong><small>Cron ready</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="metrics">
+      <div class="container metric-grid">
+        <div><strong>2</strong><span>独立服务端口</span></div>
+        <div><strong>4</strong><span>内置界面语言</span></div>
+        <div><strong>1</strong><span>可发布的二进制</span></div>
+        <div><strong>/data</strong><span>统一持久化目录</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Features</span>
+            <h2>从发送到审计，一处完成</h2>
+          </div>
+          <p>适合告警、报表、自动化和内部系统通知，无需在每个项目里重复维护 SMTP 配置。</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card">
+            <span class="feature-icon icon-blue"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></span>
+            <h3>JSON / 表单 / GET</h3>
+            <p>三种请求方式共享同一套令牌与收件人配置，方便脚本、Webhook 和服务端直接调用。</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon icon-green"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4 2.8 7.5 7 9 4.2-1.5 7-5 7-9V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <h3>令牌与权限隔离</h3>
+            <p>普通用户只能管理自己的 SMTP、收件人和令牌，管理员统一审计与维护全站数据。</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon icon-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+            <h3>定时任务</h3>
+            <p>使用 Cron 表达式请求 API 或链接，支持响应模板、失败发送策略和立即测试。</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon icon-rose"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg></span>
+            <h3>日志与附件</h3>
+            <p>邮件发送记录、附件下载和操作审计日志完整保留，方便问题定位与安全管理。</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon icon-cyan"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span>
+            <h3>双端口部署</h3>
+            <p>管理界面与公开发信 API 分开监听，可以只把 12567 端口暴露给业务系统。</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon icon-violet"><svg viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 0 1 2-2h12v16H6a2 2 0 0 1-2-2Z"/><path d="M8 8h6M8 12h6"/></svg></span>
+            <h3>单文件交付</h3>
+            <p>Go 模板、CSS、JS 和多语言资源全部嵌入二进制，无需额外 Web 目录或前端构建。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tinted" id="screenshots">
+      <div class="container">
+        <div class="section-head compact">
+          <div>
+            <span class="section-kicker">Product tour</span>
+            <h2>清晰、直接的管理界面</h2>
+          </div>
+          <p>从 SMTP 配置到令牌和定时任务，常用操作集中在一个工作区。</p>
+        </div>
+        <div class="screenshot-grid">
+          <figure>
+            <img src="./screenshots/dashboard.webp" alt="仪表盘" loading="lazy" width="1024" height="712">
+            <figcaption>运行状态与 API 地址</figcaption>
+          </figure>
+          <figure>
+            <img src="./screenshots/smtp.webp" alt="添加 SMTP 服务器" loading="lazy" width="1024" height="640">
+            <figcaption>添加 SMTP 服务器</figcaption>
+          </figure>
+          <figure>
+            <img src="./screenshots/token.webp" alt="生成 API 令牌" loading="lazy" width="1024" height="640">
+            <figcaption>生成 API 令牌</figcaption>
+          </figure>
+          <figure>
+            <img src="./screenshots/schedule.webp" alt="添加定时任务" loading="lazy" width="1024" height="712">
+            <figcaption>配置定时任务</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="quickstart">
+      <div class="container quickstart-grid">
+        <div>
+          <span class="section-kicker">Quick start</span>
+          <h2>一条命令启动</h2>
+          <p class="section-intro">映射管理端口和数据目录，打开浏览器完成初始化即可开始发送。</p>
+          <ol class="steps">
+            <li><span>01</span><div><strong>启动容器</strong><p>管理端口 12566，公开 API 端口 12567。</p></div></li>
+            <li><span>02</span><div><strong>完成安装向导</strong><p>选择数据库并创建管理员账号。</p></div></li>
+            <li><span>03</span><div><strong>添加 SMTP 与令牌</strong><p>从任意应用调用 <code>/sendMail</code>。</p></div></li>
+          </ol>
+        </div>
+        <div class="code-panel">
+          <div class="code-head">
+            <span><i></i><i></i><i></i></span>
+            <strong>Docker</strong>
+            <button type="button" class="copy-button" data-copy="docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v &quot;$PWD/data:/data&quot; cooge123/http2smtp">复制</button>
+          </div>
+          <pre><code><span class="token-command">docker run</span> -d --name http2smtp \
+  -p <span class="token-number">12566</span>:12566 -p <span class="token-number">12567</span>:12567 \
+  -v <span class="token-string">"$PWD/data:/data"</span> \
+  cooge123/http2smtp</code></pre>
+          <a class="code-link" href="https://github.com/chuccp/http2smtp#docker-execution">查看完整 Docker 部署说明 <span>→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-code" id="api">
+      <div class="container api-grid">
+        <div>
+          <span class="section-kicker">Public API</span>
+          <h2>发送邮件，只需要一个请求</h2>
+          <p class="section-intro">令牌配置的收件人会与请求中的地址自动合并，重复地址只发送一次。</p>
+          <div class="api-points">
+            <span>JSON</span><span>multipart</span><span>GET / POST</span><span>Base64 附件</span>
+          </div>
+        </div>
+        <div class="code-panel code-panel-dark">
+          <div class="code-head">
+            <span><i></i><i></i><i></i></span>
+            <strong>POST /sendMail</strong>
+            <button type="button" class="copy-button" data-copy='curl -X POST http://127.0.0.1:12567/sendMail -H "Content-Type: application/json" -d "{\"token\":\"YOUR_TOKEN\",\"subject\":\"Hello\",\"content\":\"HTTP2SMTP works\",\"recipients\":[\"ops@example.com\"]}"'>复制</button>
+          </div>
+          <pre><code><span class="token-command">curl</span> -X POST http://127.0.0.1:12567/sendMail \
+  -H <span class="token-string">"Content-Type: application/json"</span> \
+  -d <span class="token-string">'{
+    "token": "YOUR_TOKEN",
+    "subject": "Hello",
+    "content": "HTTP2SMTP works",
+    "recipients": ["ops@example.com"]
+  }'</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section architecture-section">
+      <div class="container">
+        <div class="architecture">
+          <div class="architecture-copy">
+            <span class="section-kicker">Architecture</span>
+            <h2>管理面与业务面分离</h2>
+            <p>管理界面保持私有，邮件发送 API 独立开放。SQLite、日志和附件统一保存在 <code>/data</code>。</p>
+          </div>
+          <div class="flow">
+            <div class="flow-node"><span>1</span><strong>Your app</strong><small>HTTP request</small></div>
+            <div class="flow-line"><i></i></div>
+            <div class="flow-node flow-node-primary"><span>2</span><strong>12567</strong><small>Token API</small></div>
+            <div class="flow-line"><i></i></div>
+            <div class="flow-node"><span>3</span><strong>SMTP</strong><small>Email delivery</small></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container cta-inner">
+        <div>
+          <span class="section-kicker">Ready to send?</span>
+          <h2>把邮件能力交给 HTTP2SMTP</h2>
+          <p>自托管、可审计，业务代码不再保存 SMTP 凭据。</p>
+        </div>
+        <div class="cta-actions">
+          <a class="button button-white" href="https://github.com/chuccp/http2smtp/releases/latest">下载最新版</a>
+          <a class="button button-outline" href="https://github.com/chuccp/http2smtp">查看源码</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <div class="brand footer-brand">
+        <img src="./favicon.svg" alt="" width="32" height="32">
+        <span>HTTP2SMTP</span>
+      </div>
+      <p>HTTP-to-SMTP gateway · Apache License 2.0</p>
+      <div class="footer-links">
+        <a href="https://github.com/chuccp/http2smtp/releases">Releases</a>
+        <a href="https://github.com/chuccp/http2smtp/issues">Issues</a>
+        <a href="https://github.com/chuccp/http2smtp/blob/main/LICENSE">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite">已复制命令</div>
+  <script>
+    document.querySelectorAll('[data-copy]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var text = button.getAttribute('data-copy');
+        function done() {
+          var toast = document.querySelector('.toast');
+          toast.classList.add('show');
+          setTimeout(function () { toast.classList.remove('show'); }, 1600);
+          var old = button.textContent;
+          button.textContent = '已复制';
+          setTimeout(function () { button.textContent = old; }, 1200);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(fallback);
+        } else {
+          fallback();
+        }
+        function fallback() {
+          var area = document.createElement('textarea');
+          area.value = text;
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+          done();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
