@@ -38,11 +38,11 @@ simple HTTP request.
 
 | Dashboard | Add SMTP server |
 |---|---|
-| <img src="./docs/screenshots/dashboard.png" alt="Dashboard" width="100%"> | <img src="./docs/screenshots/smtp.png" alt="Add SMTP server" width="100%"> |
+| <img src="./docs/screenshots/dashboard.webp" alt="Dashboard" width="100%"> | <img src="./docs/screenshots/smtp.webp" alt="Add SMTP server" width="100%"> |
 
 | Create API token | Add scheduled task |
 |---|---|
-| <img src="./docs/screenshots/token.png" alt="Create API token" width="100%"> | <img src="./docs/screenshots/schedule.png" alt="Add scheduled task" width="100%"> |
+| <img src="./docs/screenshots/token.webp" alt="Create API token" width="100%"> | <img src="./docs/screenshots/schedule.webp" alt="Add scheduled task" width="100%"> |
 
 ## Quick Start
 

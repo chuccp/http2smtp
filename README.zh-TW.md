@@ -36,11 +36,11 @@ HTTP2SMTP 是一個可自託管的 HTTP 到 SMTP 閘道。你可以在管理介�
 
 | 儀表板 | 新增 SMTP 伺服器 |
 |---|---|
-| <img src="./docs/screenshots/dashboard.png" alt="儀表板" width="100%"> | <img src="./docs/screenshots/smtp.png" alt="新增 SMTP 伺服器" width="100%"> |
+| <img src="./docs/screenshots/dashboard.webp" alt="儀表板" width="100%"> | <img src="./docs/screenshots/smtp.webp" alt="新增 SMTP 伺服器" width="100%"> |
 
 | 產生 API 權杖 | 新增排程工作 |
 |---|---|
-| <img src="./docs/screenshots/token.png" alt="產生 API 權杖" width="100%"> | <img src="./docs/screenshots/schedule.png" alt="新增排程工作" width="100%"> |
+| <img src="./docs/screenshots/token.webp" alt="產生 API 權杖" width="100%"> | <img src="./docs/screenshots/schedule.webp" alt="新增排程工作" width="100%"> |
 
 ## 快速開始
 
