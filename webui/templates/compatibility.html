@@ -1,63 +1,201 @@
-{{define "cardClass"}} bare-card-wide compatibility-card{{end}}
+{{define "bodyClass"}} compatibility-body{{end}}
+{{define "cardClass"}} compatibility-card{{end}}
 {{define "content"}}
-<div class="compatibility-page">
-  <div class="compatibility-badge">{{.L.T "compatibility.badge"}}</div>
-  <h1>{{.L.T "compatibility.heading"}}</h1>
-  <p class="compatibility-summary">{{.L.T "compatibility.summary"}}</p>
-  <div class="flash flash-err compatibility-reason">
-    {{if eq .ProblemCode "legacy"}}
-      {{.L.T "compatibility.reasonLegacy"}}
-    {{else if eq .ProblemCode "invalid"}}
-      {{.L.T "compatibility.reasonInvalid" .RawVersion}}
-    {{else}}
-      {{.L.T "compatibility.reasonVersion" .FoundVersion .RequiredVersion}}
-    {{end}}
-  </div>
-  <p class="hint">{{.L.T "compatibility.protection"}}</p>
+<div class="compatibility-shell">
+  <header class="compatibility-topbar">
+    <div class="compatibility-brand">
+      <span class="compatibility-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="7" rx="2"/>
+          <rect x="3" y="13" width="18" height="7" rx="2"/>
+          <path d="M7 7.5h.01M7 16.5h.01M15 7.5h4M15 16.5h4"/>
+        </svg>
+      </span>
+      <span class="compatibility-brand-copy">
+        <strong>HTTP2SMTP</strong>
+        <span>{{.Title}}</span>
+      </span>
+    </div>
+    <span class="compatibility-mode">
+      <span class="compatibility-mode-dot"></span>
+      {{.L.T "compatibility.badge"}}
+    </span>
+  </header>
 
-  <section class="compatibility-section">
-    <h2>{{.L.T "compatibility.backupTitle"}}</h2>
-    <p>{{.L.T "compatibility.backupIntro"}}</p>
-    <ul class="compatibility-paths">
-      <li>
-        <span>{{.L.T "compatibility.backupConfig"}}</span>
-        <code>{{.ConfigPath}}</code>
-      </li>
-      {{if .SQLitePath}}
-      <li>
-        <span>{{.L.T "compatibility.backupSQLite"}}</span>
-        <code>{{.SQLitePath}}</code>
-      </li>
-      {{else if eq .DatabaseType "mysql"}}
-      <li>
-        <span>{{.L.T "compatibility.backupMySQL"}}</span>
-        <code>{{.MySQLDatabase}}</code>
-      </li>
-      {{end}}
-      <li>
-        <span>{{.L.T "compatibility.backupStorage"}}</span>
-        <code>{{.StorageRoot}}</code>
-      </li>
-    </ul>
-  </section>
+  <main class="compatibility-page">
+    <section class="compatibility-hero">
+      <div class="compatibility-hero-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3 3.8 7v5.2c0 4.6 3.5 7.7 8.2 8.8 4.7-1.1 8.2-4.2 8.2-8.8V7L12 3Z"/>
+          <path d="M12 8v5"/>
+          <path d="M12 16.3h.01"/>
+        </svg>
+      </div>
+      <div class="compatibility-hero-copy">
+        <div class="compatibility-badge">
+          <span></span>
+          {{.L.T "compatibility.badge"}}
+        </div>
+        <h1>{{.L.T "compatibility.heading"}}</h1>
+        <p class="compatibility-summary">{{.L.T "compatibility.summary"}}</p>
+      </div>
+    </section>
 
-  <section class="compatibility-section">
-    <h2>{{.L.T "compatibility.resetTitle"}}</h2>
-    <p>{{.L.T "compatibility.resetIntro"}}</p>
-    <ol class="compatibility-steps">
-      <li>{{.L.T "compatibility.resetStep1"}}</li>
-      <li>{{.L.T "compatibility.resetStep2"}}</li>
-      {{if .SQLitePath}}
-      <li>{{.L.T "compatibility.resetStep3SQLite"}}</li>
-      {{else if eq .DatabaseType "mysql"}}
-      <li>{{.L.T "compatibility.resetStep3MySQL"}}</li>
-      {{else}}
-      <li>{{.L.T "compatibility.resetStep3"}}</li>
-      {{end}}
-      <li>{{.L.T "compatibility.resetStep4"}}</li>
-    </ol>
-  </section>
+    <div class="compatibility-reason">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7.5v5.2M12 16.4h.01"/>
+      </svg>
+      <span>
+        {{if eq .ProblemCode "legacy"}}
+          {{.L.T "compatibility.reasonLegacy"}}
+        {{else if eq .ProblemCode "invalid"}}
+          {{.L.T "compatibility.reasonInvalid" .RawVersion}}
+        {{else}}
+          {{.L.T "compatibility.reasonVersion" .FoundVersion .RequiredVersion}}
+        {{end}}
+      </span>
+    </div>
 
-  <div class="compatibility-note">{{.L.T "compatibility.notDeleted"}}</div>
+    <div class="compatibility-protection">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3 5 6v5c0 4 2.8 7.5 7 9 4.2-1.5 7-5 7-9V6l-7-3Z"/>
+        <path d="m9.3 12 1.8 1.8 3.8-4"/>
+      </svg>
+      <span>{{.L.T "compatibility.protection"}}</span>
+    </div>
+
+    <div class="compatibility-grid">
+      <section class="compatibility-panel compatibility-backup">
+        <div class="compatibility-panel-head">
+          <span class="compatibility-panel-icon compatibility-panel-icon-amber" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12"/>
+              <path d="m7.5 10.5 4.5 4.5 4.5-4.5"/>
+              <path d="M5 20h14"/>
+            </svg>
+          </span>
+          <div>
+            <span class="compatibility-kicker">01</span>
+            <h2>{{.L.T "compatibility.backupTitle"}}</h2>
+          </div>
+        </div>
+        <p class="compatibility-panel-intro">{{.L.T "compatibility.backupIntro"}}</p>
+
+        <ul class="compatibility-paths">
+          <li>
+            <span class="compatibility-file-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>
+              </svg>
+            </span>
+            <span class="compatibility-file-copy">
+              <span>{{.L.T "compatibility.backupConfig"}}</span>
+              <code>{{.ConfigPath}}</code>
+            </span>
+            <button type="button" class="compatibility-copy" data-copy="{{.ConfigPath}}" data-ok="{{.L.T "common.copied"}}" data-fail="{{.L.T "common.copyFailed"}}" title="{{.L.T "common.copy"}}" aria-label="{{.L.T "common.copy"}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            </button>
+          </li>
+          {{if .SQLitePath}}
+          <li>
+            <span class="compatibility-file-icon compatibility-file-icon-blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5.5" rx="7" ry="3"/>
+                <path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+                <path d="M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+              </svg>
+            </span>
+            <span class="compatibility-file-copy">
+              <span>{{.L.T "compatibility.backupSQLite"}}</span>
+              <code>{{.SQLitePath}}</code>
+            </span>
+            <button type="button" class="compatibility-copy" data-copy="{{.SQLitePath}}" data-ok="{{.L.T "common.copied"}}" data-fail="{{.L.T "common.copyFailed"}}" title="{{.L.T "common.copy"}}" aria-label="{{.L.T "common.copy"}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            </button>
+          </li>
+          {{else if eq .DatabaseType "mysql"}}
+          <li>
+            <span class="compatibility-file-icon compatibility-file-icon-blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5.5" rx="7" ry="3"/>
+                <path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+                <path d="M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+              </svg>
+            </span>
+            <span class="compatibility-file-copy">
+              <span>{{.L.T "compatibility.backupMySQL"}}</span>
+              <code>{{.MySQLDatabase}}</code>
+            </span>
+          </li>
+          {{end}}
+          <li>
+            <span class="compatibility-file-icon compatibility-file-icon-green" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7h7l2 2h9v10H3z"/><path d="M3 7V5h7l2 2"/>
+              </svg>
+            </span>
+            <span class="compatibility-file-copy">
+              <span>{{.L.T "compatibility.backupStorage"}}</span>
+              <code>{{.StorageRoot}}</code>
+            </span>
+            <button type="button" class="compatibility-copy" data-copy="{{.StorageRoot}}" data-ok="{{.L.T "common.copied"}}" data-fail="{{.L.T "common.copyFailed"}}" title="{{.L.T "common.copy"}}" aria-label="{{.L.T "common.copy"}}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <section class="compatibility-panel compatibility-reset">
+        <div class="compatibility-panel-head">
+          <span class="compatibility-panel-icon compatibility-panel-icon-blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 11a8 8 0 1 0-2.3 5.7"/>
+              <path d="M20 5v6h-6"/>
+            </svg>
+          </span>
+          <div>
+            <span class="compatibility-kicker">02</span>
+            <h2>{{.L.T "compatibility.resetTitle"}}</h2>
+          </div>
+        </div>
+        <p class="compatibility-panel-intro">{{.L.T "compatibility.resetIntro"}}</p>
+        <ol class="compatibility-steps">
+          <li>
+            <span>01</span>
+            <p>{{.L.T "compatibility.resetStep1"}}</p>
+          </li>
+          <li>
+            <span>02</span>
+            <p>{{.L.T "compatibility.resetStep2"}}</p>
+          </li>
+          <li>
+            <span>03</span>
+            <p>
+              {{if .SQLitePath}}
+                {{.L.T "compatibility.resetStep3SQLite"}}
+              {{else if eq .DatabaseType "mysql"}}
+                {{.L.T "compatibility.resetStep3MySQL"}}
+              {{else}}
+                {{.L.T "compatibility.resetStep3"}}
+              {{end}}
+            </p>
+          </li>
+          <li>
+            <span>04</span>
+            <p>{{.L.T "compatibility.resetStep4"}}</p>
+          </li>
+        </ol>
+      </section>
+    </div>
+
+    <div class="compatibility-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3 5 6v5c0 4 2.8 7.5 7 9 4.2-1.5 7-5 7-9V6l-7-3Z"/>
+        <path d="m9.3 12 1.8 1.8 3.8-4"/>
+      </svg>
+      <span>{{.L.T "compatibility.notDeleted"}}</span>
+    </div>
+  </main>
 </div>
 {{end}}

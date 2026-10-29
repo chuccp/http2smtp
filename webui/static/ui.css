@@ -145,3 +145,52 @@
   animation: ui-spin .8s linear infinite;
 }
 @keyframes ui-spin { to { transform: rotate(360deg); } }
+
+/* ---------- modern component theme ---------- */
+.ui-toasts { top: 20px; gap: 9px; }
+.ui-toast {
+  padding: 11px 16px; border-radius: 11px;
+  box-shadow: 0 14px 36px rgba(15,23,42,.16);
+  backdrop-filter: blur(12px);
+}
+.ui-dialog-mask {
+  padding: 20px; background: rgba(8,15,28,.48); backdrop-filter: blur(5px);
+}
+.ui-dialog {
+  width: 400px; max-width: calc(100vw - 32px); border: 1px solid rgba(255,255,255,.72);
+  border-radius: 20px; background: rgba(255,255,255,.98);
+  box-shadow: 0 30px 80px rgba(2,8,23,.3);
+}
+.ui-dialog-head {
+  padding: 17px 20px; border-color: #e8edf4;
+  font-size: 16px; letter-spacing: -.015em;
+}
+.ui-dialog-close {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px; font-size: 19px;
+}
+.ui-dialog-close:hover { background: #f2f5f9; }
+.ui-dialog-body { padding: 20px; }
+.ui-dialog-input {
+  min-height: 42px; padding: 8px 12px; border-color: #dfe6ef; border-radius: 10px;
+  background: #f9fbfd;
+}
+.ui-dialog-input:focus { outline: none; border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+.ui-dialog-foot { gap: 9px; padding: 0 20px 20px; }
+.ui-dialog-loading { background: rgba(255,255,255,.72); backdrop-filter: blur(4px); }
+.ui-dialog-flash { padding: 10px 12px; border-radius: 9px; }
+.ui-picker-trigger {
+  min-height: 42px; border-color: #dfe6ef; border-radius: 10px; background: #f9fbfd;
+}
+.ui-picker-trigger:hover { border-color: #bfdbfe; background: #fff; }
+.ui-picker-native:focus ~ .ui-picker-trigger {
+  border-color: #60a5fa; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.1);
+}
+.ui-picker-tag { padding: 3px 9px; border-radius: 7px; background: #eaf2ff; font-weight: 550; }
+.ui-picker-list { border-color: #e5ebf3; border-radius: 12px; background: #fff; }
+.ui-picker-row { min-height: 42px; padding: 9px 12px; border-color: #edf1f6; }
+.ui-picker-row:hover { background: #f7faff; }
+.ui-picker-row input, .check input { accent-color: var(--primary); }
+.ui-picker-empty { padding: 22px 16px; }
+.ui-mask { background: rgba(248,250,252,.68); backdrop-filter: blur(3px); }
+.ui-spinner { border-color: #dbe5f2; border-top-color: var(--primary); }

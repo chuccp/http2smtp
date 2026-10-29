@@ -4,14 +4,13 @@
 
   <div class="card">
     <h2 class="card-title">{{.L.T "settings.generalSettings"}}</h2>
-    {{if .IsDocker}}
-    <div class="flash flash-err">{{.L.T "settings.portLockedByDocker"}}</div>
-    {{end}}
     <div class="form-grid">
       {{template "field" (dict "L" .L "label" "settings.managementPort" "name" "webPort" "type" "number" "value" .WebPort "readonly" .IsDocker)}}
       {{template "field" (dict "L" .L "label" "settings.apiPort" "name" "apiPort" "type" "number" "value" .ApiPort "readonly" .IsDocker)}}
     </div>
-    {{if not .IsDocker}}
+    {{if .IsDocker}}
+    <div class="settings-docker-note">{{.L.T "settings.portLockedByDocker"}}</div>
+    {{else}}
     <div class="hint hint-indent">{{.L.T "setup.portHint"}}</div>
     {{end}}
     <div class="form-grid form-grid-single" style="margin-top:10px">

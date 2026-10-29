@@ -787,3 +787,21 @@ func TestSettingsRendersMaxBodySize(t *testing.T) {
 		}
 	}
 }
+
+func TestSettingsDockerPortNoteUsesAlignedStyle(t *testing.T) {
+	base := templateTestBase()
+	base.User = &NavUser{Id: 1, Name: "admin", IsAdmin: true}
+	out := renderContent(t, "settings", &SettingsData{
+		Base:     base,
+		IsDocker: true,
+		WebPort:  12566,
+		ApiPort:  12567,
+		DbType:   "sqlite",
+	})
+	if !strings.Contains(out, `class="settings-docker-note"`) {
+		t.Fatal("Docker port note is missing its aligned style")
+	}
+	if strings.Contains(out, `class="flash flash-err">Docker`) {
+		t.Fatal("Docker port note should not use the full-width card flash")
+	}
+}
