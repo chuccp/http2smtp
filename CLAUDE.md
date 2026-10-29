@@ -24,6 +24,7 @@ Run the server:
 ./http2smtp                                    # Defaults: 12566 (mgmt) + 12567 (API)
 ./http2smtp -web_port 12566 -api_port 12567    # Custom ports
 ./http2smtp -storage_root /path/to/storage     # Custom storage
+./http2smtp -v                                 # Version only; reads no config/database
 ```
 
 **A port given by flag or environment means Docker** (`core.isdocker`): the container's run
@@ -204,6 +205,7 @@ template set is loaded once per process and installed on each new server.
 | `main.go` | Wires both rest groups, models, services and the cron runner |
 | `rest/` | JSON API handlers. `Init(context)` registers routes under `/api`; protect with `.WithMeta(auth2.WithLogin())` |
 | `webui/` | Server-rendered management UI (templates, handlers, embedded static/i18n) |
+| `compatibility/` | Pre-database data-version guard and the reason shown by the management-only recovery page |
 | `configapply/` | Configuration-writing bodies shared by the JSON API and the web forms |
 | `service/` | Business logic: `TokenService`, `ScheduleService`, `LogService`, `SmtpService`, `UserService`, `RestartService` |
 | `model/` | GORM models plus the `Config` struct mapped to `config.ini` |
@@ -343,6 +345,14 @@ the warning on the settings page reports.
 
 Precedence is defaults → `config.ini` → CLI flags → environment variables.
 
+The `compatibility` package runs before `db.GetDb` and `AutoCreateTable`. It stores the
+complete on-disk format generation in `core.dataVersion`; a fresh config is stamped with
+the current value, while an initialized old config, an unversioned database, or a
+different generation starts a management-only compatibility page with backup/reset
+instructions. That mode does not attach the database, models, services, runners or public
+API. A refusal is read-only. Bump `compatibility.CurrentDataVersion` only when old and new
+installations cannot safely open each other's data.
+
 > **INI values load as strings, and the decoder only weak-converts when the target is a
 > struct.** Two consequences that have bitten this codebase:
 >
@@ -367,7 +377,10 @@ templates and assets from the working tree by design.
 
 The release workflow only sets up Go and runs `go build -tags release`; the tarball
 carries the binary alone (the UI travels inside it). The Dockerfile unpacks that tarball
-and needs no change — it never referenced `web/` directly.
+and needs no change — it never referenced `web/` directly. The build injects
+`github.ref_name` into `version.go`'s `Version` variable with
+`-ldflags "-X main.Version=${{ github.ref_name }}"`; local `make release-*` builds use
+`git describe --tags --always --dirty`.
 
 ## Known gaps
 

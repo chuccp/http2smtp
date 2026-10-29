@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"strconv"
+	"strings"
 
 	wf "github.com/chuccp/go-web-frame"
 	auth2 "github.com/chuccp/go-web-frame/component/auth"
@@ -16,6 +17,7 @@ import (
 	"github.com/chuccp/go-web-frame/util"
 	"github.com/chuccp/go-web-frame/web"
 	"github.com/chuccp/http2smtp/auth"
+	"github.com/chuccp/http2smtp/compatibility"
 	"github.com/chuccp/http2smtp/configapply"
 	"github.com/chuccp/http2smtp/model"
 	"github.com/chuccp/http2smtp/rest"
@@ -32,7 +34,16 @@ func createAPP() (*wf.WebFrame, error) {
 	flag.IntVar(&webPort, "web_port", 0, "web port")
 	flag.IntVar(&apiPort, "api_port", 0, "api port")
 	flag.StringVar(&storageRoot, "storage_root", "./", "storage root")
+	showVersion := false
+	flag.BoolVar(&showVersion, "v", false, "show version")
+	flag.BoolVar(&showVersion, "version", false, "show version")
 	flag.Parse()
+	// Return before loading config.ini or checking the database: asking for the version
+	// must not create configuration or put an incompatible installation into page mode.
+	if showVersion {
+		printVersion()
+		return nil, nil
+	}
 	webPort = util.GetEnvIntOrDefault("web_port", webPort)
 	apiPort = util.GetEnvIntOrDefault("api_port", apiPort)
 	storageRoot = util.GetEnvOrDefault("storage_root", storageRoot)
@@ -43,6 +54,36 @@ func createAPP() (*wf.WebFrame, error) {
 	// Read through the typed config, not GetBoolOrDefault: an INI file yields strings,
 	// which that getter refuses, so core.init/core.dbinit would always read as false here.
 	coreState := model.CoreState(fileConfig)
+	databaseType := fileConfig.GetString("core.dbtype")
+	if strings.TrimSpace(databaseType) == "" {
+		databaseType = "sqlite"
+	}
+	sqlitePath := ""
+	if strings.EqualFold(databaseType, "sqlite") {
+		sqlitePath = fileConfig.GetString("sqlite.filename")
+		if strings.TrimSpace(sqlitePath) == "" {
+			sqlitePath = model.DefaultSqliteConfig().Filename
+		}
+	}
+	// This must stay before db.GetDb and AutoCreateTable. Opening an old SQLite file or
+	// letting GORM create tables would modify data that this build cannot safely read.
+	// An incompatible install still starts the management listener, but only to serve a
+	// compatibility page; the database, models, services and public API are not attached.
+	var compatibilityIssue *compatibility.IncompatibleError
+	if err := compatibility.Check(compatibility.CheckOptions{
+		Config:        fileConfig,
+		ConfigPath:    "config.ini",
+		SQLitePath:    sqlitePath,
+		StorageRoot:   storageRoot,
+		DatabaseType:  databaseType,
+		MySQLDatabase: fileConfig.GetString("mysql.dbname"),
+	}); err != nil {
+		issue, ok := compatibility.AsIncompatible(err)
+		if !ok {
+			return nil, err
+		}
+		compatibilityIssue = issue
+	}
 	// A port given on the command line or through the environment marks the instance as
 	// running in Docker: it is the container's run command (and its port mapping) that
 	// fixes the ports, so the UI may not move them — RestartService reads this flag and
@@ -93,6 +134,19 @@ func createAPP() (*wf.WebFrame, error) {
 	maxBodySize := model.DefaultMaxBodySize
 	if cfg.Core != nil {
 		maxBodySize = cfg.Core.MaxBodySizeValue()
+	}
+	if compatibilityIssue != nil {
+		log.Warn("data format is incompatible; serving management-only compatibility page",
+			zap.String("reason", compatibilityIssue.Reason),
+		)
+		compatibilityServerConfig := &web.ServerConfig{Port: webPort, MaxBodySize: maxBodySize}
+		compatibilityGroup := core.NewRestGroupBuilder().
+			Rest(webui.NewCompatibilityPage(compatibilityIssue)).
+			Port(webPort).
+			ServerConfig(compatibilityServerConfig).
+			Build()
+		builder.RestGroup(compatibilityGroup)
+		return builder.Build(), nil
 	}
 	restGroupBuilder := core.NewRestGroupBuilder()
 	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, &rest.Oplog{}, webui.NewPages())
@@ -159,6 +213,9 @@ func main() {
 	app, err := createAPP()
 	if err != nil {
 		log.Panic("启动失败", zap.Error(err))
+		return
+	}
+	if app == nil {
 		return
 	}
 	err = app.Start()

@@ -1,0 +1,63 @@
+{{define "cardClass"}} bare-card-wide compatibility-card{{end}}
+{{define "content"}}
+<div class="compatibility-page">
+  <div class="compatibility-badge">{{.L.T "compatibility.badge"}}</div>
+  <h1>{{.L.T "compatibility.heading"}}</h1>
+  <p class="compatibility-summary">{{.L.T "compatibility.summary"}}</p>
+  <div class="flash flash-err compatibility-reason">
+    {{if eq .ProblemCode "legacy"}}
+      {{.L.T "compatibility.reasonLegacy"}}
+    {{else if eq .ProblemCode "invalid"}}
+      {{.L.T "compatibility.reasonInvalid" .RawVersion}}
+    {{else}}
+      {{.L.T "compatibility.reasonVersion" .FoundVersion .RequiredVersion}}
+    {{end}}
+  </div>
+  <p class="hint">{{.L.T "compatibility.protection"}}</p>
+
+  <section class="compatibility-section">
+    <h2>{{.L.T "compatibility.backupTitle"}}</h2>
+    <p>{{.L.T "compatibility.backupIntro"}}</p>
+    <ul class="compatibility-paths">
+      <li>
+        <span>{{.L.T "compatibility.backupConfig"}}</span>
+        <code>{{.ConfigPath}}</code>
+      </li>
+      {{if .SQLitePath}}
+      <li>
+        <span>{{.L.T "compatibility.backupSQLite"}}</span>
+        <code>{{.SQLitePath}}</code>
+      </li>
+      {{else if eq .DatabaseType "mysql"}}
+      <li>
+        <span>{{.L.T "compatibility.backupMySQL"}}</span>
+        <code>{{.MySQLDatabase}}</code>
+      </li>
+      {{end}}
+      <li>
+        <span>{{.L.T "compatibility.backupStorage"}}</span>
+        <code>{{.StorageRoot}}</code>
+      </li>
+    </ul>
+  </section>
+
+  <section class="compatibility-section">
+    <h2>{{.L.T "compatibility.resetTitle"}}</h2>
+    <p>{{.L.T "compatibility.resetIntro"}}</p>
+    <ol class="compatibility-steps">
+      <li>{{.L.T "compatibility.resetStep1"}}</li>
+      <li>{{.L.T "compatibility.resetStep2"}}</li>
+      {{if .SQLitePath}}
+      <li>{{.L.T "compatibility.resetStep3SQLite"}}</li>
+      {{else if eq .DatabaseType "mysql"}}
+      <li>{{.L.T "compatibility.resetStep3MySQL"}}</li>
+      {{else}}
+      <li>{{.L.T "compatibility.resetStep3"}}</li>
+      {{end}}
+      <li>{{.L.T "compatibility.resetStep4"}}</li>
+    </ol>
+  </section>
+
+  <div class="compatibility-note">{{.L.T "compatibility.notDeleted"}}</div>
+</div>
+{{end}}

@@ -73,6 +73,17 @@ chmod +x http2smtp
 ./http2smtp
 ```
 
+只查看二进制版本、不启动或配置服务：
+
+```bash
+./http2smtp -v
+./http2smtp --version
+```
+
+输出包含版本号、操作系统和架构，例如
+`http2smtp version v0.3.0 (linux/amd64)`。没有注入版本号的本地构建显示 `dev`；
+正式发布包会通过 `-ldflags` 自动使用 Git 标签。
+
 ### Docker运行
 
 ```bash
@@ -99,6 +110,7 @@ docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
 [core]
 init      = true   ##初始化开关，初始化配置完成后变为true 
 dbType    = sqlite  ##数据库类型，支持sqlite和mysql
+dataVersion = 1    ##磁盘数据格式版本，请勿从其他安装复制
 maxBodySize = 10M  ##请求体上限，支持 K/M/G 后缀，-1 表示不限制
 
 [sqlite]
@@ -125,6 +137,28 @@ password = 123456      ##数据库密码
 
 端口也可以用 `-web_port` / `-api_port`（或环境变量 `web_port` / `api_port`）指定；用这种方式
 给出的端口会被视为固定端口——Docker 镜像正是靠这一点防止设置页改动端口。
+
+## 从 v0.2.x 升级
+
+当前版本与 **v0.2.x 的数据格式不兼容**。程序启动时会先检查 `config.ini` 中的
+`core.dataVersion`，通过后才会连接数据库或自动建表。旧配置、没有版本标记的数据库，
+以及数据版本不匹配的安装会在原管理端口打开一个只提供兼容提示的管理页面。该模式
+不会连接或修改数据库，也不会启动公开 API。打开 `http://127.0.0.1:12566/`（或实际配置的
+管理地址）即可查看备份和重置步骤；直接访问 `/settings` 也会进入同一提示页。
+
+升级前请完整备份整个程序目录，包括 `config.ini`、SQLite 数据库和附件/缓存目录。
+如果使用 MySQL，还必须单独做一次完整数据库备份。
+
+不兼容安装的重置步骤：
+
+1. 停止旧版本。
+2. 将备份保存到安全位置。
+3. 把 `config.ini` 移出程序目录；SQLite 用户同时移走数据库文件，MySQL 用户则在完成
+   备份后新建一个空数据库。不要删除旧配置或旧数据库。
+4. 重新启动当前版本，并完成安装向导。
+
+程序不会自动删除旧数据。使用 Docker 时，请在移动或替换旧配置和数据库之前，同时备份
+容器工作目录及已挂载的存储卷。
 
 ## API文档
 
@@ -207,6 +241,13 @@ go build -o http2smtp ./
 发布流程同样只构建二进制，压缩包内不再包含 `web/` 目录。界面直接访问
 `http://127.0.0.1:12566/` 即可，无需额外的 Web 服务器。
 
+指定版本构建并检查：
+
+```bash
+go build -ldflags "-X main.Version=v0.3.0" -o http2smtp ./
+./http2smtp -v
+```
+
 ## 界面展示
 
 ### 初始化
@@ -241,4 +282,4 @@ go build -o http2smtp ./
 
 
 
-        
+

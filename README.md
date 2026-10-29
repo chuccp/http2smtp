@@ -75,6 +75,16 @@ chmod +x http2smtp
 ./http2smtp
 ```
 
+Check the binary version without starting or configuring the service:
+
+```bash
+./http2smtp -v
+./http2smtp --version
+```
+
+The output includes the version, operating system and architecture, for example
+`http2smtp version v0.3.0 (linux/amd64)`. Local builds show `dev` unless a version is
+injected. Release binaries receive their Git tag automatically through `-ldflags`.
 
 ### Docker Execution
 
@@ -99,6 +109,7 @@ After first startup, the configuration file [config.ini](./config.ini) is genera
 [core]
 init      = true   ## Initialization switch, becomes true after initial configuration
 dbType    = sqlite  ## Database type, supports sqlite and mysql
+dataVersion = 1    ## On-disk data format; do not copy from another installation
 maxBodySize = 10M  ## Request-body limit; K/M/G suffixes accepted, -1 means unlimited
 
 [sqlite]
@@ -127,6 +138,33 @@ so editing `core.cachepath` by hand has no effect.
 The ports may also be given as `-web_port` / `-api_port` (or `web_port` / `api_port` in the
 environment). A port passed that way is treated as fixed, which is how the Docker image
 keeps the settings page from moving it.
+
+## Upgrading from v0.2.x
+
+The current release is **not data-compatible with v0.2.x**. On startup the binary checks
+`core.dataVersion` in `config.ini` before it opens the database or runs automatic table
+creation. An old config, a database without a version marker, or a mismatched data version
+opens a management-only compatibility page on the normal management port. The database and
+public API are not started, and the database is not modified by this check. Open
+`http://127.0.0.1:12566/` (or your configured management address) to see the backup and
+reset instructions.
+
+Before upgrading, back up the complete application directory, including `config.ini`, the
+SQLite database, and the attachment/cache directory. For MySQL, take a full database dump
+as well.
+
+To reset an incompatible installation:
+
+1. Stop the old version.
+2. Keep the backup somewhere safe.
+3. Move `config.ini` out of the application directory. For SQLite, also move the database
+   file. For MySQL, create a new empty database after taking the dump. Do not delete the
+   old config or database.
+4. Start this version again and complete the setup wizard.
+
+The program never deletes old data automatically. For Docker, back up both the container's
+working directory and any mounted storage volume before moving or replacing the old
+configuration and database.
 
 ## API Documentation
 
@@ -212,6 +250,13 @@ go build -o http2smtp ./
 
 The release workflow does the same; the tarball carries only the binary. The UI is served
 at `http://127.0.0.1:12566/` with no separate web server.
+
+To build with a specific embedded version:
+
+```bash
+go build -ldflags "-X main.Version=v0.3.0" -o http2smtp ./
+./http2smtp -v
+```
 
 ## UI Display
 

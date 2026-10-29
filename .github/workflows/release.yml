@@ -74,7 +74,8 @@ jobs:
         run: |
           # -tags release: the binary serves the embedded UI instead of reading
           # templates from the working tree (the dev-mode default)
-          go build -tags release -v -o build_assets/http2smtp  ./
+          # -X: stamp the Git tag into version.go's Version variable
+          go build -tags release -v -ldflags "-X main.Version=${{ github.ref_name }}" -o build_assets/http2smtp  ./
 
       - name: Rename Windows http2smtp
         if: matrix.goos == 'windows'

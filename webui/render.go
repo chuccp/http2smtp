@@ -103,7 +103,7 @@ var templateFuncs = template.FuncMap{
 // pages, the bare card for login/setup/error.
 func layoutFor(name string) string {
 	switch name {
-	case "login", "setup", "error", "notadmin":
+	case "login", "setup", "error", "notadmin", "compatibility":
 		return "bare"
 	default:
 		return "layout"

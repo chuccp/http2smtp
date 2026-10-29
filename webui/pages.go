@@ -71,17 +71,9 @@ func (p *Pages) Init(ctx *core.Context) error {
 	if p.loadErr != nil {
 		return p.loadErr
 	}
-	templateOption, err := web.LoadTemplateOption(
-		web.EmbedFs("templates", templatesFS).
-			Reload(devMode).
-			ReloadPath(devTemplatesDir),
-		".",
-		web.WithTemplateFuncs(templateFuncs),
-		web.WithLayouts("layout", "bare"),
-		web.WithPartials("partials"),
-	)
+	templateOption, err := loadPageTemplates()
 	if err != nil {
-		return fmt.Errorf("load web templates: %w", err)
+		return err
 	}
 
 	// Static assets live in the binary and take part in the normal route pipeline.
@@ -105,9 +97,29 @@ func (p *Pages) Init(ctx *core.Context) error {
 	return nil
 }
 
+func loadPageTemplates() (web.TemplateOption, error) {
+	templateOption, err := web.LoadTemplateOption(
+		web.EmbedFs("templates", templatesFS).
+			Reload(devMode).
+			ReloadPath(devTemplatesDir),
+		".",
+		web.WithTemplateFuncs(templateFuncs),
+		web.WithLayouts("layout", "bare"),
+		web.WithPartials("partials"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("load web templates: %w", err)
+	}
+	return templateOption, nil
+}
+
 // staticFile serves one asset by name with an explicit content type — from disk in
 // dev mode, from the embedded FS otherwise.
 func (p *Pages) staticFile(name, contentType string) web.HandlerFunc {
+	return staticFileHandler(name, contentType)
+}
+
+func staticFileHandler(name, contentType string) web.HandlerFunc {
 	return func(req *web.Request) (any, error) {
 		var data []byte
 		var err error

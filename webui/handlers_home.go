@@ -220,6 +220,11 @@ func (p *Pages) logout(view *web.Template) error {
 // lang switches the interface language and returns to where the visitor came from.
 // The return target is restricted to same-site paths.
 func (p *Pages) lang(req *web.Request) (any, error) {
+	switchLanguage(req)
+	return nil, nil
+}
+
+func switchLanguage(req *web.Request) {
 	if req.IsPost() {
 		lang := req.GetFormParam("lang")
 		if isSupportedLang(lang) {
@@ -240,5 +245,4 @@ func (p *Pages) lang(req *web.Request) (any, error) {
 		back = "/"
 	}
 	req.Response().Redirect(http.StatusFound, back)
-	return nil, nil
 }
