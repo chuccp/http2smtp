@@ -66,21 +66,13 @@ Windows PowerShell：
 ```powershell
 docker pull cooge123/http2smtp
 
-docker run -d --name http2smtp `
-  -p 12566:12566 `
-  -p 12567:12567 `
-  -v "${PWD}\data:/data" `
-  cooge123/http2smtp
+docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v "${PWD}\data:/data" cooge123/http2smtp
 ```
 
 Linux または macOS：
 
 ```bash
-docker run -d --name http2smtp \
-  -p 12566:12566 \
-  -p 12567:12567 \
-  -v "$PWD/data:/data" \
-  cooge123/http2smtp
+docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v "$PWD/data:/data" cooge123/http2smtp
 ```
 
 コンテナとポートを確認：

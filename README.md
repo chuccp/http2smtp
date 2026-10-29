@@ -65,21 +65,13 @@ Linux or macOS:
 ```bash
 docker pull cooge123/http2smtp
 
-docker run -d --name http2smtp \
-  -p 12566:12566 \
-  -p 12567:12567 \
-  -v "$PWD/data:/data" \
-  cooge123/http2smtp
+docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v "$PWD/data:/data" cooge123/http2smtp
 ```
 
 Windows PowerShell:
 
 ```powershell
-docker run -d --name http2smtp `
-  -p 12566:12566 `
-  -p 12567:12567 `
-  -v "${PWD}\data:/data" `
-  cooge123/http2smtp
+docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v "${PWD}\data:/data" cooge123/http2smtp
 ```
 
 Check the container and ports:

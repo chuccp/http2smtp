@@ -63,21 +63,13 @@ Windows PowerShell：
 ```powershell
 docker pull cooge123/http2smtp
 
-docker run -d --name http2smtp `
-  -p 12566:12566 `
-  -p 12567:12567 `
-  -v "${PWD}\data:/data" `
-  cooge123/http2smtp
+docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v "${PWD}\data:/data" cooge123/http2smtp
 ```
 
 Linux 或 macOS：
 
 ```bash
-docker run -d --name http2smtp \
-  -p 12566:12566 \
-  -p 12567:12567 \
-  -v "$PWD/data:/data" \
-  cooge123/http2smtp
+docker run -d --name http2smtp -p 12566:12566 -p 12567:12567 -v "$PWD/data:/data" cooge123/http2smtp
 ```
 
 檢查容器和連接埠：
