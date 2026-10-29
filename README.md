@@ -1,132 +1,80 @@
+# HTTP2SMTP
 
+**Send email through HTTP without hard-coding SMTP credentials in every application.**
 
-# HTTP2SMTP - USE HTTP SEND EMAIL 
-
-[![GitHub Downloads](https://img.shields.io/github/downloads/chuccp/http2smtp/total.svg)](https://github.com/chuccp/http2smtp/releases)
+[![Release](https://img.shields.io/github/v/release/chuccp/http2smtp)](https://github.com/chuccp/http2smtp/releases)
+[![Actions](https://img.shields.io/github/actions/workflow/status/chuccp/http2smtp/release.yml)](https://github.com/chuccp/http2smtp/actions/workflows/release.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cooge123/http2smtp)](https://hub.docker.com/r/cooge123/http2smtp)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
-[![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#Community)
-![GitHub last commit](https://img.shields.io/github/last-commit/chuccp/http2smtp)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/chuccp/http2smtp/release.yml)
-![GitHub top language](https://img.shields.io/github/languages/top/chuccp/http2smtp)
+[![Go](https://img.shields.io/github/go-mod/go-version/chuccp/http2smtp)](./go.mod)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
-⭐️ If it helps you, please give a star.
+**English** | [简体中文](./README_zh.md)
 
-**English**🌎 | [**简体中文**🀄](./README_zh.md)
+HTTP2SMTP is a self-hosted HTTP-to-SMTP gateway. Manage SMTP servers, recipients, API
+tokens and scheduled tasks from a modern web UI, then send mail from any application with
+a simple HTTP request.
 
-## Important Updates
+> [!IMPORTANT]
+> This release is **not data-compatible with v0.2.x**. If an incompatible installation is
+> detected, the service opens a management-only compatibility page with backup and reset
+> instructions. The old database is not opened or modified. Read
+> [Upgrading from v0.2.x](#upgrading-from-v02x) before upgrading.
 
-Added scheduled task functionality, which allows using cron expressions to periodically read results from an API or link and send emails. Supports configuring templates for JSON response APIs to convert JSON data into text for email content.
+## Highlights
 
-## Project Description
-
-A gateway service that converts SMTP protocol to HTTP interfaces, helping developers:
-
-- Avoid hardcoding SMTP configurations in code
-- Dynamically send emails through REST API
-- Visually configure multiple SMTP providers
-- Use scheduled tasks to reduce email configuration in projects
-
-## Main Features
-
-- 🚀 Configure SMTP servers and recipient emails via Web UI
-- 📦 Support for GET/POST/JSON request formats
-- 🔒 Token-based API access control
-- 🧩 Click-the-shapes captcha on login
-- 📎 Multi-file attachment support (Base64 encoding/form upload)
-- 🐳 Ready-to-use Docker image
-- 📊 Send record query and statistics
-- 🧾 Operation audit log (logins, edits, deletes and cleanups, maintained by admins)
-- 📅 Scheduled task support for requesting links and sending emails
-- 📧 Email template support
-
-## Community
-
-Welcome to join WeChat group or Telegram for more suggestions.
-
-WeChat group:
-
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/WeChat.png?raw=true" alt="WebChat" width="200">
-
-Telegram:
-
-https://t.me/+JClG9_DojaM0ZGE1
+- HTTP sending with JSON, form data or query parameters
+- Multiple SMTP servers, contacts and API tokens
+- Per-user ownership with administrator-wide management
+- Scheduled HTTP requests with cron expressions and response templates
+- HTML email templates and multiple attachments
+- Mail history, attachment download and operation audit logs
+- Click-shape login captcha using distinct, rotation-safe symbols
+- Server-rendered UI with embedded templates and static files
+- Chinese, Traditional Chinese, English and Japanese interfaces
+- Docker image with one persistent `/data` volume
+- GitHub releases with version and embedded UI verified automatically
 
 ## Quick Start
 
-### Direct Execution
+### Docker Compose
+
+`docker/docker-compose.yml` mounts `docker/data` to `/data`, so configuration, SQLite,
+logs and attachments survive container replacement.
 
 ```bash
-# Windows (PowerShell environment)
-# Download package
-Invoke-WebRequest -Uri "https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-windows-amd64.tar.gz" -OutFile "http2smtp-windows-amd64.tar.gz"
-# Extract files
-tar -zxvf http2smtp-windows-amd64.tar.gz
-# Run program
-.\http2smtp.exe
-
-# Linux
-# Download package (using wget for compatibility)
-wget https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-linux-amd64.tar.gz
-# Extract files
-tar -zxvf http2smtp-linux-amd64.tar.gz
-# Add execution permissions and run
-chmod +x http2smtp
-./http2smtp
-```
-
-Check the binary version without starting or configuring the service:
-
-```bash
-./http2smtp -v
-./http2smtp --version
-```
-
-The output includes the version, operating system and architecture, for example
-`http2smtp version v0.3.0 (linux/amd64)`. Local builds show `dev` unless a version is
-injected. GitHub Releases write the Git tag into `version.go` before compiling, so packaged
-binaries contain the exact release version.
-
-### Docker Execution
-
-The container uses `/data` as its only persistent data directory. Mount it to keep
-`config.ini`, the SQLite database, rotating application logs and attachments across
-container replacements.
-
-```bash
-# docker compose (recommended)
 cd docker
 docker compose up -d
 ```
 
-The compose file mounts `docker/data` to `/data`. For a direct `docker run`:
+Open <http://127.0.0.1:12566> and complete the setup wizard.
+
+### Docker Run
+
+Linux or macOS:
 
 ```bash
 docker pull cooge123/http2smtp
 
 docker run -d --name http2smtp \
-  -p 12566:12566 -p 12567:12567 \
+  -p 12566:12566 \
+  -p 12567:12567 \
   -v "$PWD/data:/data" \
   cooge123/http2smtp
 ```
 
-On Windows PowerShell, use `-v "${PWD}\data:/data"` for the same mount.
+Windows PowerShell:
 
-The persistent directory layout is:
-
-```text
-data/
-  config.ini
-  d-mail.db                 # default SQLite database
-  logs/
-    http2smtp.log           # rotated by the built-in logger
-  YYYY-MM-DD/               # attachment cache files
+```powershell
+docker run -d --name http2smtp `
+  -p 12566:12566 `
+  -p 12567:12567 `
+  -v "${PWD}\data:/data" `
+  cooge123/http2smtp
 ```
 
-If MySQL is selected, the database itself remains external, while configuration, logs and
-attachments stay under `/data`.
-
-After startup, access the management page using the default port number: http://127.0.0.1:12566
+The official image is a thin runtime wrapper around the Linux binary from the matching
+GitHub Release. It does not copy separate `templates` or `static` directories, because
+both are already embedded in that binary.
 
 Check the container and ports:
 
@@ -136,199 +84,256 @@ docker exec http2smtp nc -z -w 2 127.0.0.1 12566
 docker exec http2smtp nc -z -w 2 127.0.0.1 12567
 ```
 
-The built-in health check tests the management port in every mode. In compatibility mode
-the public API port is intentionally closed, so that second command is expected to fail
-until the installation has been backed up and reset.
+The built-in health check always probes the management port. In compatibility mode the
+public API port is intentionally disabled, so the API-port check fails until the
+installation is backed up and reset.
 
-## Configuration Instructions
+### Binary
 
-After first startup, the configuration file [config.ini](./config.ini) is generated:
+Download the archive for your platform from
+[GitHub Releases](https://github.com/chuccp/http2smtp/releases/latest).
 
-```ini
-[core]
-init      = true   ## Initialization switch, becomes true after initial configuration
-dbType    = sqlite  ## Database type, supports sqlite and mysql
-dataVersion = 1    ## On-disk data format; do not copy from another installation
-maxBodySize = 10M  ## Request-body limit; K/M/G suffixes accepted, -1 means unlimited
+Windows PowerShell:
 
-[sqlite]
-filename = d-mail.db  ## Database path
-
-[manage]
-port    = 12566       ## Management port
-
-[api]
-port = 12567          ## API port
-
-[mysql]
-host     = 127.0.0.1   ## Database address
-port     = 3306         ## Database port
-dbname   = d_mail      ## Database name
-charset  = utf8        ## Database character set
-username = root        ## Database username
-password = 123456      ## Database password
+```powershell
+Invoke-WebRequest `
+  -Uri "https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-windows-amd64.tar.gz" `
+  -OutFile "http2smtp-windows-amd64.tar.gz"
+tar -xzf http2smtp-windows-amd64.tar.gz
+.\http2smtp.exe
 ```
 
-The attachment cache directory is not a `config.ini` setting: it comes from `-storage_root`
-(or the `storage_root` environment variable) and defaults to `./`, i.e. dates appear as
-subdirectories below the storage root. When a custom storage root is used, application logs
-are written to `logs/http2smtp.log` under the same directory.
+Linux:
 
-The ports may also be given as `-web_port` / `-api_port` (or `web_port` / `api_port` in the
-environment). A port passed that way is treated as fixed, which is how the Docker image
-keeps the settings page from moving it.
+```bash
+wget https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-linux-amd64.tar.gz
+tar -xzf http2smtp-linux-amd64.tar.gz
+chmod +x http2smtp
+./http2smtp
+```
+
+The release archive contains only the binary. Templates, CSS, JavaScript, icons and
+locale files are embedded inside it.
+
+### Version
+
+```bash
+./http2smtp -v
+./http2smtp --version
+```
+
+Example:
+
+```text
+http2smtp version v0.3.0 (linux/amd64)
+```
+
+The release workflow writes the Git tag into `version.go` before building, so published
+binaries always contain their exact release version. Local builds show `dev` unless a
+version is injected.
+
+## First Run
+
+1. Open the management page at <http://127.0.0.1:12566>.
+2. Select SQLite or MySQL and test the connection.
+3. Create the administrator account.
+4. Add an SMTP server, recipients and an API token.
+5. Send mail through the public API on port `12567`.
+
+The management UI and admin API share port `12566`. The public mail API uses a separate
+port `12567`, so it can be exposed without exposing the administration surface.
+
+## Persistent Data
+
+The container keeps all mutable data under `/data`:
+
+```text
+/data/
+  config.ini
+  d-mail.db                 # default SQLite database
+  logs/
+    http2smtp.log           # rotated by the built-in logger
+  YYYY-MM-DD/               # attachment cache
+```
+
+When using MySQL, the database remains external, while configuration, logs and
+attachments stay under `/data`.
+
+For non-Docker deployments, `-storage_root` (or the `storage_root` environment variable)
+sets the attachment root. A custom storage root also enables file logging at
+`<storage_root>/logs/http2smtp.log`.
 
 ## Upgrading from v0.2.x
 
-The current release is **not data-compatible with v0.2.x**. On startup the binary checks
-`core.dataVersion` in `config.ini` before it opens the database or runs automatic table
-creation. An old config, a database without a version marker, or a mismatched data version
-opens a management-only compatibility page on the normal management port. The database and
-public API are not started, and the database is not modified by this check. Open
-`http://127.0.0.1:12566/` (or your configured management address) to see the backup and
-reset instructions.
+The data layout changed substantially. On startup HTTP2SMTP checks the persisted data
+version before opening the database or running automatic table creation.
 
-Before upgrading, back up the complete application directory, including `config.ini`, the
-SQLite database, and the attachment/cache directory. For MySQL, take a full database dump
-as well.
+An unversioned installation or a mismatched data version starts a management-only
+compatibility page. The database, models, scheduled jobs and public API do not start, and
+the old data is not changed.
 
-To reset an incompatible installation:
+Before resetting:
 
-1. Stop the old version.
-2. Keep the backup somewhere safe.
-3. Move `config.ini` out of the application directory. For SQLite, also move the database
-   file. For MySQL, create a new empty database after taking the dump. Do not delete the
-   old config or database.
-4. Start this version again and complete the setup wizard.
+1. Stop the old service.
+2. Back up `config.ini`, the SQLite database, the attachment directory and application
+   logs. For MySQL, take a full database dump.
+3. Move `config.ini` out of the application directory.
+4. Move the SQLite database to the backup location, or create a new empty MySQL database.
+5. Start this release and complete the setup wizard.
 
-The program never deletes old data automatically. For Docker, back up both the container's
-working directory and any mounted storage volume before moving or replacing the old
-configuration and database.
+HTTP2SMTP never deletes the old configuration, database or attachments automatically.
+For Docker, back up the entire host directory mounted at `/data`.
 
-## API Documentation
+## Public API
 
-### Send Email API
+### Send Mail
 
-`POST /sendMail`
+`POST /sendMail` on the public API port (`12567` by default).
 
-**Parameters**:
+| Field | Type | Required | Description |
+|---|---|---:|---|
+| `token` | string | yes | API token created in the management UI |
+| `subject` | string | no | Uses the token default when omitted |
+| `content` | string | yes | Plain text or HTML mail content |
+| `recipients` | string[] | no | Added to the token's configured recipients |
+| `files` | object[] | no | Base64 file objects with `name` and `data` |
 
-| Parameter  | Type     | Required | Description         |
-|------------|----------|----------|---------------------|
-| token      | string   | Yes      | Authorization token |
-| subject    | string   | No       | Email subject       |
-| content    | string   | Yes      | Email content       |
-| recipients | []string | No       | Additional recipient list |
-| files      | []File   | No       | Attachment file list |
+Configured recipients and request recipients are merged, and duplicate addresses are sent
+only once. Malformed addresses are skipped. The request fails only when no usable
+recipient remains.
 
-`recipients` are added to the addresses configured on the token; an address present in
-both is sent to once. Malformed addresses are skipped, and the request fails only if no
-usable recipient remains. Request bodies are capped by `core.maxBodySize` (default
-10 MB, K/M/G suffixes accepted, `-1` for no limit) for JSON, form and multipart requests
-alike; the settings page edits it, and a change takes effect after a restart. The limit
-applies to the encoded body, so a Base64 attachment uses about a third more space than
-the file itself.
-
-**Successful Response**:
-
-```json
-ok
-```
-
-
-### Complete Request Examples
-
-**JSON Format (with attachments)**
+JSON example:
 
 ```bash
 curl -X POST 'http://127.0.0.1:12567/sendMail' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "token": "{{token}}",
-  "subject": "test",
-  "content": "this is a test",
-  "recipients": ["ops@example.com"],
-  "files": [
-    {
-      "name": "alert.log",
-      "data": "{{base64_content}}"
-    }
-  ]
-}'
+  -H 'Content-Type: application/json' \
+  -d '{
+    "token": "YOUR_TOKEN",
+    "subject": "Deployment finished",
+    "content": "<b>Build 42 completed.</b>",
+    "recipients": ["ops@example.com"],
+    "files": [{
+      "name": "result.txt",
+      "data": "BASE64_CONTENT"
+    }]
+  }'
 ```
 
-
-**Form Submission (with multiple attachments)**
+Form or multipart example:
 
 ```bash
 curl -X POST 'http://127.0.0.1:12567/sendMail' \
---form 'token={{token}}' \
---form 'subject=test' \
---form 'content=this is a test' \
---form 'recipients=finance@example.com,sales@example.com' \
---form 'files=@"/data/reports/sales.pdf"' \
---form 'files=@"/data/reports/expenses.xlsx"'
+  --form 'token=YOUR_TOKEN' \
+  --form 'subject=Daily report' \
+  --form 'content=Report attached' \
+  --form 'recipients=ops@example.com' \
+  --form 'files=@./report.pdf'
 ```
 
-
-**GET Request Example**
+GET example:
 
 ```bash
-curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%20is%20a%20test&recipients=aaa@mail.com,bbb@mail.com'
+curl 'http://127.0.0.1:12567/sendMail?token=YOUR_TOKEN&subject=test&content=hello'
 ```
 
+Request-body size is controlled by `core.maxbodysize` (default `10M`; `-1` means
+unlimited) and applies to JSON, form and multipart requests. The limit measures the
+encoded body, so Base64 attachments require additional space.
 
-## Build Instructions
+## Configuration
 
-The management UI is server-rendered Go templates, embedded in the binary — there is no
-frontend build step:
+Configuration precedence is:
+
+`defaults` → `config.ini` → CLI flags → environment variables
+
+Common startup flags:
 
 ```bash
-go build -o http2smtp ./
+./http2smtp \
+  -web_port 12566 \
+  -api_port 12567 \
+  -storage_root /path/to/storage
 ```
 
-The release workflow does the same; the tarball carries only the binary. The UI is served
-at `http://127.0.0.1:12566/` with no separate web server.
+A port supplied by a flag or `web_port` / `api_port` environment variable is treated as
+fixed, which is how Docker prevents the UI from moving a mapped port.
 
-`webui/embed.go` embeds the complete `templates` and `static` directories with
-`//go:embed`. The release job verifies the embedded UI before packaging, builds every
-artifact with `-tags release`, and the Docker image downloads the asset for the exact
-Git tag being published rather than an older `latest` release.
+Typical `config.ini`:
 
-To build with a specific embedded version:
+```ini
+[core]
+init = true
+dbType = sqlite
+dataVersion = 1
+maxBodySize = 10M
+
+[sqlite]
+filename = d-mail.db
+
+[manage]
+port = 12566
+
+[api]
+port = 12567
+```
+
+For MySQL, use the `[mysql]` section with `host`, `port`, `dbname`, `username`,
+`password` and `charset`.
+
+Do not change `core.dataVersion` manually. It describes the complete on-disk layout and is
+used by the compatibility guard.
+
+## Build from Source
+
+The project is a Go application with no Node/pnpm build step.
 
 ```bash
-go build -ldflags "-X main.Version=v0.3.0" -o http2smtp ./
+go test ./...
+go build -tags release -o http2smtp ./
 ./http2smtp -v
 ```
 
-## UI Display
+An ordinary `go build` is a development build and reads templates/static assets from the
+working tree. Release builds use `-tags release` and serve the embedded copies.
 
+`webui/embed.go` packages the complete interface:
 
-### initialize
+```go
+//go:embed templates
+var templatesFS embed.FS
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/001.png?raw=true" alt="WebChat" width="800">
+//go:embed static
+var staticFS embed.FS
+```
 
-### add SMTP
+The locale JSON files are embedded as well. The release workflow:
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/002.png?raw=true" alt="WebChat" width="800">
+1. Verifies embedded templates and static files with `go test -tags release ./webui`.
+2. Writes the pushed Git tag into `version.go`.
+3. Builds every target with `-tags release`.
+4. Uploads Actions artifacts and creates one GitHub Release.
+5. Builds Docker images from the exact same release tag.
 
-### add email address
+Latest builds are available from
+[GitHub Releases](https://github.com/chuccp/http2smtp/releases) and
+[Docker Hub](https://hub.docker.com/r/cooge123/http2smtp).
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/003.png?raw=true" alt="WebChat" width="800">
+## Security Notes
 
-### add TOEKN
+- Put the management port behind HTTPS and restrict it to trusted networks.
+- Treat API tokens as credentials; rotate or disable exposed tokens immediately.
+- The public mail endpoint does not include built-in rate limiting. Use a reverse proxy or
+  gateway when exposing it to the internet.
+- Backups should include both the configuration and the database; either alone may be
+  insufficient to restore an installation.
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/004.png?raw=true" alt="WebChat" width="800">
+## Community
 
-### add schedule
+Telegram: <https://t.me/+JClG9_DojaM0ZGE1>
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/005.png?raw=true" alt="WebChat" width="800">
+Issues and feature requests are welcome in
+[GitHub Issues](https://github.com/chuccp/http2smtp/issues).
 
 ## License
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
-
-This project is licensed under the Apache License 2.0. 
-
-See the [LICENSE](./LICENSE) file for the full license text.
+Apache License 2.0. See [LICENSE](./LICENSE).

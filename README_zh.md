@@ -1,319 +1,329 @@
-# HTTP2SMTP - 使用http发送邮件
+# HTTP2SMTP
 
-[![GitHub Downloads](https://img.shields.io/github/downloads/chuccp/http2smtp/total.svg)](https://github.com/chuccp/http2smtp/releases)
+**通过 HTTP 发送邮件，无需在每个应用中硬编码 SMTP 账号。**
+
+[![Release](https://img.shields.io/github/v/release/chuccp/http2smtp)](https://github.com/chuccp/http2smtp/releases)
+[![Actions](https://img.shields.io/github/actions/workflow/status/chuccp/http2smtp/release.yml)](https://github.com/chuccp/http2smtp/actions/workflows/release.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cooge123/http2smtp)](https://hub.docker.com/r/cooge123/http2smtp)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/chuccp/http2smtp/blob/main/LICENSE)
-[![Wechat Group](https://img.shields.io/badge/wechat-group-green.svg?logo=wechat)](#社区)
-![GitHub last commit](https://img.shields.io/github/last-commit/chuccp/http2smtp)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/chuccp/http2smtp/release.yml)
-![GitHub top language](https://img.shields.io/github/languages/top/chuccp/http2smtp)
+[![Go](https://img.shields.io/github/go-mod/go-version/chuccp/http2smtp)](./go.mod)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
+[English](./README.md) | **简体中文**
 
-⭐️ If it helps you, please give a star.
+HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在现代化管理界面中维护 SMTP
+服务器、收件人、API 令牌和定时任务，业务程序只需要发送一个 HTTP 请求即可投递邮件。
 
-[**English**🌎](./README.md) | **简体中文**🀄
+> [!IMPORTANT]
+> 当前版本与 **v0.2.x 数据不兼容**。检测到旧版或数据版本不匹配时，服务会进入只提供
+> 管理页面的兼容模式，不会打开或修改旧数据库，并会在页面中提示备份与重置步骤。
+> 升级前请先阅读[从 v0.2.x 升级](#从-v02x-升级)。
 
-## 重要更新
+## 主要功能
 
-增加定时任务功能，可以使用cron表达式来定时读取某一个接口或者链接结果发送邮件。支持对json响应的接口配置一个模板，将json数据转换成文本，作为邮件内容发送。
-
-## 项目描述
-
-将SMTP协议转换为HTTP接口的网关服务，帮助开发者：
-
-- 无需在代码中硬编码SMTP配置
-- 通过REST API动态发送邮件
-- 可视化配置多个SMTP服务商
-- 使用定时任务，减少项目中邮件配置
-
-## 主要特性
-
-- 🚀 通过Web UI配置SMTP服务器和接收邮箱
-- 📦 支持GET/POST/JSON多种请求格式
-- 🔒 基于Token的API访问控制
-- 🧩 登录图形点击验证码
-- 📎 多文件附件支持（Base64编码/表单上传）
-- 🐳 开箱即用的Docker镜像
-- 📊 发送记录查询与统计
-- 🧾 操作日志审计（登录、增删改、清理等，管理员可清理）
-- 📅 支持定时任务，请求链接，发送邮件
-- 📧 支持邮件模板
-
-## 社区
-欢迎加入微信群或者telegram，提供更多意见。
-
-微信群：
-
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/WeChat.png?raw=true" alt="WebChat" width="200">
-
-telegram：
-
-https://t.me/+JClG9_DojaM0ZGE1
+- 支持 JSON、表单和 URL 参数发送邮件
+- 多个 SMTP 服务器、收件人和 API 令牌
+- 普通用户数据隔离，管理员可管理全站数据
+- Cron 定时请求、响应模板和失败发送策略
+- HTML 邮件模板与多附件
+- 邮件记录、附件下载和操作审计日志
+- 使用旋转后仍清晰可辨图形的新版点击验证码
+- 服务端渲染界面，模板和静态文件全部嵌入二进制
+- 简体中文、繁体中文、英文和日文界面
+- Docker 单目录 `/data` 持久化
+- GitHub 自动验证嵌入资源、打包和发布版本
 
 ## 快速开始
 
-### 直接运行
+### Docker Compose
+
+`docker/docker-compose.yml` 会把 `docker/data` 挂载到 `/data`，因此配置、SQLite、
+日志和附件在替换容器后仍会保留。
 
 ```bash
+cd docker
+docker compose up -d
+```
 
-# Windows 系统（PowerShell 环境）
-# 下载程序包
-Invoke-WebRequest -Uri "https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-windows-amd64.tar.gz" -OutFile "http2smtp-windows-amd64.tar.gz"
-# 解压文件
-tar -zxvf http2smtp-windows-amd64.tar.gz
-# 运行程序 
+打开 <http://127.0.0.1:12566>，按安装向导完成初始化。
+
+### Docker Run
+
+Windows PowerShell：
+
+```powershell
+docker pull cooge123/http2smtp
+
+docker run -d --name http2smtp `
+  -p 12566:12566 `
+  -p 12567:12567 `
+  -v "${PWD}\data:/data" `
+  cooge123/http2smtp
+```
+
+Linux 或 macOS：
+
+```bash
+docker run -d --name http2smtp \
+  -p 12566:12566 \
+  -p 12567:12567 \
+  -v "$PWD/data:/data" \
+  cooge123/http2smtp
+```
+
+官方镜像本身只是一个精简运行环境，直接使用对应 GitHub Release 中的 Linux 二进制。
+镜像不会单独复制 `templates` 或 `static` 目录，因为这些静态资源已经全部嵌入该二进制。
+
+检查容器和端口：
+
+```bash
+docker inspect --format '{{.State.Health.Status}}' http2smtp
+docker exec http2smtp nc -z -w 2 127.0.0.1 12566
+docker exec http2smtp nc -z -w 2 127.0.0.1 12567
+```
+
+内置健康检查始终检测管理端口。兼容模式会按设计关闭公开 API，因此 API 端口测试失败
+是正常现象，完成备份和重置后才会恢复。
+
+### 直接运行
+
+从 [GitHub Releases](https://github.com/chuccp/http2smtp/releases/latest) 下载对应平台的
+压缩包。
+
+Windows PowerShell：
+
+```powershell
+Invoke-WebRequest `
+  -Uri "https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-windows-amd64.tar.gz" `
+  -OutFile "http2smtp-windows-amd64.tar.gz"
+tar -xzf http2smtp-windows-amd64.tar.gz
 .\http2smtp.exe
-# Linux 系统
-# 下载程序包（使用wget确保兼容性）
+```
+
+Linux：
+
+```bash
 wget https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-linux-amd64.tar.gz
-# 解压文件
-tar -zxvf http2smtp-linux-amd64.tar.gz
-# 添加执行权限并运行
+tar -xzf http2smtp-linux-amd64.tar.gz
 chmod +x http2smtp
 ./http2smtp
 ```
 
-只查看二进制版本、不启动或配置服务：
+发布压缩包中只有二进制文件，模板、CSS、JavaScript、图标和语言文件都已经嵌入其中。
+
+### 查看版本
 
 ```bash
 ./http2smtp -v
 ./http2smtp --version
 ```
 
-输出包含版本号、操作系统和架构，例如
-`http2smtp version v0.3.0 (linux/amd64)`。没有注入版本号的本地构建显示 `dev`；
-GitHub 发布流程会在编译前把 Git 标签写入 `version.go`，正式包内始终包含准确的发布版本。
-
-### Docker运行
-
-容器的所有持久化数据统一放在 `/data`。挂载该目录后，替换或升级容器不会丢失
-`config.ini`、SQLite 数据库、滚动应用日志和附件。
-
-```bash
-# 使用 docker compose（推荐）
-cd docker
-docker compose up -d
-```
-
-compose 文件默认把 `docker/data` 挂载到 `/data`。直接运行镜像：
-
-```bash
-docker pull cooge123/http2smtp
-
-docker run -d --name http2smtp `
-  -p 12566:12566 -p 12567:12567 `
-  -v "${PWD}\data:/data" `
-  cooge123/http2smtp
-```
-
-持久化目录结构：
+输出示例：
 
 ```text
-data/
+http2smtp version v0.3.0 (linux/amd64)
+```
+
+GitHub 发布流程会在编译前把 Git 标签写入 `version.go`，因此正式包始终包含准确的发布
+版本；普通本地构建默认显示 `dev`。
+
+## 首次使用
+
+1. 打开管理页面 <http://127.0.0.1:12566>。
+2. 选择 SQLite 或 MySQL，并测试数据库连接。
+3. 创建管理员账号。
+4. 添加 SMTP 服务器、收件人和 API 令牌。
+5. 通过 `12567` 端口的公开 API 发送邮件。
+
+管理界面和管理 API 共用 `12566` 端口；公开邮件 API 单独使用 `12567` 端口，因此可以
+只向外部开放邮件发送接口。
+
+## 持久化数据
+
+Docker 容器把所有可变数据统一保存在 `/data`：
+
+```text
+/data/
   config.ini
   d-mail.db                 # 默认 SQLite 数据库
   logs/
-    http2smtp.log           # 由内置日志组件自动轮转
-  YYYY-MM-DD/               # 邮件附件缓存
+    http2smtp.log           # 内置日志组件自动轮转
+  YYYY-MM-DD/               # 附件缓存
 ```
 
-如果选择 MySQL，数据库本身仍由外部 MySQL 保存；配置、日志和附件继续放在 `/data`。
+使用 MySQL 时，数据库由外部 MySQL 保存；配置、日志和附件仍放在 `/data`。
 
-启动后，使用默认端口号访问管理页面：http://127.0.0.1:12566
-
-检查容器和端口：
-
-```powershell
-docker inspect --format '{{.State.Health.Status}}' http2smtp
-docker exec http2smtp nc -z -w 2 127.0.0.1 12566
-docker exec http2smtp nc -z -w 2 127.0.0.1 12567
-```
-
-内置健康检查在所有模式下都会测试管理端口。兼容模式会按设计关闭公开 API，因此第二条
-端口测试应失败，直到完成备份和重置。
-
-## 配置说明
-
-首次启动后生成配置文件 `config.ini`：
-
-```ini
-[core]
-init      = true   ##初始化开关，初始化配置完成后变为true 
-dbType    = sqlite  ##数据库类型，支持sqlite和mysql
-dataVersion = 1    ##磁盘数据格式版本，请勿从其他安装复制
-maxBodySize = 10M  ##请求体上限，支持 K/M/G 后缀，-1 表示不限制
-
-[sqlite]
-filename = d-mail.db  ##数据库路径
-
-[manage]
-port    = 12566       ##管理端口
-
-[api]
-port = 12567          ##API端口    
-
-[mysql]
-host     = 127.0.0.1   ##数据库地址
-port     = 3306         ##数据库端口
-dbname   = d_mail      ##数据库名称
-charset  = utf8        ##数据库字符集
-username = root        ##数据库用户名
-password = 123456      ##数据库密码
-```
-
-邮件附件缓存目录不是 `config.ini` 的配置项：它来自 `-storage_root` 参数（或 `storage_root`
-环境变量），默认是 `./`，附件会按日期作为子目录放在该目录下。使用自定义存储目录时，
-应用日志会写入同一目录下的 `logs/http2smtp.log`。
-
-端口也可以用 `-web_port` / `-api_port`（或环境变量 `web_port` / `api_port`）指定；用这种方式
-给出的端口会被视为固定端口——Docker 镜像正是靠这一点防止设置页改动端口。
+非 Docker 部署可以通过 `-storage_root` 参数或 `storage_root` 环境变量设置附件目录。
+使用自定义存储目录时，应用日志会写入
+`<storage_root>/logs/http2smtp.log`。
 
 ## 从 v0.2.x 升级
 
-当前版本与 **v0.2.x 的数据格式不兼容**。程序启动时会先检查 `config.ini` 中的
-`core.dataVersion`，通过后才会连接数据库或自动建表。旧配置、没有版本标记的数据库，
-以及数据版本不匹配的安装会在原管理端口打开一个只提供兼容提示的管理页面。该模式
-不会连接或修改数据库，也不会启动公开 API。打开 `http://127.0.0.1:12566/`（或实际配置的
-管理地址）即可查看备份和重置步骤；直接访问 `/settings` 也会进入同一提示页。
+新版数据布局变化较大，无法平滑升级。程序会在连接数据库和自动建表之前检查
+`core.dataVersion`。
 
-升级前请完整备份整个程序目录，包括 `config.ini`、SQLite 数据库和附件/缓存目录。
-如果使用 MySQL，还必须单独做一次完整数据库备份。
+遇到旧版配置、没有版本标记的数据库或数据版本不匹配时：
 
-不兼容安装的重置步骤：
+- 只在原管理端口启动兼容提示页面
+- 不加载数据库、模型、定时任务和公开 API
+- 不读取或修改旧数据库
+- 在页面中展示备份文件、备份步骤和重置方式
 
-1. 停止旧版本。
-2. 将备份保存到安全位置。
-3. 把 `config.ini` 移出程序目录；SQLite 用户同时移走数据库文件，MySQL 用户则在完成
-   备份后新建一个空数据库。不要删除旧配置或旧数据库。
-4. 重新启动当前版本，并完成安装向导。
+重置前请执行以下操作：
 
-程序不会自动删除旧数据。使用 Docker 时，请在移动或替换旧配置和数据库之前，同时备份
-容器工作目录及已挂载的存储卷。
+1. 停止旧版本服务。
+2. 完整备份 `config.ini`、SQLite 数据库、附件目录和应用日志；MySQL 用户请执行完整
+   数据库备份。
+3. 将 `config.ini` 移出程序目录。
+4. 将 SQLite 数据库移到备份位置，或新建一个空的 MySQL 数据库。
+5. 启动当前版本，重新完成安装向导。
 
-## API文档
+HTTP2SMTP 不会自动删除旧配置、数据库或附件。Docker 用户请完整备份挂载到 `/data`
+的宿主机目录。
 
-### 发送邮件接口
+## 公开 API
 
-`POST /sendMail`
+### 发送邮件
 
-**参数**：
+`POST /sendMail`，默认使用公开 API 端口 `12567`。
 
-| 参数名        | 类型       | 必填 | 说明      |
-|------------|----------|----|---------|
-| token      | string   | 是  | 授权令牌    |
-| subject    | string   | 否  | 邮件主题    |
-| content    | string   | 是  | 邮件内容    |
-| recipients | []string | 否  | 额外收件人列表 |
-| files      | []File   | 否  | 附件文件列表  |
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---:|---|
+| `token` | string | 是 | 管理界面创建的 API 令牌 |
+| `subject` | string | 否 | 未填写时使用令牌默认主题 |
+| `content` | string | 是 | 纯文本或 HTML 邮件内容 |
+| `recipients` | string[] | 否 | 追加到令牌配置的收件人 |
+| `files` | object[] | 否 | 包含 `name` 和 Base64 `data` 的附件 |
 
-`recipients` 会追加到令牌上配置的收件人（地址重复只发送一次）。格式非法的地址会被
-跳过，只有在没有可用收件人时请求才会失败。JSON、表单和 multipart 请求体均由
-`core.maxBodySize` 限制（默认 10 MB，支持 K/M/G 后缀，`-1` 表示不限制），可在设置页修改，
-修改后需重启生效。该限制按编码后的请求体计算，Base64 附件会比原文件大约多占三分之一。
+令牌配置的收件人和请求中的收件人会合并，重复地址只发送一次。格式错误的地址会被
+跳过；只有在没有可用收件人时请求才会失败。
 
-**成功响应**：
-
-```json
-ok
-```
-
-### 完整请求示例
-
-**JSON格式（含附件）**
+JSON 示例：
 
 ```bash
 curl -X POST 'http://127.0.0.1:12567/sendMail' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "token": "{{token}}",
-  "subject": "test",
-  "content": "this is a test",
-  "recipients": ["ops@example.com"],
-  "files": [
-    {
-      "name": "alert.log",
-      "data": "{{base64_content}}"
-    }
-  ]
-}'
+  -H 'Content-Type: application/json' \
+  -d '{
+    "token": "YOUR_TOKEN",
+    "subject": "部署完成",
+    "content": "<b>构建 42 已完成。</b>",
+    "recipients": ["ops@example.com"],
+    "files": [{
+      "name": "result.txt",
+      "data": "BASE64_CONTENT"
+    }]
+  }'
 ```
 
-**表单提交（含多个附件）**
+表单或 multipart 示例：
 
 ```bash
 curl -X POST 'http://127.0.0.1:12567/sendMail' \
---form 'token={{token}}' \
---form 'subject=test' \
---form 'content=this is a test' \
---form 'recipients=finance@example.com,sales@example.com' \
---form 'files=@"/data/reports/sales.pdf"' \
---form 'files=@"/data/reports/expenses.xlsx"'
+  --form 'token=YOUR_TOKEN' \
+  --form 'subject=每日报表' \
+  --form 'content=报表见附件' \
+  --form 'recipients=ops@example.com' \
+  --form 'files=@./report.pdf'
 ```
 
-**GET请求示例**
+GET 示例：
 
 ```bash
-curl 'http://127.0.0.1:12567/sendMail?token={{token}}&subject=test&content=this%20is%20a%20test&recipients=aaa@mail.com,bbb@mail.com'
+curl 'http://127.0.0.1:12567/sendMail?token=YOUR_TOKEN&subject=test&content=hello'
 ```
 
+请求体大小由 `core.maxbodysize` 控制，默认 `10M`，支持 `K/M/G` 后缀，`-1` 表示不限制。
+JSON、表单和 multipart 请求都受该限制约束；限制按编码后的请求体计算，因此 Base64
+附件需要额外空间。
 
+## 配置
 
+配置优先级：
 
+`默认值` → `config.ini` → 命令行参数 → 环境变量
 
-## 构建说明
-
-管理界面是 Go 模板服务端渲染，已嵌入二进制，没有单独的前端构建步骤：
+常用启动参数：
 
 ```bash
-go build -o http2smtp ./
+./http2smtp \
+  -web_port 12566 \
+  -api_port 12567 \
+  -storage_root /path/to/storage
 ```
 
-发布流程同样只构建二进制，压缩包内不再包含 `web/` 目录。界面直接访问
-`http://127.0.0.1:12566/` 即可，无需额外的 Web 服务器。
+通过参数或 `web_port` / `api_port` 环境变量指定的端口会被视为固定端口，Docker 正是
+通过这种方式防止设置页改变端口映射。
 
-`webui/embed.go` 通过 `//go:embed` 把完整的 `templates` 和 `static` 目录编译进二进制。
-GitHub 发布流程会先验证嵌入资源，再使用 `-tags release` 构建所有产物；Docker 镜像也会
-下载当前 Git 标签对应的发布包，而不是可能落后的旧 `latest` 版本。
+典型 `config.ini`：
 
-指定版本构建并检查：
+```ini
+[core]
+init = true
+dbType = sqlite
+dataVersion = 1
+maxBodySize = 10M
+
+[sqlite]
+filename = d-mail.db
+
+[manage]
+port = 12566
+
+[api]
+port = 12567
+```
+
+使用 MySQL 时，需要配置 `[mysql]` 下的 `host`、`port`、`dbname`、`username`、
+`password` 和 `charset`。
+
+不要手动修改 `core.dataVersion`。它表示完整的磁盘数据格式，由兼容性检查使用。
+
+## 从源码构建
+
+项目使用 Go 服务端模板，不需要 Node/pnpm 构建步骤。
 
 ```bash
-go build -ldflags "-X main.Version=v0.3.0" -o http2smtp ./
+go test ./...
+go build -tags release -o http2smtp ./
 ./http2smtp -v
 ```
 
-## 界面展示
+普通 `go build` 是开发构建，会从工作目录读取模板和静态资源；正式构建使用
+`-tags release`，直接使用嵌入副本，可以从任意目录运行。
 
-### 初始化
+`webui/embed.go` 负责把完整界面打包进二进制：
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/001.png?raw=true" alt="WebChat" width="800">
+```go
+//go:embed templates
+var templatesFS embed.FS
 
-### 添加SMTP
+//go:embed static
+var staticFS embed.FS
+```
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/002.png?raw=true" alt="WebChat" width="800">
+四个语言 JSON 也会嵌入。GitHub 发布流程会：
 
-### 添加邮箱地址
+1. 使用 `go test -tags release ./webui` 验证模板和静态资源。
+2. 把推送的 Git 标签写入 `version.go`。
+3. 使用 `-tags release` 构建全部平台产物。
+4. 汇总 Actions artifact 并统一创建 GitHub Release。
+5. 使用同一个 Release 标签构建 Docker 镜像。
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/003.png?raw=true" alt="WebChat" width="800">
+最新构建可从 [GitHub Releases](https://github.com/chuccp/http2smtp/releases) 和
+[Docker Hub](https://hub.docker.com/r/cooge123/http2smtp) 获取。
 
-### 添加TOEKN
+## 安全建议
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/004.png?raw=true" alt="WebChat" width="800">
+- 管理端口应放在 HTTPS 反向代理后，并限制为可信网络访问。
+- API 令牌等同于密码；发现泄露后应立即停用或删除。
+- 公开邮件接口没有内置限流。对互联网开放时，请在反向代理或网关层配置限流。
+- 备份时同时保存配置和数据库，只备份其中一项可能无法完整恢复安装。
 
-### 添加定时任务
+## 社区
 
-<img src="https://github.com/chuccp/http2smtp/blob/main/image/005.png?raw=true" alt="WebChat" width="800">
+Telegram：<https://t.me/+JClG9_DojaM0ZGE1>
 
+欢迎在 [GitHub Issues](https://github.com/chuccp/http2smtp/issues) 提交问题与建议。
 
+## 许可证
 
-
-
-
-
-
-
-
-
-
-
-
+Apache License 2.0，详见 [LICENSE](./LICENSE)。

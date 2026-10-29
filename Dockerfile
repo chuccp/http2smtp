@@ -4,6 +4,8 @@ FROM busybox:latest
 ARG goarch=amd64
 ARG release_base=https://github.com/chuccp/http2smtp/releases/latest/download
 
+# Package the GitHub Release binary as-is. Templates, static assets and locale files
+# are already embedded by the release build.
 ADD ${release_base}/http2smtp-linux-${goarch}.tar.gz /app/
 RUN tar -xzf http2smtp-linux-${goarch}.tar.gz && rm -rf  *.tar.gz && chmod a+x /app/http2smtp
 
