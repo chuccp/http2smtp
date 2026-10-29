@@ -39,7 +39,10 @@
 </div>
 
 <div class="card">
-  <h2 class="card-title">{{.L.T "dashboard.apiAddress"}}</h2>
+  <div class="card-title-row">
+    <h2 class="card-title">{{.L.T "dashboard.apiAddress"}}</h2>
+    <span class="version-chip"><span>{{.L.T "dashboard.version"}}</span><strong>{{.Version}}</strong></span>
+  </div>
   <div class="api-address">
     <code class="mono">{{.ApiURL}}</code>
     <button type="button" class="icon-btn" data-copy="{{.ApiURL}}" data-ok="✓" data-fail="{{.L.T "common.copyFailed"}}" title="{{.L.T "common.copy"}}" aria-label="{{.L.T "common.copy"}}">

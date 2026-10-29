@@ -19,7 +19,7 @@ func TestCompatibilityPageShowsBackupAndResetInstructions(t *testing.T) {
 		StorageRoot:     `C:\app\storage`,
 		DatabaseType:    "sqlite",
 		RequiredVersion: compatibility.CurrentDataVersion,
-	})
+	}, "v1.2.3-test")
 	server := templateTestServer(t, page.render)
 	req := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
 	req.Header.Set("Accept-Language", "en")
@@ -35,6 +35,7 @@ func TestCompatibilityPageShowsBackupAndResetInstructions(t *testing.T) {
 		"Upgrade blocked",
 		"This update includes major changes, so a smooth upgrade is not possible",
 		"Back up before resetting",
+		"v1.2.3-test",
 		`C:\app\config.ini`,
 		`C:\app\d-mail.db`,
 		`C:\app\storage`,
@@ -57,7 +58,7 @@ func TestCompatibilityPageShowsMySQLBackupStep(t *testing.T) {
 		StorageRoot:     "/app/storage",
 		DatabaseType:    "mysql",
 		MySQLDatabase:   "http2smtp",
-	})
+	}, "v1.2.3-test")
 	server := templateTestServer(t, page.render)
 	req := httptest.NewRequest(http.MethodGet, "http://localhost/", nil)
 	req.Header.Set("Accept-Language", "en")
@@ -91,7 +92,7 @@ func TestCompatibilityPageRegistersSettingsWithoutDatabase(t *testing.T) {
 		StorageRoot:     "/app/storage",
 		DatabaseType:    "sqlite",
 		RequiredVersion: compatibility.CurrentDataVersion,
-	})
+	}, "v1.2.3-test")
 	app := wf.NewBuilder(config.NewConfig()).Rest(page).Build()
 	handler := app.GetHandler()
 	if handler == nil {

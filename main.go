@@ -146,7 +146,7 @@ func createAPP() (*wf.WebFrame, error) {
 		)
 		compatibilityServerConfig := &web.ServerConfig{Port: webPort, MaxBodySize: maxBodySize}
 		compatibilityGroup := core.NewRestGroupBuilder().
-			Rest(webui.NewCompatibilityPage(compatibilityIssue)).
+			Rest(webui.NewCompatibilityPage(compatibilityIssue, Version)).
 			Port(webPort).
 			ServerConfig(compatibilityServerConfig).
 			Build()
@@ -154,7 +154,7 @@ func createAPP() (*wf.WebFrame, error) {
 		return builder.Build(), nil
 	}
 	restGroupBuilder := core.NewRestGroupBuilder()
-	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, &rest.Oplog{}, webui.NewPages())
+	restGroupBuilder.Rest(&rest.Set{}, &rest.User{}, &rest.Token{}, &rest.Mail{}, &rest.Smtp{}, &rest.Schedule{}, &rest.Log{}, &rest.Oplog{}, webui.NewPages(Version))
 	restGroupBuilder.Port(webPort)
 	// Both server configs are kept: a restart re-runs these same groups, so the restart
 	// endpoint rewrites the ports here to make a port saved in the UI take effect.

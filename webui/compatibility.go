@@ -9,13 +9,14 @@ import (
 // CompatibilityPage is the management-only UI shown when the persisted data belongs
 // to an incompatible release. It deliberately has no database-backed routes.
 type CompatibilityPage struct {
-	issue *compatibility.IncompatibleError
+	issue   *compatibility.IncompatibleError
+	version string
 }
 
 // NewCompatibilityPage returns the standalone page registered by main.go when the
 // database must not be attached.
-func NewCompatibilityPage(issue *compatibility.IncompatibleError) *CompatibilityPage {
-	return &CompatibilityPage{issue: issue}
+func NewCompatibilityPage(issue *compatibility.IncompatibleError, version string) *CompatibilityPage {
+	return &CompatibilityPage{issue: issue, version: version}
 }
 
 func (p *CompatibilityPage) Init(ctx *core.Context) error {
@@ -85,6 +86,7 @@ func (p *CompatibilityPage) render(view *web.Template) error {
 		Base: Base{
 			Lang:      lang,
 			L:         tr,
+			Version:   p.version,
 			Title:     tr.T("compatibility.pageTitle"),
 			Path:      req.URL().Path,
 			Languages: Languages,

@@ -14,9 +14,10 @@ import (
 
 func templateTestBase() Base {
 	return Base{
-		Lang: "zh-cn",
-		L:    translatorFor("zh-cn"),
-		User: &NavUser{Id: 1, Name: "tester", IsAdmin: true},
+		Lang:    "zh-cn",
+		L:       translatorFor("zh-cn"),
+		User:    &NavUser{Id: 1, Name: "tester", IsAdmin: true},
+		Version: "v1.2.3-test",
 	}
 }
 
@@ -641,6 +642,7 @@ func TestDashboardShowsAPIAddress(t *testing.T) {
 		`-d 'token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'`,
 		"GET 参数",
 		`curl 'http://example.com:12567/sendMail?token=YOUR_TOKEN&subject=test&content=hello&recipients=ops@example.com'`,
+		`v1.2.3-test`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("dashboard is missing %q", want)

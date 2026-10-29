@@ -20,6 +20,7 @@ type authFilter = auth2.AuthenticationFilter[*model.User]
 // same port and auth filter as the JSON API, but its routes live at the site root.
 type Pages struct {
 	ctx            *core.Context
+	version        string
 	userService    *service.UserService
 	smtpService    *service.SmtpService
 	tokenService   *service.TokenService
@@ -45,7 +46,7 @@ type Pages struct {
 }
 
 // NewPages returns the UI rest component for main.go to register.
-func NewPages() *Pages { return &Pages{} }
+func NewPages(version string) *Pages { return &Pages{version: version} }
 
 func (p *Pages) Init(ctx *core.Context) error {
 	p.ctx = ctx

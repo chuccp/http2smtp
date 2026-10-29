@@ -2,8 +2,9 @@
 FROM busybox:latest
 
 ARG goarch=amd64
+ARG release_base=https://github.com/chuccp/http2smtp/releases/latest/download
 
-ADD https://github.com/chuccp/http2smtp/releases/latest/download/http2smtp-linux-${goarch}.tar.gz /app/
+ADD ${release_base}/http2smtp-linux-${goarch}.tar.gz /app/
 RUN tar -xzf http2smtp-linux-${goarch}.tar.gz && rm -rf  *.tar.gz && chmod a+x /app/http2smtp
 
 # Everything mutable lives under one mountable root: config.ini, the SQLite

@@ -19,6 +19,7 @@
   {{end}}
   {{template "content" .}}
 </div>
+<div class="bare-version" title="{{.L.T "dashboard.version"}}">{{.Version}}</div>
 <div class="bare-lang">
   <form method="post" action="/lang">
     <input type="hidden" name="back" value="{{.Path}}">

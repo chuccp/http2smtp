@@ -12,7 +12,24 @@ permissions:
   pull-requests: write
 
 jobs:
+  verify-embed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify embedded templates and static assets
+        run: go test -tags release ./webui
+
   build:
+    needs:
+      - verify-embed
     strategy:
       matrix:
         # Include amd64 on all platforms.
@@ -63,19 +80,24 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          # Must satisfy the go directive in go.mod, otherwise the toolchain is
-          # downloaded on every run (or the build fails outright)
-          go-version: '1.26.0'
+          go-version-file: go.mod
+          cache: true
 
       - name: Get project dependencies
         run: go mod download
 
+      - name: Set version from tag
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $content = "package main`n`n// Version is overwritten from the release tag at build time.`nvar Version = `"$tag`"`n"
+          Set-Content -Path version.go -Value $content -Encoding UTF8 -NoNewline
+
       - name: Build http2smtp
         run: |
+          New-Item -ItemType Directory -Force -Path build_assets | Out-Null
           # -tags release: the binary serves the embedded UI instead of reading
           # templates from the working tree (the dev-mode default)
-          # -X: stamp the Git tag into version.go's Version variable
-          go build -tags release -v -ldflags "-X main.Version=${{ github.ref_name }}" -o build_assets/http2smtp  ./
+          go build -tags release -v -o build_assets/http2smtp  ./
 
       - name: Rename Windows http2smtp
         if: matrix.goos == 'windows'
@@ -101,13 +123,32 @@ jobs:
           tar -czvf ../http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz .
           popd || exit 1
 
-      - name: Upload files to GitHub release
-        uses: svenstaro/upload-release-action@v2
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file_glob: true
-          file: ./http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz*
-          tag: ${{ github.ref }}
+          name: http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: http2smtp-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-docker:
     strategy:
       matrix:
@@ -115,7 +156,7 @@ jobs:
         goarch: [ amd64,arm64,riscv64 ]
     runs-on: ubuntu-latest
     needs:
-      - build
+      - release
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
@@ -150,6 +191,7 @@ jobs:
         with:
           build-args: |
             goarch=${{env.GOARCH}}
+            release_base=https://github.com/chuccp/http2smtp/releases/download/${{ github.ref_name }}
           platforms: ${{ matrix.goos }}/${{ matrix.goarch }}
           labels: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true

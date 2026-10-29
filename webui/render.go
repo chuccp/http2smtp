@@ -55,11 +55,13 @@ type Flash struct {
 
 // Base is embedded in every page's data struct. Title is already translated.
 type Base struct {
-	Lang  string
-	L     *Translator
-	User  *NavUser
-	Title string
-	Flash Flash
+	Lang string
+	L    *Translator
+	User *NavUser
+	// Version is the build version stamped into the binary at release time.
+	Version string
+	Title   string
+	Flash   Flash
 	// Path is the request path — the tab bar and the nav highlight are drawn client-side
 	// from location, but the server needs it for the language form's return target.
 	Path string
@@ -117,6 +119,7 @@ func (p *Pages) newBase(lang, titleKey string) Base {
 	return Base{
 		Lang:      lang,
 		L:         tr,
+		Version:   p.version,
 		Title:     tr.T(titleKey),
 		Languages: Languages,
 		LangNames: langNames,

@@ -2,6 +2,14 @@ package webui
 
 import "testing"
 
+func TestPageBaseCarriesBuildVersion(t *testing.T) {
+	page := NewPages("v1.2.3-test")
+	base := page.newBase("en", "auth.login")
+	if base.Version != "v1.2.3-test" {
+		t.Errorf("base version = %q", base.Version)
+	}
+}
+
 // safeNext only lets same-site paths through; anything a browser could resolve to
 // another origin falls back to the dashboard.
 func TestSafeNext(t *testing.T) {

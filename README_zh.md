@@ -82,7 +82,7 @@ chmod +x http2smtp
 
 输出包含版本号、操作系统和架构，例如
 `http2smtp version v0.3.0 (linux/amd64)`。没有注入版本号的本地构建显示 `dev`；
-正式发布包会通过 `-ldflags` 自动使用 Git 标签。
+GitHub 发布流程会在编译前把 Git 标签写入 `version.go`，正式包内始终包含准确的发布版本。
 
 ### Docker运行
 
@@ -270,6 +270,10 @@ go build -o http2smtp ./
 
 发布流程同样只构建二进制，压缩包内不再包含 `web/` 目录。界面直接访问
 `http://127.0.0.1:12566/` 即可，无需额外的 Web 服务器。
+
+`webui/embed.go` 通过 `//go:embed` 把完整的 `templates` 和 `static` 目录编译进二进制。
+GitHub 发布流程会先验证嵌入资源，再使用 `-tags release` 构建所有产物；Docker 镜像也会
+下载当前 Git 标签对应的发布包，而不是可能落后的旧 `latest` 版本。
 
 指定版本构建并检查：
 

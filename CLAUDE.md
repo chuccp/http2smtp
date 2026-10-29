@@ -383,10 +383,13 @@ templates and assets from the working tree by design.
 
 The release workflow only sets up Go and runs `go build -tags release`; the tarball
 carries the binary alone (the UI travels inside it). The Dockerfile unpacks that tarball
-and needs no change — it never referenced `web/` directly. The build injects
-`github.ref_name` into `version.go`'s `Version` variable with
-`-ldflags "-X main.Version=${{ github.ref_name }}"`; local `make release-*` builds use
-`git describe --tags --always --dirty`.
+and needs no change — it never referenced `web/` directly. Before compiling, the build
+overwrites the variable-only `version.go` with `github.ref_name`; output helpers live in
+`version_output.go`. Local `make release-*` builds use
+`git describe --tags --always --dirty` through `-ldflags`. A `verify-embed` job runs
+`go test -tags release ./webui` before any release artifact is built. Docker receives
+`release_base=https://github.com/chuccp/http2smtp/releases/download/<tag>` so it packages
+the binary from the tag being released instead of the previous `latest` release.
 
 ## Known gaps
 

@@ -84,7 +84,8 @@ Check the binary version without starting or configuring the service:
 
 The output includes the version, operating system and architecture, for example
 `http2smtp version v0.3.0 (linux/amd64)`. Local builds show `dev` unless a version is
-injected. Release binaries receive their Git tag automatically through `-ldflags`.
+injected. GitHub Releases write the Git tag into `version.go` before compiling, so packaged
+binaries contain the exact release version.
 
 ### Docker Execution
 
@@ -288,6 +289,11 @@ go build -o http2smtp ./
 
 The release workflow does the same; the tarball carries only the binary. The UI is served
 at `http://127.0.0.1:12566/` with no separate web server.
+
+`webui/embed.go` embeds the complete `templates` and `static` directories with
+`//go:embed`. The release job verifies the embedded UI before packaging, builds every
+artifact with `-tags release`, and the Docker image downloads the asset for the exact
+Git tag being published rather than an older `latest` release.
 
 To build with a specific embedded version:
 
