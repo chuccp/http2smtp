@@ -8,7 +8,7 @@
 [![Go](https://img.shields.io/github/go-mod/go-version/chuccp/http2smtp)](./go.mod)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
-[English](./README.md) | **简体中文**
+[English](./README.md) | **简体中文** | [繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md)
 
 HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在管理界面中维护 SMTP
 服务器、收件人、API 令牌和定时任务，业务程序只需要发送一个 HTTP 请求即可投递邮件。

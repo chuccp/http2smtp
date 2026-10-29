@@ -8,7 +8,7 @@
 [![Go](https://img.shields.io/github/go-mod/go-version/chuccp/http2smtp)](./go.mod)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
-**English** | [简体中文](./README_zh.md)
+**English** | [简体中文](./README_zh.md) | [繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md)
 
 HTTP2SMTP is a self-hosted HTTP-to-SMTP gateway. Manage SMTP servers, recipients, API
 tokens and scheduled tasks from the web UI, then send mail from any application with a
