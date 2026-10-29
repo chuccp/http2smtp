@@ -86,21 +86,51 @@ chmod +x http2smtp
 
 ### Docker运行
 
+容器的所有持久化数据统一放在 `/data`。挂载该目录后，替换或升级容器不会丢失
+`config.ini`、SQLite 数据库、滚动应用日志和附件。
+
 ```bash
-##使用 docker-compose(推荐)
+# 使用 docker compose（推荐）
 cd docker
 docker compose up -d
 ```
-or
+
+compose 文件默认把 `docker/data` 挂载到 `/data`。直接运行镜像：
 
 ```bash
-
 docker pull cooge123/http2smtp
 
-docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
-
+docker run -d --name http2smtp `
+  -p 12566:12566 -p 12567:12567 `
+  -v "${PWD}\data:/data" `
+  cooge123/http2smtp
 ```
+
+持久化目录结构：
+
+```text
+data/
+  config.ini
+  d-mail.db                 # 默认 SQLite 数据库
+  logs/
+    http2smtp.log           # 由内置日志组件自动轮转
+  YYYY-MM-DD/               # 邮件附件缓存
+```
+
+如果选择 MySQL，数据库本身仍由外部 MySQL 保存；配置、日志和附件继续放在 `/data`。
+
 启动后，使用默认端口号访问管理页面：http://127.0.0.1:12566
+
+检查容器和端口：
+
+```powershell
+docker inspect --format '{{.State.Health.Status}}' http2smtp
+docker exec http2smtp nc -z -w 2 127.0.0.1 12566
+docker exec http2smtp nc -z -w 2 127.0.0.1 12567
+```
+
+内置健康检查在所有模式下都会测试管理端口。兼容模式会按设计关闭公开 API，因此第二条
+端口测试应失败，直到完成备份和重置。
 
 ## 配置说明
 
@@ -132,8 +162,8 @@ password = 123456      ##数据库密码
 ```
 
 邮件附件缓存目录不是 `config.ini` 的配置项：它来自 `-storage_root` 参数（或 `storage_root`
-环境变量），默认是 `./`，即附件按日期作为子目录落在程序旁边。每次启动都会把这个值写回
-`config.ini`，所以手工修改 `core.cachepath` 不会生效。
+环境变量），默认是 `./`，附件会按日期作为子目录放在该目录下。使用自定义存储目录时，
+应用日志会写入同一目录下的 `logs/http2smtp.log`。
 
 端口也可以用 `-web_port` / `-api_port`（或环境变量 `web_port` / `api_port`）指定；用这种方式
 给出的端口会被视为固定端口——Docker 镜像正是靠这一点防止设置页改动端口。

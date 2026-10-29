@@ -88,18 +88,56 @@ injected. Release binaries receive their Git tag automatically through `-ldflags
 
 ### Docker Execution
 
+The container uses `/data` as its only persistent data directory. Mount it to keep
+`config.ini`, the SQLite database, rotating application logs and attachments across
+container replacements.
+
 ```bash
-##use docker-compose（recommended)
+# docker compose (recommended)
 cd docker
 docker compose up -d
 ```
-or
+
+The compose file mounts `docker/data` to `/data`. For a direct `docker run`:
+
 ```bash
 docker pull cooge123/http2smtp
 
-docker run -p 12566:12566 -p 12567:12567 -it --rm cooge123/http2smtp
+docker run -d --name http2smtp \
+  -p 12566:12566 -p 12567:12567 \
+  -v "$PWD/data:/data" \
+  cooge123/http2smtp
 ```
+
+On Windows PowerShell, use `-v "${PWD}\data:/data"` for the same mount.
+
+The persistent directory layout is:
+
+```text
+data/
+  config.ini
+  d-mail.db                 # default SQLite database
+  logs/
+    http2smtp.log           # rotated by the built-in logger
+  YYYY-MM-DD/               # attachment cache files
+```
+
+If MySQL is selected, the database itself remains external, while configuration, logs and
+attachments stay under `/data`.
+
 After startup, access the management page using the default port number: http://127.0.0.1:12566
+
+Check the container and ports:
+
+```bash
+docker inspect --format '{{.State.Health.Status}}' http2smtp
+docker exec http2smtp nc -z -w 2 127.0.0.1 12566
+docker exec http2smtp nc -z -w 2 127.0.0.1 12567
+```
+
+The built-in health check tests the management port in every mode. In compatibility mode
+the public API port is intentionally closed, so that second command is expected to fail
+until the installation has been backed up and reset.
 
 ## Configuration Instructions
 
@@ -132,8 +170,8 @@ password = 123456      ## Database password
 
 The attachment cache directory is not a `config.ini` setting: it comes from `-storage_root`
 (or the `storage_root` environment variable) and defaults to `./`, i.e. dates appear as
-subdirectories beside the binary. The value is written back to `config.ini` on every start,
-so editing `core.cachepath` by hand has no effect.
+subdirectories below the storage root. When a custom storage root is used, application logs
+are written to `logs/http2smtp.log` under the same directory.
 
 The ports may also be given as `-web_port` / `-api_port` (or `web_port` / `api_port` in the
 environment). A port passed that way is treated as fixed, which is how the Docker image

@@ -1,14 +1,14 @@
-version: "3.9"
 services:
   http2smtp:
     image: cooge123/http2smtp:latest
     container_name: http2smtp
+    working_dir: /data
     environment:
-      - storage_root=/app/storage
+      - storage_root=/data
       - web_port=12566
       - api_port=12567
     volumes:
-      - ./storage:/app/storage
+      - ./data:/data
     ports:
       - "12566:12566"
       - "12567:12567"

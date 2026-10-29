@@ -57,6 +57,12 @@ cd docker && docker compose up -d
 docker build -t http2smtp .
 ```
 
+The Docker image uses `/data` as its working directory and persistent volume. It contains
+`config.ini`, the default `d-mail.db`, `logs/http2smtp.log` and date-stamped attachment
+directories. A custom `-storage_root` also enables file logging under
+`<storage_root>/logs/http2smtp.log`. The image health check probes the management port;
+the public API port is intentionally absent in compatibility mode.
+
 ### Web UI (`webui/`, Go html/template)
 
 The management UI is server-rendered and embedded in the binary (`webui/embed.go`

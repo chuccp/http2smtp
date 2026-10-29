@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -106,6 +108,9 @@ func createAPP() (*wf.WebFrame, error) {
 	if len(storageRoot) > 0 {
 		fileConfig.Put("core.cachepath", storageRoot)
 	}
+	if err := configureFileLogging(fileConfig, storageRoot); err != nil {
+		return nil, err
+	}
 	// Without a flag or environment value the port comes from config.ini — the file the
 	// setup wizard and the settings page write — and only then from the built-in default.
 	// The typed config is what makes the INI's string values work here; reading the file
@@ -209,6 +214,28 @@ func createAPP() (*wf.WebFrame, error) {
 	restartService.Setup(manageServerConfig, apiServerConfig, app.ReStart)
 	return app, nil
 }
+
+// configureFileLogging keeps application logs with the rest of the persistent data
+// when a custom storage root is used. The default working-directory storage keeps the
+// existing stdout-only behavior for ordinary local runs.
+func configureFileLogging(cfg config.IConfig, storageRoot string) error {
+	root := strings.TrimSpace(storageRoot)
+	if root == "" || root == "." || root == string(filepath.Separator) {
+		return nil
+	}
+	cleanRoot := filepath.Clean(root)
+	if cleanRoot == "." {
+		return nil
+	}
+	logDir := filepath.Join(cleanRoot, "logs")
+	if err := os.MkdirAll(logDir, 0o755); err != nil {
+		return err
+	}
+	cfg.Put("web.log.write", true)
+	cfg.Put("web.log.path", filepath.Join(logDir, "http2smtp.log"))
+	return nil
+}
+
 func main() {
 	app, err := createAPP()
 	if err != nil {
