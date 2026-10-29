@@ -72,10 +72,6 @@ docker run -d --name http2smtp `
   cooge123/http2smtp
 ```
 
-The official image is a thin runtime wrapper around the Linux binary from the matching
-GitHub Release. It does not copy separate `templates` or `static` directories, because
-both are already embedded in that binary.
-
 Check the container and ports:
 
 ```bash

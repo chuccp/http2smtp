@@ -70,9 +70,6 @@ docker run -d --name http2smtp \
   cooge123/http2smtp
 ```
 
-官方镜像本身只是一个精简运行环境，直接使用对应 GitHub Release 中的 Linux 二进制。
-镜像不会单独复制 `templates` 或 `static` 目录，因为这些静态资源已经全部嵌入该二进制。
-
 检查容器和端口：
 
 ```bash
