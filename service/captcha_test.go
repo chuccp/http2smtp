@@ -220,6 +220,28 @@ func TestRotateCaptchaPoint(t *testing.T) {
 	}
 }
 
+func TestCaptchaShapePoolAvoidsRotatedQuadAmbiguity(t *testing.T) {
+	allowed := map[string]bool{
+		"circle": true, "triangle": true, "star": true, "heart": true, "arrow": true,
+	}
+	if len(captchaShapeKeys) != len(allowed) {
+		t.Fatalf("shape pool = %v", captchaShapeKeys)
+	}
+	for _, key := range captchaShapeKeys {
+		if !allowed[key] {
+			t.Errorf("unexpected captcha shape %q", key)
+		}
+		if key == "square" || key == "diamond" {
+			t.Errorf("ambiguous rotated quadrilateral %q remains in the pool", key)
+		}
+	}
+	for _, key := range []string{"heart", "arrow"} {
+		if points := shapePoints(key, 100, 100, 24, 0); len(points) < 8 {
+			t.Errorf("%s has too few points: %d", key, len(points))
+		}
+	}
+}
+
 // The occlusion bands are translucent: the destination pixel keeps part of its colour
 // and out-of-bounds points are ignored.
 func TestBlendPixel(t *testing.T) {

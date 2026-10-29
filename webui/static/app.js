@@ -386,15 +386,12 @@
       } else if (shape === 'triangle') {
         node = document.createElementNS(ns, 'path');
         node.setAttribute('d', 'M12 3.8 21 20.2H3Z');
-      } else if (shape === 'square') {
-        node = document.createElementNS(ns, 'rect');
-        node.setAttribute('x', '4');
-        node.setAttribute('y', '4');
-        node.setAttribute('width', '16');
-        node.setAttribute('height', '16');
-      } else if (shape === 'diamond') {
+      } else if (shape === 'heart') {
         node = document.createElementNS(ns, 'path');
-        node.setAttribute('d', 'M12 3 21 12 12 21 3 12Z');
+        node.setAttribute('d', 'M12 21.2 4.2 13.7C1.9 11.4 2.1 7.8 4.5 5.7 6.8 3.7 10 4.1 12 6.4 14 4.1 17.2 3.7 19.5 5.7 21.9 7.8 22.1 11.4 19.8 13.7Z');
+      } else if (shape === 'arrow') {
+        node = document.createElementNS(ns, 'path');
+        node.setAttribute('d', 'M12 2.8 18 8.6h-3.5v6.6H18L12 21.2 6 15.2h3.5V8.6H6Z');
       } else {
         node = document.createElementNS(ns, 'path');
         node.setAttribute('d', 'M12 3.2 14.6 8.9 20.8 9.6 16.2 13.9 17.5 20 12 16.9 6.5 20 7.8 13.9 3.2 9.6 9.4 8.9Z');

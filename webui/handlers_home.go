@@ -100,9 +100,9 @@ type CaptchaView struct {
 var captchaShapeKeys = map[string]string{
 	"circle":   "captcha.circle",
 	"triangle": "captcha.triangle",
-	"square":   "captcha.square",
-	"diamond":  "captcha.diamond",
 	"star":     "captcha.star",
+	"heart":    "captcha.heart",
+	"arrow":    "captcha.arrow",
 }
 
 func (p *Pages) captchaView(lang string, data *service.CaptchaData) *CaptchaView {

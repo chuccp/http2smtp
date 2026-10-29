@@ -36,7 +36,7 @@ const (
 
 // captchaShapeKeys is the vocabulary shared with the UI, which translates each key for
 // the prompt. The order is only the source pool; every challenge shuffles it.
-var captchaShapeKeys = []string{"circle", "triangle", "square", "diamond", "star"}
+var captchaShapeKeys = []string{"circle", "triangle", "star", "heart", "arrow"}
 
 var captchaPalette = []color.RGBA{
 	{47, 111, 237, 255},
@@ -264,15 +264,11 @@ func drawCaptchaImage(keys []string, positions map[string]image.Point) (string, 
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
 
-// captchaShapeAngle keeps rotated squares and diamonds shallow: a square rotated by 45°
-// would read as a diamond (and the reverse), making the prompt ambiguous.
 func captchaShapeAngle(key string) float64 {
 	var degrees int
 	switch key {
-	case "triangle", "star":
+	case "triangle", "star", "heart", "arrow":
 		degrees = mathrand.Intn(51) - 25
-	case "square", "diamond":
-		degrees = mathrand.Intn(21) - 10
 	}
 	return float64(degrees) * math.Pi / 180
 }
@@ -282,15 +278,31 @@ func shapePoints(key string, cx, cy, size int, angle float64) []image.Point {
 	switch key {
 	case "triangle":
 		points = []image.Point{{X: cx, Y: cy - size}, {X: cx + size, Y: cy + size}, {X: cx - size, Y: cy + size}}
-	case "square":
+	case "heart":
 		points = []image.Point{
-			{X: cx - size, Y: cy - size}, {X: cx + size, Y: cy - size},
-			{X: cx + size, Y: cy + size}, {X: cx - size, Y: cy + size},
+			{X: cx, Y: cy - size/6},
+			{X: cx - size/5, Y: cy - size*3/5},
+			{X: cx - size*11/20, Y: cy - size*17/20},
+			{X: cx - size*9/10, Y: cy - size*11/20},
+			{X: cx - size, Y: cy - size/10},
+			{X: cx - size*3/4, Y: cy + size*3/10},
+			{X: cx, Y: cy + size},
+			{X: cx + size*3/4, Y: cy + size*3/10},
+			{X: cx + size, Y: cy - size/10},
+			{X: cx + size*9/10, Y: cy - size*11/20},
+			{X: cx + size*11/20, Y: cy - size*17/20},
+			{X: cx + size/5, Y: cy - size*3/5},
 		}
-	case "diamond":
+	case "arrow":
 		points = []image.Point{
-			{X: cx, Y: cy - size}, {X: cx + size, Y: cy},
-			{X: cx, Y: cy + size}, {X: cx - size, Y: cy},
+			{X: cx - size, Y: cy},
+			{X: cx - size*7/10, Y: cy - size/5},
+			{X: cx + size/6, Y: cy - size/5},
+			{X: cx + size/6, Y: cy - size*3/5},
+			{X: cx + size, Y: cy},
+			{X: cx + size/6, Y: cy + size*3/5},
+			{X: cx + size/6, Y: cy + size/5},
+			{X: cx - size*7/10, Y: cy + size/5},
 		}
 	case "star":
 		points = make([]image.Point, 0, 10)
@@ -394,8 +406,7 @@ func fillCircle(img *image.RGBA, cx, cy, radius int, colour color.RGBA) {
 	}
 }
 
-// fillPolygon is a small even-odd scanline fill, enough for the triangle, square, diamond
-// and star.
+// fillPolygon is a small even-odd scanline fill, enough for every non-circular shape.
 func fillPolygon(img *image.RGBA, points []image.Point, colour color.RGBA) {
 	if len(points) < 3 {
 		return

@@ -13,17 +13,17 @@ func TestCaptchaViewKeepsShapeOrder(t *testing.T) {
 	view := p.captchaView("en", &service.CaptchaData{
 		ID:     "id",
 		Image:  "data:image/png;base64,AA==",
-		Shapes: []string{"star", "circle", "square"},
+		Shapes: []string{"star", "circle", "heart"},
 		Width:  300,
 		Height: 200,
 	})
-	if len(view.Shapes) != 3 || view.Shapes[0] != "star" || view.Shapes[1] != "circle" || view.Shapes[2] != "square" {
+	if len(view.Shapes) != 3 || view.Shapes[0] != "star" || view.Shapes[1] != "circle" || view.Shapes[2] != "heart" {
 		t.Errorf("shape order = %v", view.Shapes)
 	}
-	if len(view.Labels) != 3 || view.Labels[0] != "Star" || view.Labels[1] != "Circle" || view.Labels[2] != "Square" {
+	if len(view.Labels) != 3 || view.Labels[0] != "Star" || view.Labels[1] != "Circle" || view.Labels[2] != "Heart" {
 		t.Errorf("labels = %v", view.Labels)
 	}
-	if view.Prompt != "Star → Circle → Square" {
+	if view.Prompt != "Star → Circle → Heart" {
 		t.Errorf("prompt fallback = %q", view.Prompt)
 	}
 }
