@@ -36,13 +36,13 @@ simple HTTP request.
 
 ## Screenshots
 
-| Dashboard | Settings |
+| Dashboard | Add SMTP server |
 |---|---|
-| <img src="./docs/screenshots/dashboard.png" alt="Dashboard" width="100%"> | <img src="./docs/screenshots/settings.png" alt="Settings" width="100%"> |
+| <img src="./docs/screenshots/dashboard.png" alt="Dashboard" width="100%"> | <img src="./docs/screenshots/smtp.png" alt="Add SMTP server" width="100%"> |
 
-| Login | Setup |
+| Create API token | Add scheduled task |
 |---|---|
-| <img src="./docs/screenshots/login.png" alt="Login" width="100%"> | <img src="./docs/screenshots/setup.png" alt="Setup wizard" width="100%"> |
+| <img src="./docs/screenshots/token.png" alt="Create API token" width="100%"> | <img src="./docs/screenshots/schedule.png" alt="Add scheduled task" width="100%"> |
 
 ## Quick Start
 

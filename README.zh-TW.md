@@ -34,13 +34,13 @@ HTTP2SMTP 是一個可自託管的 HTTP 到 SMTP 閘道。你可以在管理介�
 
 ## 介面截圖
 
-| 儀表板 | 系統設定 |
+| 儀表板 | 新增 SMTP 伺服器 |
 |---|---|
-| <img src="./docs/screenshots/dashboard.png" alt="儀表板" width="100%"> | <img src="./docs/screenshots/settings.png" alt="系統設定" width="100%"> |
+| <img src="./docs/screenshots/dashboard.png" alt="儀表板" width="100%"> | <img src="./docs/screenshots/smtp.png" alt="新增 SMTP 伺服器" width="100%"> |
 
-| 登入 | 安裝精靈 |
+| 產生 API 權杖 | 新增排程工作 |
 |---|---|
-| <img src="./docs/screenshots/login.png" alt="登入" width="100%"> | <img src="./docs/screenshots/setup.png" alt="安裝精靈" width="100%"> |
+| <img src="./docs/screenshots/token.png" alt="產生 API 權杖" width="100%"> | <img src="./docs/screenshots/schedule.png" alt="新增排程工作" width="100%"> |
 
 ## 快速開始
 

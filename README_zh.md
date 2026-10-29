@@ -34,13 +34,13 @@ HTTP2SMTP 是一个可自托管的 HTTP 到 SMTP 网关。你可以在管理界�
 
 ## 界面截图
 
-| 仪表盘 | 系统设置 |
+| 仪表盘 | 添加 SMTP 服务器 |
 |---|---|
-| <img src="./docs/screenshots/dashboard.png" alt="仪表盘" width="100%"> | <img src="./docs/screenshots/settings.png" alt="系统设置" width="100%"> |
+| <img src="./docs/screenshots/dashboard.png" alt="仪表盘" width="100%"> | <img src="./docs/screenshots/smtp.png" alt="添加 SMTP 服务器" width="100%"> |
 
-| 登录 | 安装向导 |
+| 生成 API 令牌 | 添加定时任务 |
 |---|---|
-| <img src="./docs/screenshots/login.png" alt="登录" width="100%"> | <img src="./docs/screenshots/setup.png" alt="安装向导" width="100%"> |
+| <img src="./docs/screenshots/token.png" alt="生成 API 令牌" width="100%"> | <img src="./docs/screenshots/schedule.png" alt="添加定时任务" width="100%"> |
 
 ## 快速开始
 

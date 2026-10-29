@@ -37,13 +37,13 @@ HTTP2SMTP はセルフホスト可能な HTTP-to-SMTP ゲートウェイです�
 
 ## スクリーンショット
 
-| ダッシュボード | システム設定 |
+| ダッシュボード | SMTP サーバー追加 |
 |---|---|
-| <img src="./docs/screenshots/dashboard.png" alt="ダッシュボード" width="100%"> | <img src="./docs/screenshots/settings.png" alt="システム設定" width="100%"> |
+| <img src="./docs/screenshots/dashboard.png" alt="ダッシュボード" width="100%"> | <img src="./docs/screenshots/smtp.png" alt="SMTP サーバー追加" width="100%"> |
 
-| ログイン | セットアップ |
+| API トークン作成 | スケジュールタスク追加 |
 |---|---|
-| <img src="./docs/screenshots/login.png" alt="ログイン" width="100%"> | <img src="./docs/screenshots/setup.png" alt="セットアップウィザード" width="100%"> |
+| <img src="./docs/screenshots/token.png" alt="API トークン作成" width="100%"> | <img src="./docs/screenshots/schedule.png" alt="スケジュールタスク追加" width="100%"> |
 
 ## クイックスタート
 
