@@ -45,6 +45,12 @@ func AttachInitial(conn *framedb.DB) {
 
 // putDbSettings copies the non-empty database fields of setInfo onto the live config.
 // Empty fields are left alone so a partial form never wipes what config.ini holds.
+//
+// Only the section of the effective database type is written. Both sections arrive
+// filled with model.DefaultConfig() values — every caller binds onto it — and writing
+// the inactive one would replace its stored host/dbname/port with those defaults, which
+// is exactly the wipe the empty-field rule is meant to prevent: a settings save while
+// on sqlite must not reset a stored mysql database name.
 func putDbSettings(ctx *core.Context, setInfo *model.Config) {
 	if setInfo.Core.DbType != "" {
 		ctx.GetConfig().Put("core.dbtype", setInfo.Core.DbType)
@@ -53,28 +59,36 @@ func putDbSettings(ctx *core.Context, setInfo *model.Config) {
 	if setInfo.Core.MaxBodySize != 0 {
 		ctx.GetConfig().Put("core.maxbodysize", setInfo.Core.MaxBodySize.String())
 	}
-	if setInfo.Sqlite != nil && setInfo.Sqlite.Filename != "" {
-		ctx.GetConfig().Put("sqlite.filename", setInfo.Sqlite.Filename)
+	dbType := setInfo.Core.DbType
+	if dbType == "" {
+		dbType = ctx.GetConfig().GetStringOrDefault("core.dbtype", "sqlite")
 	}
-	if setInfo.Mysql != nil {
-		m := setInfo.Mysql
-		if m.Host != "" {
-			ctx.GetConfig().Put("mysql.host", m.Host)
+	switch dbType {
+	case "mysql":
+		if setInfo.Mysql != nil {
+			m := setInfo.Mysql
+			if m.Host != "" {
+				ctx.GetConfig().Put("mysql.host", m.Host)
+			}
+			if m.Port > 0 {
+				ctx.GetConfig().Put("mysql.port", m.Port)
+			}
+			if m.Dbname != "" {
+				ctx.GetConfig().Put("mysql.dbname", m.Dbname)
+			}
+			if m.Username != "" {
+				ctx.GetConfig().Put("mysql.username", m.Username)
+			}
+			if m.Password != "" {
+				ctx.GetConfig().Put("mysql.password", m.Password)
+			}
+			if m.Charset != "" {
+				ctx.GetConfig().Put("mysql.charset", m.Charset)
+			}
 		}
-		if m.Port > 0 {
-			ctx.GetConfig().Put("mysql.port", m.Port)
-		}
-		if m.Dbname != "" {
-			ctx.GetConfig().Put("mysql.dbname", m.Dbname)
-		}
-		if m.Username != "" {
-			ctx.GetConfig().Put("mysql.username", m.Username)
-		}
-		if m.Password != "" {
-			ctx.GetConfig().Put("mysql.password", m.Password)
-		}
-		if m.Charset != "" {
-			ctx.GetConfig().Put("mysql.charset", m.Charset)
+	case "sqlite":
+		if setInfo.Sqlite != nil && setInfo.Sqlite.Filename != "" {
+			ctx.GetConfig().Put("sqlite.filename", setInfo.Sqlite.Filename)
 		}
 	}
 }

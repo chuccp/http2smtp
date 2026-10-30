@@ -1,10 +1,12 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"io/fs"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -465,6 +467,57 @@ func TestSendApiCallMailOwnerDisabled(t *testing.T) {
 	}
 	if rows := f.logRows(t); len(rows) != 0 {
 		t.Fatalf("a blocked schedule wrote %d log rows", len(rows))
+	}
+}
+
+// The multipart form path carries attachments as file parts instead of base64 fields;
+// the same rules apply: they are cached, recorded on the log and owned by its cleanup.
+func TestSendMailByTokenMultipartUpload(t *testing.T) {
+	f := newTokenSendFixture(t)
+	alice := f.user(t, "alice", true)
+	s := f.smtpFor(t, alice)
+	m := f.mailFor(t, alice, "A", "a@example.com")
+	tk := f.tokenFor(t, alice.Id, s.Id, idList(m.Id), "sub", "tok-mp", entity.TokenStateInUse)
+
+	srv := f.publicAPI(t)
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	_ = writer.WriteField("token", tk.Token)
+	_ = writer.WriteField("content", "hello")
+	_ = writer.WriteField("recipients", "extra@example.com")
+	part, err := writer.CreateFormFile("files", "upload.txt")
+	if err != nil {
+		t.Fatalf("create file part: %v", err)
+	}
+	if _, err := part.Write([]byte("multipart payload")); err != nil {
+		t.Fatalf("write file part: %v", err)
+	}
+	_ = writer.Close()
+
+	resp, err := http.Post(srv.URL+"/sendMail", writer.FormDataContentType(), &body)
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	resp.Body.Close()
+
+	rows := f.logRows(t)
+	if len(rows) != 1 {
+		t.Fatalf("log rows = %d, want 1", len(rows))
+	}
+	// The recipient added by the request is in the log alongside the configured one.
+	if !strings.Contains(rows[0].Mail, "extra@example.com") || !strings.Contains(rows[0].Mail, "a@example.com") {
+		t.Errorf("log mail = %q, want both recipients", rows[0].Mail)
+	}
+	atts, err := f.attachs.FindByLogId(rows[0].Id)
+	if err != nil {
+		t.Fatalf("read attachments: %v", err)
+	}
+	if len(atts) != 1 || atts[0].Name != "upload.txt" {
+		t.Fatalf("attachments = %+v, want one upload.txt", atts)
+	}
+	data, err := os.ReadFile(atts[0].FilePath)
+	if err != nil || string(data) != "multipart payload" {
+		t.Errorf("cached copy = %q (%v), want the uploaded bytes", data, err)
 	}
 }
 

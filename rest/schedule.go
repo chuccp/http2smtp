@@ -167,28 +167,22 @@ func (schedule *Schedule) putOne(req *web.Request) (any, error) {
 
 // ensureTokenUsable enforces the token reference rule: a regular caller may only point
 // a schedule at their own token, while an admin may use anyone's — the admin token list
-// already exposes every token together with the SMTP configuration behind it.
+// already exposes every token together with the SMTP configuration behind it. Either
+// way the token must be in use, the same rule the form's picker and its save enforce:
+// a disabled token is not a reference a schedule may hold.
 func (schedule *Schedule) ensureTokenUsable(tokenId uint, user *model.User) error {
-	if !user.IsAdmin {
-		return schedule.ensureTokenOwnedBy(tokenId, user.Id)
+	var byToken *model.Token
+	var err error
+	if user.IsAdmin {
+		byToken, err = schedule.tokenService.GetOneAny(tokenId)
+	} else {
+		byToken, err = schedule.tokenService.GetOne(tokenId, user.Id)
 	}
-	byToken, err := schedule.tokenService.GetOneAny(tokenId)
 	if err != nil {
 		return err
 	}
-	if byToken == nil {
-		return errors.New("token not found")
-	}
-	return nil
-}
-
-// ensureTokenOwnedBy rejects a schedule that points at a token the owner does not hold.
-func (schedule *Schedule) ensureTokenOwnedBy(tokenId uint, userId uint) error {
-	byToken, err := schedule.tokenService.GetOne(tokenId, userId)
-	if err != nil {
-		return err
-	}
-	if byToken == nil {
+	// A miss and a disabled token answer alike, so existence does not leak.
+	if byToken == nil || !byToken.IsUse() {
 		return errors.New("token not found")
 	}
 	return nil
