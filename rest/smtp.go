@@ -56,7 +56,13 @@ func (smtp *Smtp) deleteOne(req *web.Request) (any, error) {
 	if user == nil {
 		return nil, err
 	}
-	exist, err := smtp.smtpModel.Query().Where("id = ? AND user_id = ?", uint(atoi), user.Id).One()
+	// An admin may delete any row — the lists put the delete button on every one of
+	// them — while a regular user may only delete their own.
+	query := smtp.smtpModel.Query().Where("id = ?", uint(atoi))
+	if !user.IsAdmin {
+		query = query.Where("user_id = ?", user.Id)
+	}
+	exist, err := query.One()
 	if err != nil {
 		return nil, err
 	}

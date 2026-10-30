@@ -43,7 +43,14 @@ func (token *Token) deleteOne(req *web.Request) (any, error) {
 		return nil, err
 	}
 	tokenModel := core.GetModel[*model.TokenModel](token.context)
-	exist, err := tokenModel.Query().Where("id = ? AND user_id = ?", id, user.Id).One()
+	// An admin may delete any row — the lists put the delete button on every one of
+	// them — while a regular user may only delete their own. A miss reads as "not
+	// found" either way, so existence does not leak.
+	query := tokenModel.Query().Where("id = ?", id)
+	if !user.IsAdmin {
+		query = query.Where("user_id = ?", user.Id)
+	}
+	exist, err := query.One()
 	if err != nil {
 		return nil, err
 	}

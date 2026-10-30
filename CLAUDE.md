@@ -241,13 +241,15 @@ Ownership: non-admin users only see their own rows, filtered by `user_id`. Admin
 endpoints re-check `IsAdmin` in the handler — `/reSet` included, since it rewrites the
 database and port configuration and hot-swaps the live connection under the running
 models. `PUT` handlers verify ownership and preserve the original owner, so an admin
-editing someone else's row does not take it over. Row-level reads (`GET /smtp/:id`,
-`/mail/:id`, …) answer `data: null` for a row the caller does not own rather than
-reporting a permission error, so existence does not leak; the list endpoints are what
-admins use to reach other users' rows, and those exclude nothing by default
-(`adminOnly=true` narrows them to admin-owned rows). An admin may also send a test mail
-through any user's SMTP row (the list's send dialog and `POST /api/sendMailBySMTP`); a
-regular caller stays limited to servers they own.
+editing someone else's row does not take it over. `DELETE` handlers follow the lists
+they serve: an admin may delete any row (the delete button sits on every list row), a
+regular user only their own, and a miss reads as "not found" either way. Row-level
+reads (`GET /smtp/:id`, `/mail/:id`, …) answer `data: null` for a row the caller does
+not own rather than reporting a permission error, so existence does not leak; the list
+endpoints are what admins use to reach other users' rows, and those exclude nothing by
+default (`adminOnly=true` narrows them to admin-owned rows). An admin may also send a
+test mail through any user's SMTP row (the list's send dialog and `POST
+/api/sendMailBySMTP`); a regular caller stays limited to servers they own.
 
 Two references are checked as well, because resolving them by id alone would hand out
 another account's credentials: a token may only point at the owner's own SMTP server and
