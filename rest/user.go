@@ -206,6 +206,17 @@ func (l *User) updateUser(request *web.Request) (any, error) {
 			return nil, err
 		}
 	}
+	// An admin row keeps its flags — the webui enforces the same rule because demoting
+	// or disabling the last active admin would lock the instance with no way back in.
+	// The form silently keeps them; the API refuses so the caller notices. Name and
+	// password changes on an admin row are unaffected.
+	existing, err := l.userService.GetOne(req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if existing.IsAdmin && (!req.IsAdmin || !req.IsUse) {
+		return nil, errors.New("admin accounts cannot be demoted or disabled")
+	}
 	if err := l.userService.UpdateUser(req.Id, req.Name, req.Password, req.IsAdmin, req.IsUse); err != nil {
 		return nil, err
 	}
@@ -225,7 +236,15 @@ func (l *User) deleteUser(request *web.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	target, _ := l.userService.GetOne(uint(id))
+	target, err := l.userService.GetOne(uint(id))
+	if err != nil {
+		return nil, err
+	}
+	// The webui offers no delete on admin rows at all: deleting (disabling) the last
+	// active admin would lock the instance out of its own management surface.
+	if target.IsAdmin {
+		return nil, errors.New("admin accounts cannot be deleted")
+	}
 	if err := l.userService.DeleteUser(uint(id)); err != nil {
 		return nil, err
 	}

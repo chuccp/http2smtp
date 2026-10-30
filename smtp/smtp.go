@@ -128,13 +128,21 @@ func SendMail(sendMsg *SendMsg, invalidMails ...string) error {
 		return err
 	}
 	if err := c.DialAndSend(msg); err != nil {
+		// The "not found" answer usually names a rejected user: retry once without the
+		// addresses the error mentions and report them to the caller afterwards. The
+		// retry must only run when at least one address was extracted — with an empty
+		// exclusion list it resends the identical message, hits the identical error and
+		// re-enters this branch forever, which ends the whole process in a stack
+		// overflow instead of a failed send.
 		if strings.Contains(err.Error(), "not found") && len(invalidMails) == 0 {
 			mails := util.ExtractEmails(err.Error())
-			err := SendMail(sendMsg, mails...)
-			if err != nil {
-				return err
-			} else {
-				return ToUserNotFoundError(mails)
+			if len(mails) > 0 {
+				err := SendMail(sendMsg, mails...)
+				if err != nil {
+					return err
+				} else {
+					return ToUserNotFoundError(mails)
+				}
 			}
 		}
 		return err
